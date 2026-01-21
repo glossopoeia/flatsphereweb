@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGPU Sphere Reprojection Tool</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
+        }
+        
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .controls {
+            width: 300px;
+            padding: 20px;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        select, input[type="number"], input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            background-color: #404040;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+        }
+        
+        .canvas-container {
+            flex: 1;
+        }
+        
+        #projectionCanvas {
+            border: 1px solid #555;
+            border-radius: 8px;
+            background-color: #000;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            padding: 10px;
+            background-color: #4a1515;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .range-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebGPU Sphere Reprojection Tool</h1>
+    
+    <div id="errorDiv" class="error" style="display: none;"></div>
+    
+    <div class="container">
+        <div class="controls">
+            <div class="control-group">
+                <label for="projectionSelect">Projection Type:</label>
+                <select id="projectionSelect">
+                    <option value="0">Stereographic</option>
+                    <option value="1">Polar (Azimuthal Equidistant)</option>
+                    <option value="2">Orthographic</option>
+                    <option value="3">Vertical Perspective</option>
+                    <option value="4">Mercator</option>
+                    <option value="5">Plate Carrée (Equirectangular)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="renderModeSelect">Render Mode:</label>
+                <select id="renderModeSelect">
+                    <option value="0">Mathematical Colors</option>
+                    <option value="1">World Map Texture</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="cameraLatSlider">Camera Latitude (°):</label>
+                <input type="range" id="cameraLatSlider" min="-90" max="90" value="45" step="1">
+                <div class="range-display">
+                    <span>-90°</span>
+                    <span id="cameraLatValue">45°</span>
+                    <span>90°</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label for="cameraLonSlider">Camera Longitude (°):</label>
+                <input type="range" id="cameraLonSlider" min="-180" max="180" value="0" step="1">
+                <div class="range-display">
+                    <span>-180°</span>
+                    <span id="cameraLonValue">0°</span>
+                    <span>180°</span>
+                </div>
+            </div>
+            
+            <div class="control-group" id="zoomGroup">
+                <label for="zoomSlider">Zoom Level:</label>
+                <input type="range" id="zoomSlider" min="0.01" max="10" value="2" step="0.01">
+                <div class="range-display">
+                    <span>0.01</span>
+                    <span id="zoomValue">2.0</span>
+                    <span>10.0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="projectionCanvas" width="800" height="600"></canvas>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

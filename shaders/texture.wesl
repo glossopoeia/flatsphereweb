@@ -35,39 +35,6 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
     return out;
 }
 
-// Convert HSL to RGB
-fn hsl_to_rgb(h: f32, s: f32, l: f32) -> vec3f {
-    let c = (1.0 - abs(2.0 * l - 1.0)) * s;
-    let x = c * (1.0 - abs(fract(h / 60.0) * 2.0 - 1.0));
-    let m = l - c / 2.0;
-    
-    var rgb: vec3f;
-    let h_sector = floor(h / 60.0);
-    
-    if (h_sector == 0.0) { rgb = vec3f(c, x, 0.0); }
-    else if (h_sector == 1.0) { rgb = vec3f(x, c, 0.0); }
-    else if (h_sector == 2.0) { rgb = vec3f(0.0, c, x); }
-    else if (h_sector == 3.0) { rgb = vec3f(0.0, x, c); }
-    else if (h_sector == 4.0) { rgb = vec3f(x, 0.0, c); }
-    else { rgb = vec3f(c, 0.0, x); }
-    
-    return rgb + m;
-}
-
-// Generate unique color based on lat/lon
-fn sphere_color(lat: f32, lon: f32) -> vec3f {
-    // Hue based on longitude (0-360 degrees)
-    let hue = (lon + PI) / (2.0 * PI) * 360.0;
-    
-    // Saturation: 0 at poles, 1 at equator
-    let sat = sin(abs(lat));
-    
-    // Luminosity: 0 at north pole, 1 at south pole
-    let lum = (lat + HALF_PI) / PI;
-    
-    return hsl_to_rgb(hue, sat, lum);
-}
-
 // Sample world map texture based on lat/lon
 fn world_texture_color(lat: f32, lon: f32) -> vec3f {
     // Convert spherical coordinates to equirectangular texture coordinates
@@ -76,7 +43,7 @@ fn world_texture_color(lat: f32, lon: f32) -> vec3f {
     // Latitude: -π/2 to π/2 maps to 1 to 0 (v coordinate, flipped)
     let v = 1.0 - (lat + HALF_PI) / PI;
     
-    let tex_coords = vec2f(clamp(u, 0, 1), clamp(v, 0, 1));
+    let tex_coords = vec2f(u, v);
     let color = textureSample(world_texture, world_sampler, tex_coords);
     return color.rgb;
 }

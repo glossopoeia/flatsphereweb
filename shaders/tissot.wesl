@@ -35,7 +35,7 @@ fn apply_tissot_indicatrices(base_color: vec3f, lat: f32, lon: f32, show_tissot:
         let tissot_intensity = is_tissot_indicatrix(lat, lon);
         if (tissot_intensity > 0.5) {
             // Red lines for indicatrices with good visibility
-            return mix(base_color, vec3f(1.0, 0.2, 0.2), vec3(0.7));
+            return mix(base_color, vec3f(1.0, 0.2, 0.2), 0.7);
         }
     }
     return base_color;

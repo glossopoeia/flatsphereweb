@@ -312,7 +312,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         
         if (tissot_intensity > 0.5) {
             // Red lines for indicatrices with good visibility
-            return vec4f(mix(color, vec3f(1.0, 0.2, 0.2), 0.7), 1.0);
+            return vec4f(mix(color, vec3f(1.0, 0.2, 0.2), vec3(0.7)), 1.0);
         }
     }
     

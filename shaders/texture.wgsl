@@ -4,9 +4,9 @@ struct Uniforms {
     camera_lon: f32,
     zoom: f32,
     aspect: f32,
+    show_tissot: f32,
     padding1: f32,
     padding2: f32,
-    padding3: f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -208,6 +208,35 @@ fn plate_carree_inverse(x: f32, y: f32) -> vec2f {
     return vec2f(y, x);
 }
 
+// Tissot's indicatrix functions
+fn is_tissot_indicatrix(lat: f32, lon: f32) -> f32 {
+    // Grid spacing for indicatrices (every 15 degrees for good coverage)
+    let grid_spacing = PI / 12.0; // 15 degrees
+    let radius = PI / 120.0; // Small circle radius (1.5 degrees)
+    let line_width = PI / 400.0; // Line thickness (0.45 degrees)
+    
+    // Find nearest grid point
+    let grid_lat = round(lat / grid_spacing) * grid_spacing;
+    let grid_lon = round(lon / grid_spacing) * grid_spacing;
+    
+    // Skip poles where projection might be undefined
+    if (abs(grid_lat) > HALF_PI - PI / 18.0) {
+        return 0.0;
+    }
+    
+    // Distance to grid center on the sphere
+    let dlat = lat - grid_lat;
+    let dlon = (lon - grid_lon) * cos(grid_lat);
+    let dist = sqrt(dlat * dlat + dlon * dlon);
+    
+    // Check if we're near the circle
+    if (abs(dist - radius) < line_width) {
+        return 1.0;
+    }
+    
+    return 0.0;
+}
+
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     // Convert screen coordinates to projection space using dynamic aspect ratio
@@ -275,6 +304,17 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     
     // Sample world map texture
     let color = world_texture_color(final_lat, final_lon);
+    
+    // Add Tissot's indicatrices if enabled
+    if (uniforms.show_tissot > 0.5) {
+        // Check if we're on a Tissot indicatrix in sphere space
+        let tissot_intensity = is_tissot_indicatrix(final_lat, final_lon);
+        
+        if (tissot_intensity > 0.5) {
+            // Red lines for indicatrices with good visibility
+            return vec4f(mix(color, vec3f(1.0, 0.2, 0.2), vec3(0.7)), 1.0);
+        }
+    }
     
     return vec4f(color, 1.0);
 }

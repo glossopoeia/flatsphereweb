@@ -5,12 +5,19 @@ class ProjectionApp {
         this.renderer = null;
         this.projectionSelect = document.getElementById('projectionSelect');
         this.renderModeSelect = document.getElementById('renderModeSelect');
-        this.cameraLatSlider = document.getElementById('cameraLatSlider');
-        this.cameraLonSlider = document.getElementById('cameraLonSlider');
+        // Internal camera state (no longer controlled by sliders)
+        this.cameraLat = 45; // degrees
+        this.cameraLon = 0;  // degrees
         this.zoomSlider = document.getElementById('zoomSlider');
         this.zoomGroup = document.getElementById('zoomGroup');
+        this.tissotToggle = document.getElementById('tissotToggle');
         this.canvas = document.getElementById('projectionCanvas');
         this.errorDiv = document.getElementById('errorDiv');
+        
+        // Mouse interaction state
+        this.isDragging = false;
+        this.lastMouseX = 0;
+        this.lastMouseY = 0;
         
         this.setupEventListeners();
         this.init();
@@ -26,18 +33,14 @@ class ProjectionApp {
             this.render();
         });
         
-        this.cameraLatSlider.addEventListener('input', (e) => {
-            document.getElementById('cameraLatValue').textContent = `${e.target.value}°`;
-            this.render();
-        });
-        
-        this.cameraLonSlider.addEventListener('input', (e) => {
-            document.getElementById('cameraLonValue').textContent = `${e.target.value}°`;
-            this.render();
-        });
+
         
         this.zoomSlider.addEventListener('input', (e) => {
             document.getElementById('zoomValue').textContent = parseFloat(e.target.value).toFixed(2);
+            this.render();
+        });
+        
+        this.tissotToggle.addEventListener('change', () => {
             this.render();
         });
         
@@ -46,6 +49,41 @@ class ProjectionApp {
             this.resizeCanvas();
             this.render();
         });
+        
+        // Mouse drag controls
+        this.canvas.addEventListener('mousedown', (e) => {
+            this.isDragging = true;
+            this.lastMouseX = e.clientX;
+            this.lastMouseY = e.clientY;
+            this.canvas.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+        
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (!this.isDragging) return;
+            
+            const deltaX = e.clientX - this.lastMouseX;
+            const deltaY = e.clientY - this.lastMouseY;
+            
+            this.updateCameraFromMouseDrag(deltaX, deltaY);
+            
+            this.lastMouseX = e.clientX;
+            this.lastMouseY = e.clientY;
+            e.preventDefault();
+        });
+        
+        this.canvas.addEventListener('mouseup', () => {
+            this.isDragging = false;
+            this.canvas.style.cursor = 'grab';
+        });
+        
+        this.canvas.addEventListener('mouseleave', () => {
+            this.isDragging = false;
+            this.canvas.style.cursor = 'grab';
+        });
+        
+        // Set initial cursor
+        this.canvas.style.cursor = 'grab';
     }
     
     updateZoomVisibility() {
@@ -85,11 +123,43 @@ class ProjectionApp {
         
         const projectionType = parseInt(this.projectionSelect.value);
         const renderMode = parseInt(this.renderModeSelect.value);
-        const cameraLat = parseFloat(this.cameraLatSlider.value) * Math.PI / 180;
-        const cameraLon = parseFloat(this.cameraLonSlider.value) * Math.PI / 180;
+        const cameraLat = this.cameraLat * Math.PI / 180;
+        const cameraLon = this.cameraLon * Math.PI / 180;
+        const zoom = parseFloat(this.zoomSlider.value);
+        const showTissot = this.tissotToggle.checked ? 1.0 : 0.0;
+        
+        this.renderer.render(projectionType, renderMode, cameraLat, cameraLon, zoom, showTissot);
+    }
+    
+    updateCameraFromMouseDrag(deltaX, deltaY) {
+        const projectionType = parseInt(this.projectionSelect.value);
         const zoom = parseFloat(this.zoomSlider.value);
         
-        this.renderer.render(projectionType, renderMode, cameraLat, cameraLon, zoom);
+        // Base sensitivity (degrees per pixel)
+        let baseSensitivity = 0.5;
+        
+        // Scale sensitivity based on zoom level for applicable projections
+        let sensitivity = baseSensitivity;
+        if (projectionType === 2 || projectionType === 3) { // Orthographic or Vertical Perspective
+            // Reduce sensitivity with square root of zoom to make it less aggressive
+            sensitivity = baseSensitivity / Math.sqrt(zoom);
+        }
+        
+        // Calculate new camera position
+        let newLon = this.cameraLon - (deltaX * sensitivity);
+        let newLat = this.cameraLat + (deltaY * sensitivity);
+        
+        // Clamp values to valid ranges
+        newLat = Math.max(-90, Math.min(90, newLat));
+        newLon = ((newLon % 360) + 360) % 360; // Wrap longitude to 0-360
+        if (newLon > 180) newLon -= 360; // Convert to -180 to 180 range
+        
+        // Update internal state
+        this.cameraLat = newLat;
+        this.cameraLon = newLon;
+        
+        // Re-render
+        this.render();
     }
     
     showError(message) {

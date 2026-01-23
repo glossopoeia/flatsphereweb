@@ -1,3 +1,5 @@
+import package::tissot::{is_tissot_indicatrix, apply_tissot_indicatrices, PI, HALF_PI};
+
 struct Uniforms {
     projection_type: f32,
     camera_lat: f32,
@@ -10,6 +12,8 @@ struct Uniforms {
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var world_texture: texture_2d<f32>;
+@group(0) @binding(2) var world_sampler: sampler;
 
 struct VertexOutput {
     @builtin(position) position: vec4f,
@@ -30,9 +34,6 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
     out.uv = pos[vertex_index];
     return out;
 }
-
-const PI: f32 = 3.14159265358979323846;
-const HALF_PI: f32 = 1.57079632679489661923;
 
 // Convert HSL to RGB
 fn hsl_to_rgb(h: f32, s: f32, l: f32) -> vec3f {
@@ -65,6 +66,19 @@ fn sphere_color(lat: f32, lon: f32) -> vec3f {
     let lum = (lat + HALF_PI) / PI;
     
     return hsl_to_rgb(hue, sat, lum);
+}
+
+// Sample world map texture based on lat/lon
+fn world_texture_color(lat: f32, lon: f32) -> vec3f {
+    // Convert spherical coordinates to equirectangular texture coordinates
+    // Longitude: -π to π maps to 0 to 1 (u coordinate)
+    let u = (lon + PI) / (2.0 * PI);
+    // Latitude: -π/2 to π/2 maps to 1 to 0 (v coordinate, flipped)
+    let v = 1.0 - (lat + HALF_PI) / PI;
+    
+    let tex_coords = vec2f(clamp(u, 0, 1), clamp(v, 0, 1));
+    let color = textureSample(world_texture, world_sampler, tex_coords);
+    return color.rgb;
 }
 
 // Oblique transformation functions
@@ -193,34 +207,7 @@ fn plate_carree_inverse(x: f32, y: f32) -> vec2f {
     return vec2f(y, x);
 }
 
-// Tissot's indicatrix functions
-fn is_tissot_indicatrix(lat: f32, lon: f32) -> f32 {
-    // Grid spacing for indicatrices (every 15 degrees for good coverage)
-    let grid_spacing = PI / 12.0; // 15 degrees
-    let radius = PI / 120.0; // Small circle radius (1.5 degrees)
-    let line_width = PI / 400.0; // Line thickness (0.45 degrees)
-    
-    // Find nearest grid point
-    let grid_lat = round(lat / grid_spacing) * grid_spacing;
-    let grid_lon = round(lon / grid_spacing) * grid_spacing;
-    
-    // Skip poles where projection might be undefined
-    if (abs(grid_lat) > HALF_PI - PI / 18.0) {
-        return 0.0;
-    }
-    
-    // Distance to grid center on the sphere
-    let dlat = lat - grid_lat;
-    let dlon = (lon - grid_lon) * cos(grid_lat);
-    let dist = sqrt(dlat * dlat + dlon * dlon);
-    
-    // Check if we're near the circle
-    if (abs(dist - radius) < line_width) {
-        return 1.0;
-    }
-    
-    return 0.0;
-}
+
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
@@ -253,19 +240,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         lat_lon = polar_inverse(coord.x, coord.y);
     } else if (projection_type == 2) {
         lat_lon = orthographic_inverse(coord.x, coord.y);
-        // Check bounds for orthographic
-        let r = sqrt(coord.x * coord.x + coord.y * coord.y);
-        if (r > 1.0) {
-            return vec4f(0.0, 0.0, 0.0, 1.0); // Black background
-        }
     } else if (projection_type == 3) {
         lat_lon = vertical_perspective_inverse(coord.x, coord.y, uniforms.zoom);
-        // Check bounds for perspective
-        let r = sqrt(coord.x * coord.x + coord.y * coord.y);
-        let max_r = sqrt((uniforms.zoom - 1.0) / (uniforms.zoom + 1.0));
-        if (r > max_r) {
-            return vec4f(0.0, 0.0, 0.0, 1.0); // Black background
-        }
     } else if (projection_type == 4) {
         lat_lon = mercator_inverse(coord.x, coord.y);
     } else if (projection_type == 5) {
@@ -277,29 +253,35 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let lat = lat_lon.x;
     let lon = lat_lon.y;
     
-    // Check if the point is valid (within sphere bounds)
-    if (abs(lat) > HALF_PI || abs(lon) > PI) {
-        return vec4f(0.0, 0.0, 0.0, 1.0); // Black background
-    }
-    
     // Apply oblique transformation
     let oblique_result = oblique_transform_from_sphere(lat, lon, uniforms.camera_lat, uniforms.camera_lon);
     let final_lat = oblique_result.x;
     let final_lon = oblique_result.y;
     
-    // Generate mathematical color
-    let color = sphere_color(final_lat, final_lon);
-    
-    // Add Tissot's indicatrices if enabled
-    if (uniforms.show_tissot > 0.5) {
-        // Check if we're on a Tissot indicatrix in sphere space
-        let tissot_intensity = is_tissot_indicatrix(final_lat, final_lon);
-        
-        if (tissot_intensity > 0.5) {
-            // Red lines for indicatrices with good visibility
-            return vec4f(mix(color, vec3f(1.0, 0.2, 0.2), vec3(0.7)), 1.0);
+    // Sample world map texture
+    let color = world_texture_color(final_lat, final_lon);
+
+    // Check if the point is valid (within sphere bounds)
+    if (abs(lat) > HALF_PI || abs(lon) > PI) {
+        return vec4f(0.0, 0.0, 0.0, 1.0); // Black background
+    }
+    // Check bounds for projections
+    if (projection_type == 2) {
+        let r = sqrt(coord.x * coord.x + coord.y * coord.y);
+        if (r > 1.0) {
+            return vec4f(0.0, 0.0, 0.0, 1.0); // Black background
+        }
+    } else if (projection_type == 3) {
+        // Check bounds for perspective
+        let r = sqrt(coord.x * coord.x + coord.y * coord.y);
+        let max_r = sqrt((uniforms.zoom - 1.0) / (uniforms.zoom + 1.0));
+        if (r > max_r) {
+            return vec4f(0.0, 0.0, 0.0, 1.0); // Black background
         }
     }
     
-    return vec4f(color, 1.0);
+    // Add Tissot's indicatrices if enabled
+    let final_color = apply_tissot_indicatrices(color, final_lat, final_lon, uniforms.show_tissot);
+    
+    return vec4f(final_color, 1.0);
 }

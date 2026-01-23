@@ -1,3 +1,6 @@
+/* eslint-disable */
+import { link } from "wesl";
+
 export class ProjectionRenderer {
     constructor() {
         this.device = null;
@@ -20,6 +23,26 @@ export class ProjectionRenderer {
         }
         
         this.device = await adapter.requestDevice();
+
+        // Get shaders
+        const mathShaderCode = await link({
+            rootModuleName: "./math.wesl",
+            weslSrc: {
+                "math.wesl": await fetch("./shaders/math.wesl").then(v => v.text()),
+                "tissot.wesl": await fetch("./shaders/tissot.wesl").then(v => v.text()),
+            },
+        });
+
+        const textureShaderCode = await link({
+            rootModuleName: "./texture.wesl",
+            weslSrc: {
+                "texture.wesl": await fetch("./shaders/texture.wesl").then(v => v.text()),
+                "tissot.wesl": await fetch("./shaders/tissot.wesl").then(v => v.text()),
+            },
+        });
+
+        const mathShaderMod = mathShaderCode.createShaderModule(this.device, {});
+        const textureShaderMod = textureShaderCode.createShaderModule(this.device, {});
         
         // Get canvas context
         this.context = canvas.getContext('webgpu');
@@ -28,15 +51,6 @@ export class ProjectionRenderer {
         this.context.configure({
             device: this.device,
             format: canvasFormat,
-        });
-        
-        // Create shader modules for both modes
-        this.mathShaderModule = this.device.createShaderModule({
-            code: await this.loadShaderFile('./shaders/math.wgsl')
-        });
-        
-        this.textureShaderModule = this.device.createShaderModule({
-            code: await this.loadShaderFile('./shaders/texture.wgsl')
         });
         
         // Create uniform buffer
@@ -57,10 +71,10 @@ export class ProjectionRenderer {
         });
         
         // Create bind group layouts and bind groups
-        this.createPipelines(canvasFormat);
+        this.createPipelines(canvasFormat, mathShaderMod, textureShaderMod);
     }
     
-    createPipelines(canvasFormat) {
+    createPipelines(canvasFormat, mathShaderModule, textureShaderModule) {
         // Math shader pipeline (no textures)
         const mathBindGroupLayout = this.device.createBindGroupLayout({
             entries: [
@@ -87,11 +101,11 @@ export class ProjectionRenderer {
                 bindGroupLayouts: [mathBindGroupLayout]
             }),
             vertex: {
-                module: this.mathShaderModule,
+                module: mathShaderModule,
                 entryPoint: 'vs_main',
             },
             fragment: {
-                module: this.mathShaderModule,
+                module: mathShaderModule,
                 entryPoint: 'fs_main',
                 targets: [{
                     format: canvasFormat,
@@ -146,11 +160,11 @@ export class ProjectionRenderer {
                 bindGroupLayouts: [textureBindGroupLayout]
             }),
             vertex: {
-                module: this.textureShaderModule,
+                module: textureShaderModule,
                 entryPoint: 'vs_main',
             },
             fragment: {
-                module: this.textureShaderModule,
+                module: textureShaderModule,
                 entryPoint: 'fs_main',
                 targets: [{
                     format: canvasFormat,
@@ -160,14 +174,6 @@ export class ProjectionRenderer {
                 topology: 'triangle-strip',
             },
         });
-    }
-    
-    async loadShaderFile(path) {
-        const response = await fetch(path);
-        if (!response.ok) {
-            throw new Error(`Failed to load shader: ${path}`);
-        }
-        return await response.text();
     }
 
     async loadWorldTexture() {

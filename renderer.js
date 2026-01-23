@@ -41,7 +41,7 @@ export class ProjectionRenderer {
         
         // Create uniform buffer
         this.uniformBuffer = this.device.createBuffer({
-            size: 32, // 6 floats * 4 bytes each = 24 bytes, padded to 32 for alignment
+            size: 32, // 7 floats * 4 bytes each = 28 bytes, padded to 32 for alignment
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         
@@ -195,7 +195,7 @@ export class ProjectionRenderer {
         // Canvas size is handled by the browser, we just need to update our view
     }
     
-    render(projectionType, renderMode, cameraLat, cameraLon, zoom) {
+    render(projectionType, renderMode, cameraLat, cameraLon, zoom, showTissot) {
         // Update uniforms
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
@@ -207,7 +207,8 @@ export class ProjectionRenderer {
             cameraLon,
             zoom,
             aspect,
-            0, 0, 0 // padding for alignment
+            showTissot,
+            0, 0 // padding for alignment
         ]);
         
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);

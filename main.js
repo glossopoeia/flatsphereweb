@@ -142,11 +142,11 @@ class ProjectionApp {
         let sensitivity = baseSensitivity;
         if (projectionType === 2 || projectionType === 3) { // Orthographic or Vertical Perspective
             // Reduce sensitivity with square root of zoom to make it less aggressive
-            sensitivity = baseSensitivity / Math.sqrt(zoom);
+            sensitivity = baseSensitivity * Math.sqrt(zoom);
         }
         
         // Calculate new camera position
-        let newLon = this.cameraLon - (deltaX * sensitivity);
+        let newLon = this.cameraLon + (deltaX * sensitivity);
         let newLat = this.cameraLat + (deltaY * sensitivity);
         
         // Clamp values to valid ranges

@@ -62,9 +62,9 @@ fn oblique_transform_from_sphere(lat: f32, lon: f32, pole_lat: f32, pole_lon: f3
     
     var new_lon: f32;
     if (abs(pole_lat - HALF_PI) < 1e-6) {
-        new_lon = lon - pole_lon;
+        new_lon = lon - pole_lon - PI;
     } else if (abs(pole_lat + HALF_PI) < 1e-6) {
-        new_lon = pole_lon - lon - PI;
+        new_lon = pole_lon - lon;
     } else {
         let sin_lat = sin(lat);
         let cos_lat = cos(lat);
@@ -73,7 +73,7 @@ fn oblique_transform_from_sphere(lat: f32, lon: f32, pole_lat: f32, pole_lon: f3
         
         let numer = cos_lat * sin(lon - pole_lon);
         let denom = cos_pole_lat * sin_lat - sin_pole_lat * cos_lat * pole_rel_cos;
-        new_lon = atan2(numer, denom);
+        new_lon = -atan2(numer, denom);
     }
     
     return vec2f(new_lat, new_lon);

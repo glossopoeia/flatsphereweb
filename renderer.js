@@ -30,6 +30,7 @@ export class ProjectionRenderer {
             weslSrc: {
                 "texture.wesl": await fetch("./shaders/texture.wesl").then(v => v.text()),
                 "tissot.wesl": await fetch("./shaders/tissot.wesl").then(v => v.text()),
+                "graticule.wesl": await fetch("./shaders/graticule.wesl").then(v => v.text()),
             },
         });
 
@@ -46,7 +47,7 @@ export class ProjectionRenderer {
         
         // Create uniform buffer
         this.uniformBuffer = this.device.createBuffer({
-            size: 32, // 7 floats * 4 bytes each = 28 bytes, padded to 32 for alignment
+            size: 32, // 8 floats * 4 bytes each = 32 bytes
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         
@@ -151,7 +152,7 @@ export class ProjectionRenderer {
         // Canvas size is handled by the browser, we just need to update our view
     }
     
-    render(projectionType, cameraLat, cameraLon, zoom, showTissot) {
+    render(projectionType, cameraLat, cameraLon, zoom, showTissot, showGraticule) {
         // Update uniforms
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
@@ -164,7 +165,8 @@ export class ProjectionRenderer {
             zoom,
             aspect,
             showTissot,
-            0, 0 // padding for alignment
+            showGraticule,
+            0 // padding for alignment
         ]);
         
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);

@@ -1,4 +1,5 @@
 import package::tissot::{is_tissot_indicatrix, apply_tissot_indicatrices, PI, HALF_PI};
+import package::graticule::{apply_graticule, is_graticule_line};
 
 struct Uniforms {
     projection_type: f32,
@@ -7,8 +8,8 @@ struct Uniforms {
     zoom: f32,
     aspect: f32,
     show_tissot: f32,
+    show_graticule: f32,
     padding1: f32,
-    padding2: f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -225,6 +226,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let final_lat = oblique_result.x;
     let final_lon = oblique_result.y;
     
+    // Calculate graticule BEFORE any conditional branches (for uniform control flow)
+    let graticule_intensity = is_graticule_line(final_lat, final_lon);
+    
     // Sample world map texture
     let color = world_texture_color(final_lat, final_lon);
 
@@ -248,7 +252,10 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     }
     
     // Add Tissot's indicatrices if enabled
-    let final_color = apply_tissot_indicatrices(color, final_lat, final_lon, uniforms.show_tissot);
+    var final_color = apply_tissot_indicatrices(color, final_lat, final_lon, uniforms.show_tissot);
+    
+    // Add graticule if enabled (using pre-calculated intensity)
+    final_color = apply_graticule(final_color, graticule_intensity, uniforms.show_graticule);
     
     return vec4f(final_color, 1.0);
 }

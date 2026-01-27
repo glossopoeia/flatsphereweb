@@ -6,13 +6,14 @@ A WebGPU-based tool for visualizing different map projections of spherical data 
 
 - **Real-time projection rendering** using WebGPU fragment shaders
 - **Multiple projection types** including:
-  - Stereographic
-  - Polar (Azimuthal Equidistant) 
-  - Orthographic
+  - Stereographic (with zoom control)
+  - Polar (Azimuthal Equidistant) (with zoom control)
+  - Orthographic (with zoom control)
   - Vertical Perspective (with zoom control)
-  - Mercator
-  - Plate Carrée (Equirectangular)
+  - Mercator (with zoom control)
+  - Plate Carrée (Equirectangular) (with zoom control)
 - **Oblique aspect support** with camera latitude/longitude controls
+- **Universal zoom control** for all projections
 - **Dual rendering modes**:
   - **Mathematical color mapping** that creates unique colors based on latitude/longitude coordinates
   - **World map texture** using real Earth imagery for geographic visualization
@@ -64,9 +65,13 @@ The tool implements projection mathematics similar to those found in the [flatsp
    - **Mathematical Colors**: Unique mathematical color mapping for coordinate analysis
    - **World Map Texture**: Real Earth imagery for geographic visualization
 
-5. **Adjust camera position** using the latitude and longitude sliders
+5. **Adjust camera position** using mouse drag controls (click and drag on the canvas)
 
-6. **For Vertical Perspective projection**, use the zoom slider to control viewing distance
+6. **Use the zoom slider** to zoom in/out on any projection
+
+7. **Toggle overlays** to display:
+   - **Tissot's Indicatrices**: Red circles showing distortion patterns
+   - **Graticule Lines**: White grid lines showing coordinate system
 
 ## Browser Requirements
 

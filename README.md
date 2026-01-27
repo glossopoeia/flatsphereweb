@@ -1,9 +1,13 @@
 # WebGPU Sphere Reprojection Tool
 
-A WebGPU-based tool for visualizing different map projections of spherical data in real-time. This project implements several cartographic projections using WebGPU compute shaders for high-performance rendering.
+A WebGPU-based tool for visualizing different map projections of spherical data in real-time. This project implements several cartographic projections using WebGPU compute shaders for high-performance rendering with full mobile and desktop support.
 
 ## Features
 
+- **Cross-platform support** with responsive design for mobile and desktop
+- **Touch and mouse interaction** for intuitive map navigation
+- **Fullscreen mode** available on all platforms
+- **Transparent overlay controls** that float above the map visualization
 - **Real-time projection rendering** using WebGPU fragment shaders
 - **Multiple projection types** including:
   - Stereographic (with zoom control)
@@ -18,6 +22,15 @@ A WebGPU-based tool for visualizing different map projections of spherical data 
   - **Mathematical color mapping** that creates unique colors based on latitude/longitude coordinates
   - **World map texture** using real Earth imagery for geographic visualization
 - **Interactive controls** for projection parameters
+
+## Mobile Features
+
+- **Touch-friendly interface** with larger touch targets and optimized layouts
+- **Drag navigation** works seamlessly with both mouse and touch input  
+- **Auto-hiding controls** on mobile devices to maximize map viewing area
+- **Responsive overlay design** that adapts to different screen sizes and orientations
+- **Fullscreen support** with native mobile fullscreen API integration
+- **Gesture prevention** to avoid conflicts with browser navigation gestures
 
 ## Rendering Modes
 

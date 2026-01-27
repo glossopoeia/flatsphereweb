@@ -314,12 +314,13 @@ class ProjectionApp {
     resizeCanvas() {
         const width = window.innerWidth;
         const height = window.innerHeight;
+        const dpr = window.devicePixelRatio || 1;
         
-        // Set canvas size to exact viewport dimensions
-        this.canvas.width = width;
-        this.canvas.height = height;
+        // Scale backing store by device pixel ratio for sharp rendering
+        this.canvas.width = Math.floor(width * dpr);
+        this.canvas.height = Math.floor(height * dpr);
         
-        // Ensure canvas style matches viewport exactly
+        // Keep CSS size in logical (CSS) pixels to match the viewport
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
         

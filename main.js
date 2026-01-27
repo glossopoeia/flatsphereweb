@@ -403,14 +403,7 @@ async function checkWebGPUSupport() {
             return false;
         }
         
-        // Try to get a device
-        const device = await adapter.requestDevice();
-        if (!device) {
-            errorDiv.textContent = 'WebGPU device creation failed. This may be due to resource limitations or driver issues.';
-            errorDiv.style.display = 'block';
-            return false;
-        }
-        
+        // Adapter exists, defer device creation to the renderer
         return true;
         
     } catch (error) {

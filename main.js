@@ -26,13 +26,8 @@ class ProjectionApp {
     
     setupEventListeners() {
         this.projectionSelect.addEventListener('change', () => {
-            this.updateZoomVisibility();
             this.render();
         });
-        
-
-        
-
         
         this.zoomSlider.addEventListener('input', (e) => {
             document.getElementById('zoomValue').textContent = parseFloat(e.target.value).toFixed(2);
@@ -89,18 +84,11 @@ class ProjectionApp {
         this.canvas.style.cursor = 'grab';
     }
     
-    updateZoomVisibility() {
-        const projectionType = parseInt(this.projectionSelect.value);
-        // Show zoom for Orthographic (2) and Vertical Perspective (3)
-        this.zoomGroup.style.display = (projectionType === 2 || projectionType === 3) ? 'block' : 'none';
-    }
-    
     async init() {
         try {
             this.renderer = new ProjectionRenderer();
             await this.renderer.initialize(this.canvas);
             this.resizeCanvas();
-            this.updateZoomVisibility();
             this.render();
         } catch (error) {
             this.showError(`Failed to initialize WebGPU: ${error.message}`);
@@ -136,19 +124,15 @@ class ProjectionApp {
     }
     
     updateCameraFromMouseDrag(deltaX, deltaY) {
-        const projectionType = parseInt(this.projectionSelect.value);
         const zoom = parseFloat(this.zoomSlider.value);
         
         // Base sensitivity (degrees per pixel)
         let baseSensitivity = 0.5;
         
-        // Scale sensitivity based on zoom level for applicable projections
-        let sensitivity = baseSensitivity;
-        if (projectionType === 2 || projectionType === 3) { // Orthographic or Vertical Perspective
-            // Adjust sensitivity using the square root of zoom: higher zoom (> 1) increases sensitivity,
-            // while zoom values between 0 and 1 decrease it, smoothing interaction across the slider range.
-            sensitivity = baseSensitivity * Math.sqrt(zoom);
-        }
+        // Scale sensitivity based on zoom level for all projections
+        // Adjust sensitivity using the square root of zoom: higher zoom (> 1) increases sensitivity,
+        // while zoom values between 0 and 1 decrease it, smoothing interaction across the slider range.
+        let sensitivity = baseSensitivity * Math.sqrt(zoom);
         
         // Calculate new camera position
         let newLon = this.cameraLon + (deltaX * sensitivity);

@@ -175,8 +175,6 @@ fn plate_carree_inverse(x: f32, y: f32) -> vec2f {
     return vec2f(y, x);
 }
 
-
-
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     // Convert screen coordinates to projection space using dynamic aspect ratio
@@ -190,7 +188,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     } else if (projection_type == 1) { // Polar
         coord = coord * 2.0;
     } else if (projection_type == 2) { // Orthographic
-        coord = coord * uniforms.zoom;
+        coord = coord;
     } else if (projection_type == 3) { // Perspective
         coord = coord * 1.5;
     } else if (projection_type == 4) { // Mercator
@@ -198,6 +196,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     } else if (projection_type == 5) { // Plate Carree
         coord = vec2f(coord.x * PI, coord.y * HALF_PI);
     }
+
+    // Apply zoom factor before inverse projection to narrow the view
+    coord = coord * uniforms.zoom;
     
     // Perform inverse projection to get lat/lon
     var lat_lon: vec2f;
@@ -209,7 +210,10 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     } else if (projection_type == 2) {
         lat_lon = orthographic_inverse(coord.x, coord.y);
     } else if (projection_type == 3) {
-        lat_lon = vertical_perspective_inverse(coord.x, coord.y, uniforms.zoom);
+        // For perspective, use zoom as distance parameter (special case)
+        // Convert zoom to distance: zoom=1 -> d=2, zoom=10 -> d=11
+        let d = uniforms.zoom + 1.0;
+        lat_lon = vertical_perspective_inverse(coord.x, coord.y, d);
     } else if (projection_type == 4) {
         lat_lon = mercator_inverse(coord.x, coord.y);
     } else if (projection_type == 5) {
@@ -245,7 +249,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     } else if (projection_type == 3) {
         // Check bounds for perspective
         let r = sqrt(coord.x * coord.x + coord.y * coord.y);
-        let max_r = sqrt((uniforms.zoom - 1.0) / (uniforms.zoom + 1.0));
+        let d = uniforms.zoom + 1.0; // Match the distance calculation above
+        let max_r = sqrt((d - 1.0) / (d + 1.0));
         if (r > max_r) {
             return vec4f(0.0, 0.0, 0.0, 1.0); // Black background
         }

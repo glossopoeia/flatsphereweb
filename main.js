@@ -98,7 +98,7 @@ class ProjectionApp {
         // Mouse wheel zoom
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+            const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
             this.zoom = Math.max(0.01, Math.min(10, this.zoom * zoomFactor));
             this.showZoomIndicator();
             this.render();
@@ -131,7 +131,7 @@ class ProjectionApp {
                 const currentDistance = this.getTouchDistance(touch1, touch2);
                 
                 if (this.lastTouchDistance > 0) {
-                    const zoomFactor = currentDistance / this.lastTouchDistance;
+                    const zoomFactor = this.lastTouchDistance / currentDistance;
                     this.zoom = Math.max(0.01, Math.min(10, this.initialZoom * zoomFactor));
                     this.showZoomIndicator();
                     this.render();

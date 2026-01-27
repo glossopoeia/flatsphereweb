@@ -227,6 +227,31 @@
             opacity: 1;
         }
         
+        /* Fullscreen mode safe area adjustments */
+        :fullscreen .controls-overlay,
+        :-webkit-full-screen .controls-overlay {
+            top: max(20px, env(safe-area-inset-top));
+            left: max(20px, env(safe-area-inset-left));
+            right: max(20px, env(safe-area-inset-right));
+        }
+        
+        :fullscreen .fullscreen-button,
+        :-webkit-full-screen .fullscreen-button {
+            top: max(20px, env(safe-area-inset-top));
+            right: max(20px, env(safe-area-inset-right));
+        }
+        
+        :fullscreen .zoom-indicator,
+        :-webkit-full-screen .zoom-indicator {
+            top: max(80px, calc(env(safe-area-inset-top) + 60px));
+            right: max(20px, env(safe-area-inset-right));
+        }
+        
+        :fullscreen .error,
+        :-webkit-full-screen .error {
+            top: max(20px, env(safe-area-inset-top));
+        }
+        
         /* Mobile optimizations */
         @media (max-width: 768px) {
             .controls-overlay {
@@ -302,6 +327,50 @@
                 right: 8px;
                 font-size: 0.75em;
                 padding: 5px 8px;
+            }
+        }
+        
+        /* Mobile fullscreen safe area adjustments */
+        @media (max-width: 768px) {
+            :fullscreen .controls-overlay,
+            :-webkit-full-screen .controls-overlay {
+                top: max(10px, env(safe-area-inset-top));
+                left: max(10px, env(safe-area-inset-left));
+                right: max(70px, calc(env(safe-area-inset-right) + 56px + 10px));
+            }
+            
+            :fullscreen .fullscreen-button,
+            :-webkit-full-screen .fullscreen-button {
+                top: max(10px, env(safe-area-inset-top));
+                right: max(10px, env(safe-area-inset-right));
+            }
+            
+            :fullscreen .zoom-indicator,
+            :-webkit-full-screen .zoom-indicator {
+                top: max(70px, calc(env(safe-area-inset-top) + 56px + 4px));
+                right: max(15px, env(safe-area-inset-right));
+            }
+        }
+        
+        /* Mobile landscape fullscreen safe area adjustments */
+        @media (max-width: 768px) and (orientation: landscape) {
+            :fullscreen .controls-overlay,
+            :-webkit-full-screen .controls-overlay {
+                top: max(8px, env(safe-area-inset-top));
+                left: max(8px, env(safe-area-inset-left));
+                right: max(60px, calc(env(safe-area-inset-right) + 48px + 8px));
+            }
+            
+            :fullscreen .fullscreen-button,
+            :-webkit-full-screen .fullscreen-button {
+                top: max(8px, env(safe-area-inset-top));
+                right: max(8px, env(safe-area-inset-right));
+            }
+            
+            :fullscreen .zoom-indicator,
+            :-webkit-full-screen .zoom-indicator {
+                top: max(60px, calc(env(safe-area-inset-top) + 48px + 4px));
+                right: max(8px, env(safe-area-inset-right));
             }
         }
     </style>

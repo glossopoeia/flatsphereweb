@@ -9,6 +9,7 @@ struct Uniforms {
     aspect: f32,
     show_tissot: f32,
     show_graticule: f32,
+    source_projection: f32,
     padding1: f32,
 }
 
@@ -36,15 +37,50 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
     return out;
 }
 
-// Sample world map texture based on lat/lon
+// Sample world map texture based on lat/lon and source projection
 fn world_texture_color(lat: f32, lon: f32) -> vec3f {
-    // Convert spherical coordinates to equirectangular texture coordinates
-    // Longitude: -π to π maps to 0 to 1 (u coordinate)
-    let u = (lon + PI) / (2.0 * PI);
-    // Latitude: -π/2 to π/2 maps to 1 to 0 (v coordinate, flipped)
-    let v = 1.0 - (lat + HALF_PI) / PI;
+    let source_proj = i32(uniforms.source_projection);
+    var tex_coords: vec2f;
     
-    let tex_coords = vec2f(u, v);
+    if (source_proj == 0) {
+        // Equirectangular (default)
+        let u = (lon + PI) / (2.0 * PI);
+        let v = 1.0 - (lat + HALF_PI) / PI;
+        tex_coords = vec2f(u, v);
+    } else if (source_proj == 1) {
+        // Stereographic source
+        let stereo_proj = stereographic_project(lat, lon);
+        let u = (stereo_proj.x + 3.0) / 6.0; // Map [-3,3] to [0,1]
+        let v = (stereo_proj.y + 3.0) / 6.0;
+        tex_coords = vec2f(u, 1.0 - v);
+    } else if (source_proj == 2) {
+        // Polar source
+        let polar_proj = polar_project(lat, lon);
+        let u = (polar_proj.x + 2.0) / 4.0; // Map [-2,2] to [0,1]
+        let v = (polar_proj.y + 2.0) / 4.0;
+        tex_coords = vec2f(u, 1.0 - v);
+    } else if (source_proj == 3) {
+        // Orthographic source
+        let ortho_proj = orthographic_project(lat, lon);
+        let u = (ortho_proj.x + 1.0) / 2.0; // Map [-1,1] to [0,1]
+        let v = (ortho_proj.y + 1.0) / 2.0;
+        tex_coords = vec2f(u, 1.0 - v);
+    } else if (source_proj == 4) {
+        // Mercator source
+        let merc_proj = mercator_project(lat, lon);
+        let u = (merc_proj.x + PI) / (2.0 * PI); // Map [-π,π] to [0,1]
+        let v = (merc_proj.y + 3.0) / 6.0; // Map approximately [-3,3] to [0,1]
+        tex_coords = vec2f(u, 1.0 - v);
+    } else {
+        // Fallback to equirectangular
+        let u = (lon + PI) / (2.0 * PI);
+        let v = 1.0 - (lat + HALF_PI) / PI;
+        tex_coords = vec2f(u, v);
+    }
+    
+    // Clamp texture coordinates to valid range
+    tex_coords = clamp(tex_coords, vec2f(0.0), vec2f(1.0));
+    
     let color = textureSample(world_texture, world_sampler, tex_coords);
     return color.rgb;
 }

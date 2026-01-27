@@ -4,6 +4,9 @@ class ProjectionApp {
     constructor() {
         this.renderer = null;
         this.projectionSelect = document.getElementById('projectionSelect');
+        this.imageUrlInput = document.getElementById('imageUrl');
+        this.sourceProjectionSelect = document.getElementById('sourceProjection');
+        this.loadImageButton = document.getElementById('loadImageButton');
 
         // Internal camera state (no longer controlled by sliders)
         this.cameraLat = 45; // degrees
@@ -47,6 +50,16 @@ class ProjectionApp {
         
         this.graticuleToggle.addEventListener('change', () => {
             this.render();
+        });
+
+        this.loadImageButton.addEventListener('click', () => {
+            this.loadUserImage();
+        });
+
+        this.imageUrlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.loadUserImage();
+            }
         });
 
         // Controls visibility toggle
@@ -326,6 +339,126 @@ class ProjectionApp {
         
         if (this.renderer) {
             this.renderer.resize(width, height);
+        }
+    }
+    
+    async loadUserImage() {
+        const imageUrl = this.imageUrlInput.value.trim();
+        const sourceProjection = parseInt(this.sourceProjectionSelect.value);
+        
+        if (!imageUrl) {
+            // Reset to default image
+            try {
+                await this.renderer.loadDefaultTexture();
+                this.renderer.setSourceProjection(0); // Default is equirectangular
+                this.render();
+                this.showError('Loaded default image', false);
+            } catch (error) {
+                this.showError(`Failed to load default image: ${error.message}`);
+            }
+            return;
+        }
+        
+        try {
+            this.loadImageButton.textContent = 'Loading...';
+            this.loadImageButton.disabled = true;
+            
+            // Try direct loading first (works for same-origin or CORS-enabled images)
+            await this.loadImageDirect(imageUrl, sourceProjection);
+            
+        } catch (directError) {
+            console.log('Direct loading failed, trying proxy:', directError.message);
+            
+            try {
+                // Fallback to proxy service for CORS issues
+                await this.loadImageWithProxy(imageUrl, sourceProjection);
+            } catch (proxyError) {
+                console.error('Both direct and proxy loading failed:', proxyError);
+                this.showError(`Failed to load image. Direct: ${directError.message}. Proxy: ${proxyError.message}. Try a different URL or use a CORS-enabled image.`);
+            }
+        } finally {
+            this.loadImageButton.textContent = 'Load Image';
+            this.loadImageButton.disabled = false;
+        }
+    }
+    
+    async loadImageDirect(imageUrl, sourceProjection) {
+        console.log('Attempting direct load of:', imageUrl);
+        // Create an image element to handle the loading
+        const img = new Image();
+        img.crossOrigin = 'anonymous'; // Enable CORS
+        
+        return new Promise((resolve, reject) => {
+            img.onload = async () => {
+                console.log('Image loaded successfully, dimensions:', img.width, 'x', img.height);
+                try {
+                    // Create canvas to extract image data
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    ctx.drawImage(img, 0, 0);
+                    
+                    canvas.toBlob(async (blob) => {
+                        try {
+                            console.log('Created blob, size:', blob.size);
+                            await this.renderer.loadCustomTexture(blob);
+                            this.renderer.setSourceProjection(sourceProjection);
+                            this.render();
+                            this.showError('Image loaded successfully!', false);
+                            resolve();
+                        } catch (error) {
+                            reject(new Error(`Failed to process image: ${error.message}`));
+                        }
+                    }, 'image/png');
+                } catch (error) {
+                    reject(new Error(`Failed to draw image to canvas: ${error.message}`));
+                }
+            };
+            
+            img.onerror = () => {
+                reject(new Error('Failed to load image - check URL or CORS policy'));
+            };
+            
+            // Set timeout for loading
+            setTimeout(() => {
+                reject(new Error('Image loading timed out'));
+            }, 30000);
+            
+            img.src = imageUrl;
+        });
+    }
+    
+    async loadImageWithProxy(imageUrl, sourceProjection) {
+        // Use AllOrigins as a fallback proxy
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(imageUrl)}`;
+        
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+            throw new Error(`Proxy fetch failed: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        if (!data.contents) {
+            throw new Error('No image data received from proxy');
+        }
+        
+        // Convert base64 data to blob
+        try {
+            const binaryString = atob(data.contents);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'image/jpeg' });
+            
+            await this.renderer.loadCustomTexture(blob);
+            this.renderer.setSourceProjection(sourceProjection);
+            this.render();
+            this.showError('Image loaded via proxy successfully!', false);
+        } catch (error) {
+            throw new Error(`Failed to process proxy data: ${error.message}`);
         }
     }
     

@@ -11,6 +11,7 @@ class ProjectionApp {
         this.zoomSlider = document.getElementById('zoomSlider');
         this.zoomGroup = document.getElementById('zoomGroup');
         this.tissotToggle = document.getElementById('tissotToggle');
+        this.graticuleToggle = document.getElementById('graticuleToggle');
         this.canvas = document.getElementById('projectionCanvas');
         this.errorDiv = document.getElementById('errorDiv');
         
@@ -39,6 +40,10 @@ class ProjectionApp {
         });
         
         this.tissotToggle.addEventListener('change', () => {
+            this.render();
+        });
+        
+        this.graticuleToggle.addEventListener('change', () => {
             this.render();
         });
         
@@ -125,8 +130,9 @@ class ProjectionApp {
         const cameraLon = this.cameraLon * Math.PI / 180;
         const zoom = parseFloat(this.zoomSlider.value);
         const showTissot = this.tissotToggle.checked ? 1.0 : 0.0;
+        const showGraticule = this.graticuleToggle.checked ? 1.0 : 0.0;
         
-        this.renderer.render(projectionType, cameraLat, cameraLon, zoom, showTissot);
+        this.renderer.render(projectionType, cameraLat, cameraLon, zoom, showTissot, showGraticule);
     }
     
     updateCameraFromMouseDrag(deltaX, deltaY) {

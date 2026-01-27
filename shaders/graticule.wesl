@@ -16,27 +16,24 @@ fn is_graticule_line(lat: f32, lon: f32) -> f32 {
     let lat_pixel_width = sqrt(dlat_dx * dlat_dx + dlat_dy * dlat_dy);
     let lon_pixel_width = sqrt(dlon_dx * dlon_dx + dlon_dy * dlon_dy);
     
-    // Check for meridians (lines of constant longitude)
+    // Check for meridians (lines of constant longitude) with anti-aliasing
     let meridian_lon = round(lon / grid_spacing) * grid_spacing;
     let meridian_distance = abs(lon - meridian_lon);
-    if (meridian_distance < lon_pixel_width) {
-        return 1.0;
-    }
+    let meridian_intensity = 1.0 - smoothstep(0.0, lon_pixel_width, meridian_distance);
     
-    // Check for parallels (lines of constant latitude)
+    // Check for parallels (lines of constant latitude) with anti-aliasing
     let parallel_lat = round(lat / grid_spacing) * grid_spacing;
     let parallel_distance = abs(lat - parallel_lat);
-    if (parallel_distance < lat_pixel_width) {
-        return 1.0;
-    }
+    let parallel_intensity = 1.0 - smoothstep(0.0, lat_pixel_width, parallel_distance);
     
-    return 0.0;
+    // Return the maximum intensity (lines can overlap at intersections)
+    return max(meridian_intensity, parallel_intensity);
 }
 
 fn apply_graticule(base_color: vec3f, graticule_intensity: f32, show_graticule: f32) -> vec3f {
-    if (show_graticule > 0.5 && graticule_intensity > 0.5) {
-        // White lines for graticule with good visibility
-        return mix(base_color, vec3f(1.0, 1.0, 1.0), 0.6);
+    if (show_graticule > 0.5) {
+        // Use the continuous intensity value for smooth anti-aliased blending
+        return mix(base_color, vec3f(1.0, 1.0, 1.0), graticule_intensity * 0.6);
     }
     return base_color;
 }

@@ -211,7 +211,7 @@ class ProjectionApp {
 
     handleFullscreenChange() {
         this.isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
-        this.fullscreenButton.textContent = this.isFullscreen ? '⛷' : '⛶';
+        this.fullscreenButton.textContent = this.isFullscreen ? '⤫' : '⛶';
         this.fullscreenButton.title = this.isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen';
     }
 

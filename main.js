@@ -8,7 +8,7 @@ class ProjectionApp {
         // Internal camera state (no longer controlled by sliders)
         this.cameraLat = 45; // degrees
         this.cameraLon = 0;  // degrees
-        this.zoomSlider = document.getElementById('zoomSlider');
+        this.zoom = 2.0; // Direct zoom value instead of slider
         this.tissotToggle = document.getElementById('tissotToggle');
         this.graticuleToggle = document.getElementById('graticuleToggle');
         this.canvas = document.getElementById('projectionCanvas');
@@ -17,6 +17,7 @@ class ProjectionApp {
         this.controlsContent = document.getElementById('controlsContent');
         this.toggleControls = document.getElementById('toggleControls');
         this.fullscreenButton = document.getElementById('fullscreenButton');
+        this.zoomIndicator = document.getElementById('zoomIndicator');
         
         // Interaction state
         this.isDragging = false;
@@ -24,6 +25,11 @@ class ProjectionApp {
         this.lastY = 0;
         this.controlsVisible = true;
         this.isFullscreen = false;
+        this.zoomIndicatorTimeout = null;
+        
+        // Touch zoom state
+        this.lastTouchDistance = 0;
+        this.initialZoom = this.zoom;
         
         this.setupEventListeners();
         this.init();
@@ -32,11 +38,6 @@ class ProjectionApp {
     setupEventListeners() {
         // Control event listeners
         this.projectionSelect.addEventListener('change', () => {
-            this.render();
-        });
-        
-        this.zoomSlider.addEventListener('input', (e) => {
-            document.getElementById('zoomValue').textContent = parseFloat(e.target.value).toFixed(2);
             this.render();
         });
         
@@ -60,9 +61,12 @@ class ProjectionApp {
 
         // Fullscreen change event
         document.addEventListener('fullscreenchange', () => {
-            this.isFullscreen = !!document.fullscreenElement;
-            this.fullscreenButton.textContent = this.isFullscreen ? '⛷' : '⛶';
-            this.fullscreenButton.title = this.isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen';
+            this.handleFullscreenChange();
+        });
+        
+        // Add webkit prefix support for Safari
+        document.addEventListener('webkitfullscreenchange', () => {
+            this.handleFullscreenChange();
         });
         
         // Handle canvas resize
@@ -91,28 +95,66 @@ class ProjectionApp {
             this.endDrag();
         });
 
+        // Mouse wheel zoom
+        this.canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+            this.zoom = Math.max(0.01, Math.min(10, this.zoom * zoomFactor));
+            this.showZoomIndicator();
+            this.render();
+        });
+
         // Touch interaction
         this.canvas.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 const touch = e.touches[0];
                 this.startDrag(touch.clientX, touch.clientY);
+            } else if (e.touches.length === 2) {
+                // Start pinch zoom
+                this.endDrag(); // End any dragging
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                this.lastTouchDistance = this.getTouchDistance(touch1, touch2);
+                this.initialZoom = this.zoom;
             }
             e.preventDefault();
         });
 
         this.canvas.addEventListener('touchmove', (e) => {
-            if (!this.isDragging || e.touches.length !== 1) return;
-            const touch = e.touches[0];
-            this.updateDrag(touch.clientX, touch.clientY);
+            if (e.touches.length === 1 && this.isDragging) {
+                const touch = e.touches[0];
+                this.updateDrag(touch.clientX, touch.clientY);
+            } else if (e.touches.length === 2) {
+                // Handle pinch zoom
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = this.getTouchDistance(touch1, touch2);
+                
+                if (this.lastTouchDistance > 0) {
+                    const zoomFactor = currentDistance / this.lastTouchDistance;
+                    this.zoom = Math.max(0.01, Math.min(10, this.initialZoom * zoomFactor));
+                    this.showZoomIndicator();
+                    this.render();
+                }
+            }
             e.preventDefault();
         });
 
-        this.canvas.addEventListener('touchend', () => {
-            this.endDrag();
+        this.canvas.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                this.endDrag();
+                this.lastTouchDistance = 0;
+            } else if (e.touches.length === 1) {
+                // Switch from pinch to drag if one finger remains
+                this.lastTouchDistance = 0;
+                const touch = e.touches[0];
+                this.startDrag(touch.clientX, touch.clientY);
+            }
         });
 
         this.canvas.addEventListener('touchcancel', () => {
             this.endDrag();
+            this.lastTouchDistance = 0;
         });
         
         // Set initial cursor
@@ -161,6 +203,28 @@ class ProjectionApp {
         this.canvas.style.cursor = 'grab';
     }
 
+    getTouchDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    handleFullscreenChange() {
+        this.isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        this.fullscreenButton.textContent = this.isFullscreen ? '⛷' : '⛶';
+        this.fullscreenButton.title = this.isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen';
+    }
+
+    showZoomIndicator() {
+        this.zoomIndicator.textContent = `${this.zoom.toFixed(1)}x`;
+        this.zoomIndicator.classList.add('visible');
+        
+        clearTimeout(this.zoomIndicatorTimeout);
+        this.zoomIndicatorTimeout = setTimeout(() => {
+            this.zoomIndicator.classList.remove('visible');
+        }, 2000);
+    }
+
     toggleControlsVisibility() {
         this.controlsVisible = !this.controlsVisible;
         
@@ -177,12 +241,44 @@ class ProjectionApp {
     async toggleFullscreen() {
         try {
             if (!this.isFullscreen) {
-                await document.documentElement.requestFullscreen();
+                // Try standard API first
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                } 
+                // Try webkit prefixed API for Safari
+                else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                }
+                // Try mobile Safari specific approach
+                else if (document.documentElement.webkitEnterFullscreen) {
+                    document.documentElement.webkitEnterFullscreen();
+                }
+                else {
+                    throw new Error('Fullscreen not supported');
+                }
             } else {
-                await document.exitFullscreen();
+                // Try standard exit
+                if (document.exitFullscreen) {
+                    await document.exitFullscreen();
+                }
+                // Try webkit prefixed exit
+                else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+                else if (document.webkitCancelFullScreen) {
+                    document.webkitCancelFullScreen();
+                }
+                else {
+                    throw new Error('Exit fullscreen not supported');
+                }
             }
         } catch (error) {
-            console.warn('Fullscreen not supported or failed:', error);
+            console.warn('Fullscreen operation failed:', error);
+            // For Safari mobile that doesn't support true fullscreen,
+            // try to at least hide the address bar by scrolling
+            if (/iPhone|iPad|iPod|Safari/.test(navigator.userAgent)) {
+                window.scrollTo(0, 1);
+            }
         }
     }
     
@@ -239,7 +335,7 @@ class ProjectionApp {
 
         const cameraLat = this.cameraLat * Math.PI / 180;
         const cameraLon = this.cameraLon * Math.PI / 180;
-        const zoom = parseFloat(this.zoomSlider.value);
+        const zoom = this.zoom;
         const showTissot = this.tissotToggle.checked ? 1.0 : 0.0;
         const showGraticule = this.graticuleToggle.checked ? 1.0 : 0.0;
         
@@ -247,7 +343,7 @@ class ProjectionApp {
     }
     
     updateCameraFromDrag(deltaX, deltaY) {
-        const zoom = parseFloat(this.zoomSlider.value);
+        const zoom = this.zoom;
         
         // Base sensitivity (degrees per pixel)
         let baseSensitivity = 0.5;

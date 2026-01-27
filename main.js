@@ -4,7 +4,7 @@ class ProjectionApp {
     constructor() {
         this.renderer = null;
         this.projectionSelect = document.getElementById('projectionSelect');
-        this.renderModeSelect = document.getElementById('renderModeSelect');
+
         // Internal camera state (no longer controlled by sliders)
         this.cameraLat = 45; // degrees
         this.cameraLon = 0;  // degrees
@@ -29,9 +29,7 @@ class ProjectionApp {
             this.render();
         });
         
-        this.renderModeSelect.addEventListener('change', () => {
-            this.render();
-        });
+
         
 
         
@@ -122,13 +120,13 @@ class ProjectionApp {
         if (!this.renderer) return;
         
         const projectionType = parseInt(this.projectionSelect.value);
-        const renderMode = parseInt(this.renderModeSelect.value);
+
         const cameraLat = this.cameraLat * Math.PI / 180;
         const cameraLon = this.cameraLon * Math.PI / 180;
         const zoom = parseFloat(this.zoomSlider.value);
         const showTissot = this.tissotToggle.checked ? 1.0 : 0.0;
         
-        this.renderer.render(projectionType, renderMode, cameraLat, cameraLon, zoom, showTissot);
+        this.renderer.render(projectionType, cameraLat, cameraLon, zoom, showTissot);
     }
     
     updateCameraFromMouseDrag(deltaX, deltaY) {

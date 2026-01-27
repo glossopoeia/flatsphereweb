@@ -24,15 +24,7 @@ export class ProjectionRenderer {
         
         this.device = await adapter.requestDevice();
 
-        // Get shaders
-        const mathShaderCode = await link({
-            rootModuleName: "./math.wesl",
-            weslSrc: {
-                "math.wesl": await fetch("./shaders/math.wesl").then(v => v.text()),
-                "tissot.wesl": await fetch("./shaders/tissot.wesl").then(v => v.text()),
-            },
-        });
-
+        // Get texture shader
         const textureShaderCode = await link({
             rootModuleName: "./texture.wesl",
             weslSrc: {
@@ -41,7 +33,6 @@ export class ProjectionRenderer {
             },
         });
 
-        const mathShaderMod = mathShaderCode.createShaderModule(this.device, {});
         const textureShaderMod = textureShaderCode.createShaderModule(this.device, {});
         
         // Get canvas context
@@ -70,54 +61,13 @@ export class ProjectionRenderer {
             addressModeV: 'clamp-to-edge',
         });
         
-        // Create bind group layouts and bind groups
-        this.createPipelines(canvasFormat, mathShaderMod, textureShaderMod);
+        // Create pipeline
+        this.createPipeline(canvasFormat, textureShaderMod);
     }
     
-    createPipelines(canvasFormat, mathShaderModule, textureShaderModule) {
-        // Math shader pipeline (no textures)
-        const mathBindGroupLayout = this.device.createBindGroupLayout({
-            entries: [
-                {
-                    binding: 0,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    buffer: { type: 'uniform' }
-                }
-            ]
-        });
-        
-        this.mathBindGroup = this.device.createBindGroup({
-            layout: mathBindGroupLayout,
-            entries: [
-                {
-                    binding: 0,
-                    resource: { buffer: this.uniformBuffer }
-                }
-            ]
-        });
-        
-        this.mathPipeline = this.device.createRenderPipeline({
-            layout: this.device.createPipelineLayout({
-                bindGroupLayouts: [mathBindGroupLayout]
-            }),
-            vertex: {
-                module: mathShaderModule,
-                entryPoint: 'vs_main',
-            },
-            fragment: {
-                module: mathShaderModule,
-                entryPoint: 'fs_main',
-                targets: [{
-                    format: canvasFormat,
-                }],
-            },
-            primitive: {
-                topology: 'triangle-strip',
-            },
-        });
-        
-        // Texture shader pipeline (with textures)
-        const textureBindGroupLayout = this.device.createBindGroupLayout({
+    createPipeline(canvasFormat, textureShaderModule) {
+        // Texture shader pipeline
+        const bindGroupLayout = this.device.createBindGroupLayout({
             entries: [
                 {
                     binding: 0,
@@ -137,8 +87,8 @@ export class ProjectionRenderer {
             ]
         });
         
-        this.textureBindGroup = this.device.createBindGroup({
-            layout: textureBindGroupLayout,
+        this.bindGroup = this.device.createBindGroup({
+            layout: bindGroupLayout,
             entries: [
                 {
                     binding: 0,
@@ -155,9 +105,9 @@ export class ProjectionRenderer {
             ]
         });
         
-        this.texturePipeline = this.device.createRenderPipeline({
+        this.pipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({
-                bindGroupLayouts: [textureBindGroupLayout]
+                bindGroupLayouts: [bindGroupLayout]
             }),
             vertex: {
                 module: textureShaderModule,
@@ -201,7 +151,7 @@ export class ProjectionRenderer {
         // Canvas size is handled by the browser, we just need to update our view
     }
     
-    render(projectionType, renderMode, cameraLat, cameraLon, zoom, showTissot) {
+    render(projectionType, cameraLat, cameraLon, zoom, showTissot) {
         // Update uniforms
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
@@ -219,10 +169,6 @@ export class ProjectionRenderer {
         
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
         
-        // Choose pipeline based on render mode
-        const pipeline = renderMode === 1 ? this.texturePipeline : this.mathPipeline;
-        const bindGroup = renderMode === 1 ? this.textureBindGroup : this.mathBindGroup;
-        
         // Create command encoder and render pass
         const commandEncoder = this.device.createCommandEncoder();
         const textureView = this.context.getCurrentTexture().createView();
@@ -236,8 +182,8 @@ export class ProjectionRenderer {
             }]
         });
         
-        renderPass.setPipeline(pipeline);
-        renderPass.setBindGroup(0, bindGroup);
+        renderPass.setPipeline(this.pipeline);
+        renderPass.setBindGroup(0, this.bindGroup);
         renderPass.draw(4); // Draw a quad (triangle strip with 4 vertices)
         renderPass.end();
         

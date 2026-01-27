@@ -22,21 +22,16 @@ fn is_tissot_indicatrix(lat: f32, lon: f32) -> f32 {
     let dlon = (lon - grid_lon) * cos(grid_lat);
     let dist = sqrt(dlat * dlat + dlon * dlon);
     
-    // Check if we're near the circle
-    if (abs(dist - radius) < line_width) {
-        return 1.0;
-    }
-    
-    return 0.0;
+    // Anti-aliasing: filled circle with smooth edge
+    let edge_smoothness = line_width * 0.5; // Smooth transition zone for anti-aliasing
+    return 1.0 - smoothstep(radius - edge_smoothness, radius + edge_smoothness, dist);
 }
 
 fn apply_tissot_indicatrices(base_color: vec3f, lat: f32, lon: f32, show_tissot: f32) -> vec3f {
     if (show_tissot > 0.5) {
         let tissot_intensity = is_tissot_indicatrix(lat, lon);
-        if (tissot_intensity > 0.5) {
-            // Red lines for indicatrices with good visibility
-            return mix(base_color, vec3f(1.0, 0.2, 0.2), 0.7);
-        }
+        // Use the continuous intensity value for smooth anti-aliased blending
+        return mix(base_color, vec3f(1.0, 0.2, 0.2), tissot_intensity * 0.7);
     }
     return base_color;
 }

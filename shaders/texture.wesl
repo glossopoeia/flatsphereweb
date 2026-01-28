@@ -42,44 +42,55 @@ fn world_texture_color(lat: f32, lon: f32) -> vec3f {
     let source_proj = i32(uniforms.source_projection);
     var tex_coords: vec2f;
     
+    // Normalize longitude to [-π, π] range using proper modular arithmetic
+    // WGSL doesn't have fmod, so we use: a - floor(a/b) * b
+    let lon_normalized = lon + PI;
+    let lon_wrapped = lon_normalized - floor(lon_normalized / (2.0 * PI)) * (2.0 * PI);
+    let norm_lon = lon_wrapped - PI;
+    
+    // Clamp latitude to valid range
+    let norm_lat = clamp(lat, -HALF_PI, HALF_PI);
+    
     if (source_proj == 0) {
-        // Equirectangular (default)
-        let u = (lon + PI) / (2.0 * PI);
-        let v = 1.0 - (lat + HALF_PI) / PI;
-        tex_coords = vec2f(u, v);
+        // Equirectangular (default) - handles longitude wrapping properly
+        let u = (norm_lon + PI) / (2.0 * PI);
+        let v = 1.0 - (norm_lat + HALF_PI) / PI;
+        tex_coords = vec2f(u, clamp(v, 0.0, 1.0));
+        
     } else if (source_proj == 1) {
         // Stereographic source
-        let stereo_proj = stereographic_project(lat, lon);
+        let stereo_proj = stereographic_project(norm_lat, norm_lon);
         let u = (stereo_proj.x + 3.0) / 6.0; // Map [-3,3] to [0,1]
         let v = (stereo_proj.y + 3.0) / 6.0;
-        tex_coords = vec2f(u, 1.0 - v);
+        tex_coords = vec2f(clamp(u, 0.0, 1.0), clamp(1.0 - v, 0.0, 1.0));
+        
     } else if (source_proj == 2) {
         // Polar source
-        let polar_proj = polar_project(lat, lon);
+        let polar_proj = polar_project(norm_lat, norm_lon);
         let u = (polar_proj.x + 2.0) / 4.0; // Map [-2,2] to [0,1]
         let v = (polar_proj.y + 2.0) / 4.0;
-        tex_coords = vec2f(u, 1.0 - v);
+        tex_coords = vec2f(clamp(u, 0.0, 1.0), clamp(1.0 - v, 0.0, 1.0));
+        
     } else if (source_proj == 3) {
         // Orthographic source
-        let ortho_proj = orthographic_project(lat, lon);
+        let ortho_proj = orthographic_project(norm_lat, norm_lon);
         let u = (ortho_proj.x + 1.0) / 2.0; // Map [-1,1] to [0,1]
         let v = (ortho_proj.y + 1.0) / 2.0;
-        tex_coords = vec2f(u, 1.0 - v);
+        tex_coords = vec2f(clamp(u, 0.0, 1.0), clamp(1.0 - v, 0.0, 1.0));
+        
     } else if (source_proj == 4) {
         // Mercator source
-        let merc_proj = mercator_project(lat, lon);
+        let merc_proj = mercator_project(norm_lat, norm_lon);
         let u = (merc_proj.x + PI) / (2.0 * PI); // Map [-π,π] to [0,1]
-        let v = (merc_proj.y + 3.0) / 6.0; // Map approximately [-3,3] to [0,1]
+        let v = clamp((merc_proj.y + 3.0) / 6.0, 0.0, 1.0); // Map approximately [-3,3] to [0,1]
         tex_coords = vec2f(u, 1.0 - v);
+        
     } else {
         // Fallback to equirectangular
-        let u = (lon + PI) / (2.0 * PI);
-        let v = 1.0 - (lat + HALF_PI) / PI;
-        tex_coords = vec2f(u, v);
+        let u = (norm_lon + PI) / (2.0 * PI);
+        let v = 1.0 - (norm_lat + HALF_PI) / PI;
+        tex_coords = vec2f(u, clamp(v, 0.0, 1.0));
     }
-    
-    // Clamp texture coordinates to valid range
-    tex_coords = clamp(tex_coords, vec2f(0.0), vec2f(1.0));
     
     let color = textureSample(world_texture, world_sampler, tex_coords);
     return color.rgb;

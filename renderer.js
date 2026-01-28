@@ -135,6 +135,7 @@ export class ProjectionRenderer {
         const response = await fetch('./world_map.jpg');
         const blob = await response.blob();
         await this.loadTextureFromBlob(blob);
+        this.updateBindGroup();
     }
 
     async loadCustomTexture(blob) {

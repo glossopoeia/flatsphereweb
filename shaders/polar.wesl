@@ -13,3 +13,9 @@ fn inverse(x: f32, y: f32) -> vec2f {
     let lon = atan2(x, -y);
     return vec2f(lat, lon);
 }
+
+fn to_texture(projX: f32, projY: f32) -> vec2f {
+    let u = (projX + 2.0) / 4.0; // Map [-2,2] to [0,1]
+    let v = (projY + 2.0) / 4.0;
+    return vec2f(clamp(u, 0.0, 1.0), clamp(1.0 - v, 0.0, 1.0));
+}

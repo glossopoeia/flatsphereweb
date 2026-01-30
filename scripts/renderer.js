@@ -10,6 +10,7 @@ export class ProjectionRenderer {
         this.canvas = null;
         this.worldTexture = null;
         this.sampler = null;
+        this.destinationProjection = 0; // Default: equirectangular
         this.sourceProjection = 0; // Default: equirectangular
     }
     
@@ -72,9 +73,9 @@ export class ProjectionRenderer {
             format: canvasFormat,
         });
         
-        // Create uniform buffer (now 36 bytes for 9 floats)
+        // Create uniform buffer
         this.uniformBuffer = this.device.createBuffer({
-            size: 36, // 9 floats * 4 bytes each = 36 bytes
+            size: 32, // 8 floats * 4 bytes each
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         
@@ -187,6 +188,10 @@ export class ProjectionRenderer {
         bitmap.close(); // Clean up bitmap
     }
 
+    setDestinationProjection(projectionType) {
+        this.destinationProjection = projectionType;
+    }
+
     setSourceProjection(projectionType) {
         this.sourceProjection = projectionType;
     }
@@ -212,22 +217,21 @@ export class ProjectionRenderer {
         });
     }
     
-    render(projectionType, cameraLat, cameraLon, zoom, showTissot, showGraticule) {
+    render(cameraLat, cameraLon, zoom, showTissot, showGraticule) {
         // Update uniforms
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         const aspect = canvasWidth / canvasHeight;
         
         const uniformData = new Float32Array([
-            projectionType,
             cameraLat,
             cameraLon,
             zoom,
             aspect,
             showTissot,
             showGraticule,
-            this.sourceProjection,
-            0 // padding for alignment
+            0, // padding for alignment
+            0, // padding for alignment
         ]);
         
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
@@ -245,7 +249,7 @@ export class ProjectionRenderer {
             }]
         });
         
-        renderPass.setPipeline(this.pipelines[projectionType][this.sourceProjection]);
+        renderPass.setPipeline(this.pipelines[this.destinationProjection][this.sourceProjection]);
         renderPass.setBindGroup(0, this.bindGroup);
         renderPass.draw(4); // Draw a quad (triangle strip with 4 vertices)
         renderPass.end();

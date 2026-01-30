@@ -11,6 +11,7 @@ export class ProjectionRenderer {
         this.canvas = null;
         this.worldTexture = null;
         this.sampler = null;
+        this.sourceProjection = 0; // Default: equirectangular
     }
     
     async initialize(canvas) {
@@ -45,14 +46,14 @@ export class ProjectionRenderer {
             format: canvasFormat,
         });
         
-        // Create uniform buffer
+        // Create uniform buffer (now 36 bytes for 9 floats)
         this.uniformBuffer = this.device.createBuffer({
-            size: 32, // 8 floats * 4 bytes each = 32 bytes
+            size: 36, // 9 floats * 4 bytes each = 36 bytes
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         
         // Load world map texture
-        await this.loadWorldTexture();
+        await this.loadDefaultTexture();
         
         // Create sampler
         this.sampler = this.device.createSampler({
@@ -87,6 +88,8 @@ export class ProjectionRenderer {
                 }
             ]
         });
+        
+        this.bindGroupLayout = bindGroupLayout; // Store for later use
         
         this.bindGroup = this.device.createBindGroup({
             layout: bindGroupLayout,
@@ -127,11 +130,24 @@ export class ProjectionRenderer {
         });
     }
 
-    async loadWorldTexture() {
+    async loadDefaultTexture() {
         // Load the world map image
         const response = await fetch('./world_map.jpg');
         const blob = await response.blob();
+        await this.loadTextureFromBlob(blob);
+        this.updateBindGroup();
+    }
+
+    async loadCustomTexture(blob) {
+        console.log('Loading custom texture from blob, size:', blob.size);
+        await this.loadTextureFromBlob(blob);
+        this.updateBindGroup();
+        console.log('Custom texture loaded and bind group updated');
+    }
+
+    async loadTextureFromBlob(blob) {
         const bitmap = await createImageBitmap(blob);
+        console.log('Created image bitmap, dimensions:', bitmap.width, 'x', bitmap.height);
         
         // Create texture
         this.worldTexture = this.device.createTexture({
@@ -146,6 +162,33 @@ export class ProjectionRenderer {
             { texture: this.worldTexture },
             [bitmap.width, bitmap.height]
         );
+        console.log('Texture created and image data copied');
+    }
+
+    setSourceProjection(projectionType) {
+        console.log('Setting source projection to:', projectionType);
+        this.sourceProjection = projectionType;
+    }
+
+    updateBindGroup() {
+        // Update the bind group with the new texture
+        this.bindGroup = this.device.createBindGroup({
+            layout: this.bindGroupLayout,
+            entries: [
+                {
+                    binding: 0,
+                    resource: { buffer: this.uniformBuffer }
+                },
+                {
+                    binding: 1,
+                    resource: this.worldTexture.createView()
+                },
+                {
+                    binding: 2,
+                    resource: this.sampler
+                }
+            ]
+        });
     }
     
     resize(width, height) {
@@ -166,6 +209,7 @@ export class ProjectionRenderer {
             aspect,
             showTissot,
             showGraticule,
+            this.sourceProjection,
             0 // padding for alignment
         ]);
         

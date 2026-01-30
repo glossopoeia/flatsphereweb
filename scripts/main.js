@@ -8,10 +8,10 @@ class ProjectionApp {
         this.sourceProjectionSelect = document.getElementById('sourceProjection');
         this.loadImageButton = document.getElementById('loadImageButton');
 
-        // Internal camera state (no longer controlled by sliders)
+        // Internal camera state
         this.cameraLat = 45; // degrees
         this.cameraLon = 0;  // degrees
-        this.zoom = 2.0; // Direct zoom value instead of slider
+        this.zoom = 2.0;
         this.tissotToggle = document.getElementById('tissotToggle');
         this.graticuleToggle = document.getElementById('graticuleToggle');
         this.canvas = document.getElementById('projectionCanvas');
@@ -336,10 +336,6 @@ class ProjectionApp {
         // Keep CSS size in logical (CSS) pixels to match the viewport
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
-        
-        if (this.renderer) {
-            this.renderer.resize(width, height);
-        }
     }
     
     async loadUserImage() {
@@ -356,6 +352,12 @@ class ProjectionApp {
             } catch (error) {
                 this.showError(`Failed to load default image: ${error.message}`);
             }
+            return;
+        }
+        
+        // Input validation for security
+        if (!this.validateImageURL(imageUrl)) {
+            this.showError('Invalid URL. Please use HTTPS URLs only.');
             return;
         }
         
@@ -379,6 +381,26 @@ class ProjectionApp {
         } finally {
             this.loadImageButton.textContent = 'Load Image';
             this.loadImageButton.disabled = false;
+        }
+    }
+    
+    validateImageURL(url) {
+        try {
+            const parsedURL = new URL(url);
+            
+            // Only allow HTTPS and data URLs for security
+            if (!['https:', 'data:'].includes(parsedURL.protocol)) {
+                return false;
+            }
+            
+            // Basic size check for the URL itself
+            if (url.length > 2048) {
+                return false;
+            }
+            
+            return true;
+        } catch (error) {
+            return false;
         }
     }
     

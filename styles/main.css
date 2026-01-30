@@ -1,0 +1,18 @@
+/* Main application stylesheet - imports all modular CSS */
+@import './base.css';
+@import './layout.css';
+@import './components.css';
+@import './responsive.css';
+
+/* Utility classes */
+.full-width {
+    grid-column: 1 / -1;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}

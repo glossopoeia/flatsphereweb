@@ -39,8 +39,8 @@
     input[type="checkbox"] {
         width: 20px;
         height: 20px;
-        min-width: 44px; /* Touch target */
-        min-height: 44px; /* Touch target */
+        padding: 12px; /* Enlarged touch target to ~44px while keeping 20px visual size */
+        margin: -12px; /* Counteracts padding so layout spacing stays consistent */
     }
     
     .fullscreen-button {

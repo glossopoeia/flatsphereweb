@@ -1,5 +1,4 @@
-import { UI } from './constants.js'
-import { validateImageURL } from './security.js'
+import { SecurityManager } from './security.js'
 import { ProjectionRenderer } from './renderer.js';
 import { NotificationManager } from './notifications.js';
 
@@ -361,7 +360,7 @@ class ProjectionApp {
         }
         
         // Input validation for security
-        if (!validateImageURL(imageUrl)) {
+        if (!SecurityManager.validateImageURL(imageUrl)) {
             this.notifications.showError('Invalid URL. Please use HTTPS URLs only.');
             return;
         }

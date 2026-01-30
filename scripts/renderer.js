@@ -179,7 +179,6 @@ export class ProjectionRenderer {
     }
 
     setSourceProjection(projectionType) {
-        console.log('Setting source projection to:', projectionType);
         this.sourceProjection = projectionType;
     }
 

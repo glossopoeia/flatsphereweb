@@ -10,7 +10,6 @@ export class SecurityManager {
     return {
       'default-src': "'self'",
       'script-src': "'self' https://cdn.jsdelivr.net",
-      'style-src': "'self' 'unsafe-inline'", // Required for CSS custom properties
       'img-src': "'self' data: blob: https:",
       'connect-src': "'self' https://api.allorigins.win",
       'worker-src': "'self'",

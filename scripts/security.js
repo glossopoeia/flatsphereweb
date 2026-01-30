@@ -33,14 +33,9 @@ export class SecurityManager {
       if (!['https:', 'data:'].includes(parsedURL.protocol)) {
         return false;
       }
-      
-      // Block known malicious domains (example list)
-      const blockedDomains = [
-        'malicious-site.com',
-        // Add more as needed
-      ];
-      
-      if (blockedDomains.includes(parsedURL.hostname)) {
+
+      // Basic size check for the URL itself
+      if (url.length > 2048) {
         return false;
       }
       

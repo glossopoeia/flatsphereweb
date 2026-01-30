@@ -1,4 +1,6 @@
+import { SecurityManager } from './security.js'
 import { ProjectionRenderer } from './renderer.js';
+import { NotificationManager } from './notifications.js';
 
 class ProjectionApp {
     constructor() {
@@ -15,12 +17,14 @@ class ProjectionApp {
         this.tissotToggle = document.getElementById('tissotToggle');
         this.graticuleToggle = document.getElementById('graticuleToggle');
         this.canvas = document.getElementById('projectionCanvas');
-        this.notificationDiv = document.getElementById('notificationDiv');
         this.controlsOverlay = document.getElementById('controlsOverlay');
         this.controlsContent = document.getElementById('controlsContent');
         this.toggleControls = document.getElementById('toggleControls');
         this.fullscreenButton = document.getElementById('fullscreenButton');
         this.zoomIndicator = document.getElementById('zoomIndicator');
+        
+        // Initialize notification manager
+        this.notifications = new NotificationManager(document.getElementById('notificationDiv'));
         
         // Interaction state
         this.isDragging = false;
@@ -320,7 +324,7 @@ class ProjectionApp {
             
             message += '\n\nPlease ensure your device supports WebGPU and it is enabled in your browser settings.';
             
-            this.showNotification(message, 'error', true); // Persistent error for WebGPU initialization failure
+            this.notifications.showError(message, true); // Persistent error for WebGPU initialization failure
         }
     }
     
@@ -348,16 +352,16 @@ class ProjectionApp {
                 await this.renderer.loadDefaultTexture(false);
                 this.renderer.setSourceProjection(0); // Default is equirectangular
                 this.render();
-                this.showNotification('Loaded default image', 'success');
+                this.notifications.showSuccess('Loaded default image');
             } catch (error) {
-                this.showNotification(`Failed to load default image: ${error.message}`, 'error');
+                this.notifications.showError(`Failed to load default image: ${error.message}`);
             }
             return;
         }
         
         // Input validation for security
-        if (!this.validateImageURL(imageUrl)) {
-            this.showNotification('Invalid URL. Please use HTTPS URLs only.', 'error');
+        if (!SecurityManager.validateImageURL(imageUrl)) {
+            this.notifications.showError('Invalid URL. Please use HTTPS URLs only.');
             return;
         }
         
@@ -376,31 +380,11 @@ class ProjectionApp {
                 await this.loadImageWithProxy(imageUrl, sourceProjection);
             } catch (proxyError) {
                 console.error('Both direct and proxy loading failed:', proxyError);
-                this.showNotification(`Failed to load image. Direct: ${directError.message}. Proxy: ${proxyError.message}. Try a different URL or use a CORS-enabled image.`, 'error');
+                this.notifications.showError(`Failed to load image. Direct: ${directError.message}. Proxy: ${proxyError.message}. Try a different URL or use a CORS-enabled image.`);
             }
         } finally {
             this.loadImageButton.textContent = 'Load Image';
             this.loadImageButton.disabled = false;
-        }
-    }
-    
-    validateImageURL(url) {
-        try {
-            const parsedURL = new URL(url);
-            
-            // Only allow HTTPS and data URLs for security
-            if (!['https:', 'data:'].includes(parsedURL.protocol)) {
-                return false;
-            }
-            
-            // Basic size check for the URL itself
-            if (url.length > 2048) {
-                return false;
-            }
-            
-            return true;
-        } catch (error) {
-            return false;
         }
     }
     
@@ -427,7 +411,7 @@ class ProjectionApp {
                             await this.renderer.loadCustomTexture(blob);
                             this.renderer.setSourceProjection(sourceProjection);
                             this.render();
-                            this.showNotification('Image loaded successfully!', 'success');
+                            this.notifications.showSuccess('Image loaded successfully!');
                             resolve();
                         } catch (error) {
                             reject(new Error(`Failed to process image: ${error.message}`));
@@ -477,7 +461,7 @@ class ProjectionApp {
             await this.renderer.loadCustomTexture(blob);
             this.renderer.setSourceProjection(sourceProjection);
             this.render();
-            this.showNotification('Image loaded via proxy successfully!', 'success');
+            this.notifications.showSuccess('Image loaded via proxy successfully!');
         } catch (error) {
             throw new Error(`Failed to process proxy data: ${error.message}`);
         }
@@ -525,29 +509,16 @@ class ProjectionApp {
         this.render();
     }
     
-    showNotification(message, type = 'error', persistent = false) {
-        this.notificationDiv.textContent = message;
-        this.notificationDiv.className = `notification ${type}`;
-        this.notificationDiv.style.display = 'block';
-        
-        // For persistent errors (like WebGPU not supported), don't auto-hide
-        if (!persistent) {
-            setTimeout(() => {
-                this.notificationDiv.style.display = 'none';
-            }, type === 'success' ? 4000 : 8000); // Shorter timeout for success messages
-        }
-    }
+
 }
 
 // Enhanced WebGPU support detection
 async function checkWebGPUSupport() {
-    const notificationDiv = document.getElementById('notificationDiv');
+    const notifications = new NotificationManager(document.getElementById('notificationDiv'));
     
     // Check if WebGPU is available at all
     if (!navigator.gpu) {
-        notificationDiv.textContent = 'WebGPU is not supported in this browser. Try Chrome 113+, Edge 113+, or Safari 18+ with WebGPU enabled.';
-        notificationDiv.className = 'notification error';
-        notificationDiv.style.display = 'block';
+        notifications.showError('WebGPU is not supported in this browser. Try Chrome 113+, Edge 113+, or Safari 18+ with WebGPU enabled.', true);
         return false;
     }
     
@@ -555,9 +526,7 @@ async function checkWebGPUSupport() {
         // Try to get an adapter
         const adapter = await navigator.gpu.requestAdapter();
         if (!adapter) {
-            notificationDiv.textContent = 'WebGPU adapter not found. This may indicate hardware compatibility issues or that WebGPU is disabled.';
-            notificationDiv.className = 'notification error';
-            notificationDiv.style.display = 'block';
+            notifications.showError('WebGPU adapter not found. This may indicate hardware compatibility issues or that WebGPU is disabled.', true);
             return false;
         }
         
@@ -585,9 +554,7 @@ async function checkWebGPUSupport() {
             message += ' \n\nFor Firefox: WebGPU support is experimental. Try about:config and set dom.webgpu.enabled to true.';
         }
         
-        notificationDiv.textContent = message;
-        notificationDiv.className = 'notification error';
-        notificationDiv.style.display = 'block';
+        notifications.showError(message, true);
         return false;
     }
 }

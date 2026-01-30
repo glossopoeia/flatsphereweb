@@ -22,7 +22,7 @@ export const SOURCE_PROJECTION_TYPES = {
 };
 
 // UI Constants
-export const UI_CONSTANTS = {
+export const UI = {
   MOBILE_BREAKPOINT: 768,
   ZOOM_INDICATOR_TIMEOUT: 2000,
   MOBILE_CONTROLS_HIDE_TIMEOUT: 3000,
@@ -49,13 +49,6 @@ export const UI_CONSTANTS = {
 export const WEBGPU_CONSTANTS = {
   UNIFORM_BUFFER_SIZE: 36, // 9 floats * 4 bytes
   VERTEX_COUNT: 4, // Triangle strip quad
-};
-
-// Shader constants
-export const SHADER_CONSTANTS = {
-  PI: Math.PI,
-  HALF_PI: Math.PI / 2,
-  TWO_PI: Math.PI * 2
 };
 
 // Error messages

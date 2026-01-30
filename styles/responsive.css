@@ -126,8 +126,8 @@
     right: max(var(--spacing-xl), env(safe-area-inset-right));
 }
 
-:fullscreen .error,
-:-webkit-full-screen .error {
+:fullscreen .notification,
+:-webkit-full-screen .notification {
     top: max(var(--spacing-xl), env(safe-area-inset-top));
 }
 

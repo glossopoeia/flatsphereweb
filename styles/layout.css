@@ -93,15 +93,13 @@
     opacity: 1;
 }
 
-.error {
+.notification {
     position: absolute;
     top: var(--spacing-xl);
     left: 50%;
     transform: translateX(-50%);
     z-index: 200;
-    color: var(--error-text);
     padding: var(--spacing-lg) var(--spacing-xl);
-    background-color: var(--error-bg);
     backdrop-filter: blur(10px);
     border-radius: var(--radius-md);
     display: none;
@@ -110,7 +108,19 @@
     line-height: 1.4;
     font-size: var(--font-size-base);
     text-align: center;
-    border: 1px solid var(--error-border);
+    border: 1px solid;
+}
+
+.notification.error {
+    color: var(--error-text);
+    background-color: var(--error-bg);
+    border-color: var(--error-border);
+}
+
+.notification.success {
+    color: var(--success-text);
+    background-color: var(--success-bg);
+    border-color: var(--success-border);
 }
 
 /* State classes */

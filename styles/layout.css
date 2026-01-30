@@ -1,0 +1,119 @@
+#projectionCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    touch-action: none;
+    display: block;
+}
+
+.controls-overlay {
+    position: absolute;
+    top: var(--spacing-xl);
+    left: var(--spacing-xl);
+    right: var(--spacing-xl);
+    z-index: 100;
+    background: var(--bg-secondary);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    max-width: 350px;
+    transition: opacity var(--transition-normal);
+}
+
+.controls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.app-title {
+    font-size: var(--font-size-xl);
+    font-weight: bold;
+    margin: 0;
+}
+
+.header-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.controls-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+.fullscreen-button {
+    position: absolute;
+    top: var(--spacing-xl);
+    right: var(--spacing-xl);
+    z-index: 100;
+    background: var(--bg-secondary);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    color: var(--text-primary);
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    transition: background var(--transition-fast);
+}
+
+.fullscreen-button:hover {
+    background: rgba(60, 60, 60, 0.9);
+}
+
+.zoom-indicator {
+    position: absolute;
+    top: 80px;
+    right: var(--spacing-xl);
+    z-index: 100;
+    background: var(--bg-secondary);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-base);
+    font-family: 'SF Mono', Monaco, 'Inconsolata', 'Roboto Mono', monospace;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.zoom-indicator.visible {
+    opacity: 1;
+}
+
+.error {
+    position: absolute;
+    top: var(--spacing-xl);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    color: var(--error-text);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background-color: var(--error-bg);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-md);
+    display: none;
+    max-width: 90%;
+    white-space: pre-line;
+    line-height: 1.4;
+    font-size: var(--font-size-base);
+    text-align: center;
+    border: 1px solid var(--error-border);
+}
+
+/* State classes */
+.controls-collapsed {
+    opacity: 0.3;
+}

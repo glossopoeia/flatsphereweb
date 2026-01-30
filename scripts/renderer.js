@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { link } from "wesl";
 
 export class ProjectionRenderer {
@@ -146,8 +145,20 @@ export class ProjectionRenderer {
     }
 
     async loadTextureFromBlob(blob) {
+        // Dispose of previous texture to prevent memory leaks
+        if (this.worldTexture && this.worldTexture !== this.defaultTexture) {
+            this.worldTexture.destroy();
+        }
+        
         const bitmap = await createImageBitmap(blob);
         console.log('Created image bitmap, dimensions:', bitmap.width, 'x', bitmap.height);
+        
+        // Validate image size for performance and memory safety
+        const maxSize = 4096 * 4096; // 16MP limit
+        if (bitmap.width * bitmap.height > maxSize) {
+            bitmap.close(); // Clean up bitmap
+            throw new Error('Image too large. Maximum size: 4096x4096 pixels.');
+        }
         
         // Create texture
         this.worldTexture = this.device.createTexture({
@@ -162,6 +173,8 @@ export class ProjectionRenderer {
             { texture: this.worldTexture },
             [bitmap.width, bitmap.height]
         );
+        
+        bitmap.close(); // Clean up bitmap
         console.log('Texture created and image data copied');
     }
 
@@ -189,10 +202,6 @@ export class ProjectionRenderer {
                 }
             ]
         });
-    }
-    
-    resize(width, height) {
-        // Canvas size is handled by the browser, we just need to update our view
     }
     
     render(projectionType, cameraLat, cameraLon, zoom, showTissot, showGraticule) {

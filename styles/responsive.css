@@ -187,19 +187,3 @@
         transition: none;
     }
 }
-
-/* Print styles */
-@media print {
-    .controls-overlay,
-    .fullscreen-button,
-    .zoom-indicator,
-    .error {
-        display: none !important;
-    }
-    
-    #projectionCanvas {
-        width: 100% !important;
-        height: auto !important;
-        aspect-ratio: 16/9;
-    }
-}

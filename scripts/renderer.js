@@ -1,4 +1,4 @@
-import { link } from "wesl";
+import { link } from "https://cdn.jsdelivr.net/npm/wesl/+esm";
 
 export class ProjectionRenderer {
     constructor() {
@@ -134,7 +134,6 @@ export class ProjectionRenderer {
         const response = await fetch('./world_map.jpg');
         const blob = await response.blob();
         await this.loadTextureFromBlob(blob);
-        this.updateBindGroup();
     }
 
     async loadCustomTexture(blob) {

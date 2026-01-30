@@ -6,16 +6,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://api.allorigins.win;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://api.allorigins.win;">
     <title>WebGPU Sphere Reprojection Tool</title>
     <link rel="stylesheet" href="styles/main.css">
-    <script type="importmap">
-        {
-          "imports": {
-            "wesl": "https://cdn.jsdelivr.net/npm/wesl/+esm"
-          }
-        }
-    </script>
 </head>
 <body>
     <div class="app-container">
@@ -44,8 +37,8 @@
                 
                 <div class="control-group full-width">
                     <label for="imageUrl">Image URL:</label>
-                    <input type="text" id="imageUrl" placeholder="Enter image URL or leave empty for default" style="background-color: rgba(64, 64, 64, 0.8); border: 1px solid #555; border-radius: 6px; color: #fff; font-size: 0.9em;">
-                    <small style="color: #aaa; font-size: 0.8em; margin-top: 4px; display: block;">
+                    <input type="text" id="imageUrl" placeholder="Enter image URL or leave empty for default">
+                    <small class="help-text">
                         Try: https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/512px-Equirectangular_projection_SW.jpg
                     </small>
                 </div>
@@ -62,11 +55,11 @@
                 </div>
                 
                 <div class="control-group full-width">
-                    <button class="control-button" id="loadImageButton" style="width: 100%; margin-top: 5px;">Load Image</button>
+                    <button class="control-button full-width-button" id="loadImageButton">Load Image</button>
                 </div>
                 
-                <div class="control-group full-width zoom-instructions">
-                    <small style="color: #ccc; font-style: italic;">
+                <div class="control-group full-width">
+                    <small class="zoom-instructions">
                         💡 Use mouse wheel or pinch-to-zoom to adjust zoom level
                     </small>
                 </div>
@@ -96,6 +89,6 @@
         <div id="errorDiv" class="error"></div>
     </div>
 
-    <script type="module" src="main.js"></script>
+    <script type="module" src="scripts/main.js"></script>
 </body>
 </html>

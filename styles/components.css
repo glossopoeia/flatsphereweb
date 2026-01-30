@@ -39,8 +39,7 @@ label {
 }
 
 select, 
-input[type="text"], 
-input[type="range"] {
+input[type="text"] {
     width: 100%;
     padding: var(--spacing-sm);
     background-color: var(--bg-tertiary);
@@ -52,8 +51,7 @@ input[type="range"] {
 }
 
 select:focus,
-input[type="text"]:focus,
-input[type="range"]:focus {
+input[type="text"]:focus {
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 2px rgba(100, 166, 255, 0.2);
 }
@@ -71,14 +69,6 @@ input[type="checkbox"] {
     gap: var(--spacing-sm);
 }
 
-.range-display {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 4px;
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-}
-
 small {
     color: var(--text-muted);
     font-size: var(--font-size-sm);
@@ -90,4 +80,17 @@ small {
 .zoom-instructions {
     font-style: italic;
     color: var(--text-secondary);
+}
+
+.full-width-button {
+    width: 100%;
+    margin-top: 5px;
+}
+
+.help-text {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    margin-top: 4px;
+    display: block;
+    overflow-wrap: anywhere;
 }

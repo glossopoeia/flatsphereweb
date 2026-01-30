@@ -52,7 +52,7 @@ export class ProjectionRenderer {
         });
         
         // Load world map texture
-        await this.loadDefaultTexture();
+        await this.loadDefaultTexture(true);
         
         // Create sampler
         this.sampler = this.device.createSampler({
@@ -129,11 +129,14 @@ export class ProjectionRenderer {
         });
     }
 
-    async loadDefaultTexture() {
+    async loadDefaultTexture(initialLoad) {
         // Load the world map image
         const response = await fetch('./world_map.jpg');
         const blob = await response.blob();
         await this.loadTextureFromBlob(blob);
+        if (!initialLoad) {
+            this.updateBindGroup(); // only do this if we've already created the pipeline
+        }
     }
 
     async loadCustomTexture(blob) {
@@ -150,7 +153,6 @@ export class ProjectionRenderer {
         }
         
         const bitmap = await createImageBitmap(blob);
-        console.log('Created image bitmap, dimensions:', bitmap.width, 'x', bitmap.height);
         
         // Validate image size for performance and memory safety
         const maxSize = 4096 * 4096; // 16MP limit
@@ -174,7 +176,6 @@ export class ProjectionRenderer {
         );
         
         bitmap.close(); // Clean up bitmap
-        console.log('Texture created and image data copied');
     }
 
     setSourceProjection(projectionType) {

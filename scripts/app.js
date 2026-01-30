@@ -35,8 +35,8 @@ export class ProjectionApp {
         });
         
         this.interactionManager.addEventListener('sourceProjectionChanged', (e) => {
-            // Only re-render if there's a custom image loaded
-            if (this.renderer && this.renderer.hasCustomTexture) {
+            if (this.renderer) {
+                this.renderer.setSourceProjection(this.interactionManager.sourceProjection);
                 this.render();
             }
         });

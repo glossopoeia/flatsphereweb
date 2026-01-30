@@ -65,7 +65,7 @@ export class InteractionManager extends EventTarget {
             }));
         });
 
-        this.imageUrlInput.addEventListener('keypress', (e) => {
+        this.imageUrlInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
                 const imageUrl = this.imageUrlInput.value.trim();
                 const sourceProjection = parseInt(this.sourceProjectionSelect.value);

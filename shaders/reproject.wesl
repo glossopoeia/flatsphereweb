@@ -1,4 +1,7 @@
-import package::tissot::{is_tissot_indicatrix, apply_tissot_indicatrices, PI, HALF_PI};
+import package::common::{PI, HALF_PI};
+import package::dstproj::{inverse, planar_scale};
+import package::srcproj::{project};
+import package::tissot::{is_tissot_indicatrix, apply_tissot_indicatrices};
 import package::graticule::{apply_graticule, is_graticule_line};
 
 struct Uniforms {
@@ -59,28 +62,28 @@ fn world_texture_color(lat: f32, lon: f32) -> vec3f {
         
     } else if (source_proj == 1) {
         // Stereographic source
-        let stereo_proj = stereographic_project(norm_lat, norm_lon);
+        let stereo_proj = project(norm_lat, norm_lon);
         let u = (stereo_proj.x + 3.0) / 6.0; // Map [-3,3] to [0,1]
         let v = (stereo_proj.y + 3.0) / 6.0;
         tex_coords = vec2f(clamp(u, 0.0, 1.0), clamp(1.0 - v, 0.0, 1.0));
         
     } else if (source_proj == 2) {
         // Polar source
-        let polar_proj = polar_project(norm_lat, norm_lon);
+        let polar_proj = project(norm_lat, norm_lon);
         let u = (polar_proj.x + 2.0) / 4.0; // Map [-2,2] to [0,1]
         let v = (polar_proj.y + 2.0) / 4.0;
         tex_coords = vec2f(clamp(u, 0.0, 1.0), clamp(1.0 - v, 0.0, 1.0));
         
     } else if (source_proj == 3) {
         // Orthographic source
-        let ortho_proj = orthographic_project(norm_lat, norm_lon);
+        let ortho_proj = project(norm_lat, norm_lon);
         let u = (ortho_proj.x + 1.0) / 2.0; // Map [-1,1] to [0,1]
         let v = (ortho_proj.y + 1.0) / 2.0;
         tex_coords = vec2f(clamp(u, 0.0, 1.0), clamp(1.0 - v, 0.0, 1.0));
         
     } else if (source_proj == 4) {
         // Mercator source
-        let merc_proj = mercator_project(norm_lat, norm_lon);
+        let merc_proj = project(norm_lat, norm_lon);
         let u = (merc_proj.x + PI) / (2.0 * PI); // Map [-π,π] to [0,1]
         let v = clamp((merc_proj.y + 3.0) / 6.0, 0.0, 1.0); // Map approximately [-3,3] to [0,1]
         tex_coords = vec2f(u, 1.0 - v);
@@ -127,147 +130,20 @@ fn oblique_transform_from_sphere(lat: f32, lon: f32, pole_lat: f32, pole_lon: f3
     return vec2f(new_lat, new_lon);
 }
 
-// Projection functions
-fn stereographic_project(lat: f32, lon: f32) -> vec2f {
-    let r = 1.0 / tan(lat / 2.0 + PI / 4.0);
-    return vec2f(r * sin(lon), -r * cos(lon));
-}
-
-fn polar_project(lat: f32, lon: f32) -> vec2f {
-    let r = HALF_PI - lat;
-    return vec2f(r * sin(lon), -r * cos(lon));
-}
-
-fn orthographic_project(lat: f32, lon: f32) -> vec2f {
-    return vec2f(cos(lat) * sin(lon), sin(lat));
-}
-
-fn vertical_perspective_project(lat: f32, lon: f32, d: f32) -> vec2f {
-    if (d > 100.0) {
-        return orthographic_project(lat, lon);
-    }
-    
-    let cos_c = sin(lat);
-    let k = (d - 1.0) / (d - cos_c);
-    
-    let x = k * cos(lat) * sin(lon);
-    let y = k * sin(lat);
-    return vec2f(x, y);
-}
-
-fn mercator_project(lat: f32, lon: f32) -> vec2f {
-    return vec2f(lon, log(tan(PI / 4.0 + lat / 2.0)));
-}
-
-fn plate_carree_project(lat: f32, lon: f32) -> vec2f {
-    return vec2f(lon, lat);
-}
-
-// Inverse projection functions
-fn stereographic_inverse(x: f32, y: f32) -> vec2f {
-    let r = sqrt(x * x + y * y);
-    let lat = HALF_PI - 2.0 * atan(r);
-    let lon = atan2(x, -y);
-    return vec2f(lat, lon);
-}
-
-fn polar_inverse(x: f32, y: f32) -> vec2f {
-    let r = sqrt(x * x + y * y);
-    let lat = HALF_PI - r;
-    let lon = atan2(x, -y);
-    return vec2f(lat, lon);
-}
-
-fn orthographic_inverse(x: f32, y: f32) -> vec2f {
-    let r = sqrt(x * x + y * y);
-    if (r > 1.0) {
-        return vec2f(0.0, 0.0); // Outside sphere
-    }
-    let lat = asin(y);
-    let lon = asin(x / cos(lat));
-    return vec2f(lat, lon);
-}
-
-fn vertical_perspective_inverse(x: f32, y: f32, d: f32) -> vec2f {
-    if (d > 100.0) {
-        return orthographic_inverse(x, y);
-    }
-    
-    let r = sqrt(x * x + y * y);
-    if (r == 0.0) {
-        return vec2f(0.0, 0.0);
-    }
-    
-    let max_r = sqrt((d - 1.0) / (d + 1.0));
-    if (r > max_r) {
-        return vec2f(0.0, 0.0); // Outside visible sphere
-    }
-    
-    let denom = (d - 1.0) / r + r / (d - 1.0);
-    let numer = d - sqrt(1.0 - ((r * r * (d + 1.0)) / (d - 1.0)));
-    let c = asin(numer / denom);
-    
-    let lat = asin((y * sin(c)) / r);
-    let lon = atan2(x * sin(c), r * cos(c));
-    return vec2f(lat, lon);
-}
-
-fn mercator_inverse(x: f32, y: f32) -> vec2f {
-    let lat = atan(sinh(y));
-    let lon = x;
-    return vec2f(lat, lon);
-}
-
-fn plate_carree_inverse(x: f32, y: f32) -> vec2f {
-    return vec2f(y, x);
-}
-
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     // Convert screen coordinates to projection space using dynamic aspect ratio
     var coord = vec2f(in.uv.x * uniforms.aspect, in.uv.y);
     
     let projection_type = i32(uniforms.projection_type);
-    
-    // Scale coordinates based on projection type
-    if (projection_type == 0) { // Stereographic
-        coord = coord * 3.0;
-    } else if (projection_type == 1) { // Polar
-        coord = coord * 2.0;
-    } else if (projection_type == 2) { // Orthographic
-        coord = coord;
-    } else if (projection_type == 3) { // Perspective
-        coord = coord * 1.5;
-    } else if (projection_type == 4) { // Mercator
-        coord = vec2f(coord.x * PI, coord.y * 3.0);
-    } else if (projection_type == 5) { // Plate Carree
-        coord = vec2f(coord.x * PI, coord.y * HALF_PI);
-    }
 
+    // Scale the UI coordinate to extend to the edges of the projection plane
+    coord = coord * planar_scale;
     // Apply zoom factor before inverse projection to narrow the view
     coord = coord * uniforms.zoom;
     
     // Perform inverse projection to get lat/lon
-    var lat_lon: vec2f;
-    
-    if (projection_type == 0) {
-        lat_lon = stereographic_inverse(coord.x, coord.y);
-    } else if (projection_type == 1) {
-        lat_lon = polar_inverse(coord.x, coord.y);
-    } else if (projection_type == 2) {
-        lat_lon = orthographic_inverse(coord.x, coord.y);
-    } else if (projection_type == 3) {
-        // For perspective, use zoom as distance parameter (special case)
-        // Convert zoom to distance: zoom=1 -> d=2, zoom=10 -> d=11
-        let d = uniforms.zoom + 1.0;
-        lat_lon = vertical_perspective_inverse(coord.x, coord.y, d);
-    } else if (projection_type == 4) {
-        lat_lon = mercator_inverse(coord.x, coord.y);
-    } else if (projection_type == 5) {
-        lat_lon = plate_carree_inverse(coord.x, coord.y);
-    } else {
-        return vec4f(0.0, 0.0, 0.0, 1.0); // Black for unknown projection
-    }
+    let lat_lon = inverse(coord.x, coord.y);
     
     let lat = lat_lon.x;
     let lon = lat_lon.y;

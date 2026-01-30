@@ -4,7 +4,7 @@ export class ProjectionRenderer {
     constructor() {
         this.device = null;
         this.context = null;
-        this.pipeline = null;
+        this.pipelines = null; // A 2D map of pipelines, indexed by [dstProj][srcProj]
         this.uniformBuffer = null;
         this.bindGroup = null;
         this.canvas = null;
@@ -24,17 +24,44 @@ export class ProjectionRenderer {
         
         this.device = await adapter.requestDevice();
 
-        // Get texture shader
-        const textureShaderCode = await link({
-            rootModuleName: "./texture.wesl",
-            weslSrc: {
-                "texture.wesl": await fetch("./shaders/texture.wesl").then(v => v.text()),
-                "tissot.wesl": await fetch("./shaders/tissot.wesl").then(v => v.text()),
-                "graticule.wesl": await fetch("./shaders/graticule.wesl").then(v => v.text()),
-            },
-        });
+        // Get projection shaders
+        const projections = [
+            'plate-carree',
+            'mercator',
+            'orthographic',
+            'vertical-perspective',
+            'polar',
+            'stereographic',
+        ]
 
-        const textureShaderMod = textureShaderCode.createShaderModule(this.device, {});
+        const commonSource = await fetch("./shaders/common.wesl").then(v => v.text());
+        const tissotSource = await fetch("./shaders/tissot.wesl").then(v => v.text());
+        const graticuleSource = await fetch("./shaders/graticule.wesl").then(v => v.text());
+        const reprojectSource = await fetch("./shaders/reproject.wesl").then(v => v.text());
+
+        const projectionPromises = projections.map(proj => fetch(`./shaders/${proj}.wesl`).then(v => v.text()));
+        const projectionSources = await Promise.all(projectionPromises);
+
+        const shaderPromises = projectionSources.map(async (dstProjSource) => {
+            const withSrcPromise = projectionSources.map(async (srcProjSource) => {
+                return await link({
+                    rootModuleName: "./reproject.wesl",
+                    weslSrc: {
+                        "reproject.wesl": reprojectSource,
+                        "dstproj.wesl": dstProjSource,
+                        "srcproj.wesl": srcProjSource,
+                        "common.wesl": commonSource,
+                        "tissot.wesl": tissotSource,
+                        "graticule.wesl": graticuleSource,
+                    },
+                })
+            });
+            return await Promise.all(withSrcPromise);
+        });
+        const shaderCodes = await Promise.all(shaderPromises);
+        const shaderModules = shaderCodes.map(nested => {
+            return nested.map(code => code.createShaderModule(this.device, {}));
+        });
         
         // Get canvas context
         this.context = canvas.getContext('webgpu');
@@ -61,13 +88,8 @@ export class ProjectionRenderer {
             addressModeU: 'repeat',
             addressModeV: 'clamp-to-edge',
         });
-        
-        // Create pipeline
-        this.createPipeline(canvasFormat, textureShaderMod);
-    }
-    
-    createPipeline(canvasFormat, textureShaderModule) {
-        // Texture shader pipeline
+
+        // One shared bind group layout
         const bindGroupLayout = this.device.createBindGroupLayout({
             entries: [
                 {
@@ -87,30 +109,19 @@ export class ProjectionRenderer {
                 }
             ]
         });
+        this.bindGroupLayout = bindGroupLayout;
+        this.updateBindGroup(); // One shared bind group
         
-        this.bindGroupLayout = bindGroupLayout; // Store for later use
-        
-        this.bindGroup = this.device.createBindGroup({
-            layout: bindGroupLayout,
-            entries: [
-                {
-                    binding: 0,
-                    resource: { buffer: this.uniformBuffer }
-                },
-                {
-                    binding: 1,
-                    resource: this.worldTexture.createView()
-                },
-                {
-                    binding: 2,
-                    resource: this.sampler
-                }
-            ]
+        // Create one pipeline per projection
+        this.pipelines = shaderModules.map(nested => {
+            return nested.map(mod => this.createPipeline(canvasFormat, mod));
         });
-        
-        this.pipeline = this.device.createRenderPipeline({
+    }
+    
+    createPipeline(canvasFormat, textureShaderModule) { 
+        return this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({
-                bindGroupLayouts: [bindGroupLayout]
+                bindGroupLayouts: [this.bindGroupLayout]
             }),
             vertex: {
                 module: textureShaderModule,
@@ -140,10 +151,8 @@ export class ProjectionRenderer {
     }
 
     async loadCustomTexture(blob) {
-        console.log('Loading custom texture from blob, size:', blob.size);
         await this.loadTextureFromBlob(blob);
         this.updateBindGroup();
-        console.log('Custom texture loaded and bind group updated');
     }
 
     async loadTextureFromBlob(blob) {
@@ -236,7 +245,7 @@ export class ProjectionRenderer {
             }]
         });
         
-        renderPass.setPipeline(this.pipeline);
+        renderPass.setPipeline(this.pipelines[projectionType][this.sourceProjection]);
         renderPass.setBindGroup(0, this.bindGroup);
         renderPass.draw(4); // Draw a quad (triangle strip with 4 vertices)
         renderPass.end();

@@ -1,5 +1,4 @@
-const PI: f32 = 3.14159265358979323846;
-const HALF_PI: f32 = 1.57079632679489661923;
+import package::common::{PI, HALF_PI};
 
 // Tissot's indicatrix functions
 fn is_tissot_indicatrix(lat: f32, lon: f32) -> f32 {

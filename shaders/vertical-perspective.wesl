@@ -13,7 +13,7 @@ fn project(lat: f32, lon: f32) -> vec2f {
 
 fn inverse(x: f32, y: f32) -> vec2f {
     let r = sqrt(x * x + y * y);
-    if (r == 0.0) {
+    if (r <= 0.0) {
         return vec2f(0.0, 0.0);
     }
     

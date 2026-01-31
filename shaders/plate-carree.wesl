@@ -14,4 +14,4 @@ fn to_texture(projX: f32, projY: f32) -> vec2f {
     let u = (projX + PI) / (2.0 * PI);
     let v = 1.0 - (projY + HALF_PI) / PI;
     return vec2f(u, clamp(v, 0.0, 1.0));
-} 
+}

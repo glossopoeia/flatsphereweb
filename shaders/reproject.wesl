@@ -92,7 +92,7 @@ fn oblique_transform_from_sphere(lat: f32, lon: f32, pole_lat: f32, pole_lon: f3
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     // Convert screen coordinates to projection space using dynamic aspect ratio
     var coord = vec2f(in.uv.x * uniforms.aspect, in.uv.y);
-    
+
     // Scale the UI coordinates to extend to the edges of the projection plane
     coord = coord * planar_scale;
     // Apply zoom factor before inverse projection to narrow the view

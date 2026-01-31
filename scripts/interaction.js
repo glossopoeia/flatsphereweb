@@ -20,7 +20,7 @@ export class InteractionManager extends EventTarget {
         // Camera state
         this.cameraLat = 90; // degrees
         this.cameraLon = 0;  // degrees
-        this.zoom = 2.0;
+        this.zoom = 1.0;
         
         // Interaction state
         this.isDragging = false;

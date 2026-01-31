@@ -18,9 +18,9 @@ export class InteractionManager extends EventTarget {
         this.zoomIndicator = document.getElementById('zoomIndicator');
         
         // Camera state
-        this.cameraLat = 45; // degrees
+        this.cameraLat = 90; // degrees
         this.cameraLon = 0;  // degrees
-        this.zoom = 2.0;
+        this.zoom = 1.0;
         
         // Interaction state
         this.isDragging = false;

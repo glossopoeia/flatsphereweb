@@ -1,4 +1,4 @@
-const PI: f32 = 3.14159265358979323846;
+import package::common::{PI};
 
 // Graticule functions
 fn is_graticule_line(lat: f32, lon: f32) -> f32 {

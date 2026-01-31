@@ -19,6 +19,7 @@ export class ProjectionApp {
     
     setupInteractionEventListeners() {
         this.interactionManager.addEventListener('destinationProjectionChanged', (e) => {
+            this.renderer.setDestinationProjection(this.interactionManager.destinationProjection);
             this.render();
         });
         
@@ -220,8 +221,6 @@ export class ProjectionApp {
     render() {
         if (!this.renderer) return;
         
-        const projectionType = this.interactionManager.destinationProjection;
-
         const lookAt = this.interactionManager.currentLookAt;
         const cameraLat = lookAt.lat * Math.PI / 180;
         const cameraLon = lookAt.lon * Math.PI / 180;
@@ -229,6 +228,6 @@ export class ProjectionApp {
         const showTissot = this.interactionManager.tissotEnabled ? 1.0 : 0.0;
         const showGraticule = this.interactionManager.graticuleEnabled ? 1.0 : 0.0;
         
-        this.renderer.render(projectionType, cameraLat, cameraLon, zoom, showTissot, showGraticule);
+        this.renderer.render(cameraLat, cameraLon, zoom, showTissot, showGraticule);
     }
 }

@@ -33,7 +33,7 @@ export class ProjectionRenderer {
             'vertical-perspective',
             'polar',
             'stereographic',
-        ]
+        ];
 
         const commonSource = await fetch("./shaders/common.wesl").then(v => v.text());
         const tissotSource = await fetch("./shaders/tissot.wesl").then(v => v.text());
@@ -55,7 +55,7 @@ export class ProjectionRenderer {
                         "tissot.wesl": tissotSource,
                         "graticule.wesl": graticuleSource,
                     },
-                })
+                });
             });
             return await Promise.all(withSrcPromise);
         });

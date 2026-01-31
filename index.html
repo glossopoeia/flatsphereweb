@@ -7,26 +7,34 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
+    <meta name="description" content="Interactive web tool for comparing different cartographic projections using WebGPU. Visualize how map projections transform the sphere with real-time rendering.">
+    <meta name="keywords" content="cartography, map projections, WebGPU, geography, Mercator, orthographic, perspective, tissot, graticule">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta property="og:title" content="Flatsphere: Interactive Reprojections of the Sphere">
+    <meta property="og:description" content="Interactive web tool for comparing different cartographic projections">
+    <meta property="og:type" content="website">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://api.allorigins.win; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
-    <title>WebGPU Sphere Reprojection Tool</title>
+
     <link rel="stylesheet" href="styles/main.css">
+
+    <title>Flatsphere: Interactive Reprojections of the Sphere</title>
 </head>
 <body>
-    <div class="app-container">
-        <canvas id="projectionCanvas"></canvas>
+    <main class="app-container">
+        <canvas id="projectionCanvas" aria-label="Interactive map projection visualization" role="img"></canvas>
         
-        <div class="controls-overlay" id="controlsOverlay">
-            <div class="controls-header">
+        <aside class="controls-overlay" id="controlsOverlay" role="region" aria-label="Map projection controls">
+            <header class="controls-header">
                 <h1 class="app-title">WebGPU Sphere Reprojection</h1>
                 <div class="header-buttons">
-                    <button class="control-button" id="toggleControls">Hide</button>
+                    <button class="control-button" id="toggleControls" aria-label="Hide control panel" aria-expanded="true" aria-controls="controlsContent">Hide</button>
                 </div>
-            </div>
+            </header>
             
             <div class="controls-content" id="controlsContent">
                 <div class="control-group full-width">
-                    <label for="projectionSelect">Projection Type:</label>
-                    <select id="projectionSelect">
+                    <label for="projectionSelect">Shown Projection:</label>
+                    <select id="projectionSelect" aria-describedby="projection-help">
                         <option value="0">Plate Carrée (Equirectangular)</option>
                         <option value="1">Mercator</option>
                         <option value="2">Orthographic</option>
@@ -34,19 +42,20 @@
                         <option value="4">Polar (Azimuthal Equidistant)</option>
                         <option value="5">Stereographic</option>
                     </select>
+                    <div id="projection-help" class="sr-only">Select the map projection to display in the visualization</div>
                 </div>
                 
                 <div class="control-group full-width">
                     <label for="imageUrl">Image URL:</label>
-                    <input type="text" id="imageUrl" placeholder="Enter image URL or leave empty for default">
-                    <small class="help-text">
+                    <input type="text" id="imageUrl" placeholder="Enter image URL or leave empty for default" aria-describedby="imageUrl-help">
+                    <small class="help-text" id="imageUrl-help">
                         Try: https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/512px-Equirectangular_projection_SW.jpg
                     </small>
                 </div>
                 
                 <div class="control-group full-width">
                     <label for="sourceProjection">Source Projection:</label>
-                    <select id="sourceProjection">
+                    <select id="sourceProjection" aria-describedby="source-projection-help">
                         <option value="0">Plate Carrée (Equirectangular)</option>
                         <option value="1">Mercator</option>
                         <option value="2">Orthographic</option>
@@ -54,10 +63,12 @@
                         <option value="4">Polar (Azimuthal Equidistant)</option>
                         <option value="5">Stereographic</option>
                     </select>
+                    <div id="source-projection-help" class="sr-only">Select the projection type of the source image</div>
                 </div>
                 
                 <div class="control-group full-width">
-                    <button class="control-button full-width-button" id="loadImageButton">Load Image</button>
+                    <button class="control-button full-width-button" id="loadImageButton" type="button" aria-describedby="load-help">Load Image</button>
+                    <div id="load-help" class="sr-only">Load the specified image with the selected source projection</div>
                 </div>
                 
                 <div class="control-group full-width">
@@ -69,27 +80,33 @@
                 <div class="control-group">
                     <label for="tissotToggle">Tissot's Indicatrices:</label>
                     <div class="checkbox-group">
-                        <input type="checkbox" id="tissotToggle">
-                        <span>Show</span>
+                        <input type="checkbox" id="tissotToggle" aria-describedby="tissot-help">
+                        <label for="tissotToggle" class="checkbox-label">Show</label>
                     </div>
+                    <div id="tissot-help" class="sr-only">Show circles that reveal map projection distortion</div>
                 </div>
                 
                 <div class="control-group">
                     <label for="graticuleToggle">Graticule:</label>
                     <div class="checkbox-group">
-                        <input type="checkbox" id="graticuleToggle">
-                        <span>Show</span>
+                        <input type="checkbox" id="graticuleToggle" aria-describedby="graticule-help">
+                        <label for="graticuleToggle" class="checkbox-label">Show</label>
                     </div>
+                    <div id="graticule-help" class="sr-only">Show latitude and longitude grid lines</div>
                 </div>
             </div>
-        </div>
+        </aside>
         
-        <button class="fullscreen-button" id="fullscreenButton" title="Toggle Fullscreen">⛶</button>
+        <button class="fullscreen-button" id="fullscreenButton" type="button" title="Toggle Fullscreen" aria-label="Toggle fullscreen mode">⛶</button>
         
-        <div class="zoom-indicator" id="zoomIndicator">2.0x</div>
+        <div class="zoom-indicator" id="zoomIndicator" aria-live="polite" aria-label="Current zoom level">2.0x</div>
         
-        <div id="notificationDiv" class="notification"></div>
-    </div>
+        <div id="notificationDiv" class="notification" aria-live="polite" aria-atomic="true" role="status"></div>
+
+        <noscript>
+            <p>This application requires JavaScript and WebGPU support to function.</p>
+        </noscript>
+    </main>
 
     <script type="module" src="scripts/main.js"></script>
 </body>

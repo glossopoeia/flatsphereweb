@@ -217,11 +217,11 @@ export class ProjectionRenderer {
         });
     }
     
-    render(cameraLat, cameraLon, zoom, showTissot, showGraticule) {
+    render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0) {
         // Update uniforms
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
-        const aspect = canvasWidth / canvasHeight;
+        const aspect = (canvasWidth / canvasHeight) * aspectRatioMultiplier;
         
         const uniformData = new Float32Array([
             cameraLat,

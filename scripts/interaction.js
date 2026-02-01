@@ -86,7 +86,7 @@ export class InteractionManager extends EventTarget {
 
         this.aspectRatioSlider.addEventListener('input', () => {
             this._aspectRatioMultiplier = parseFloat(this.aspectRatioSlider.value);
-            this.aspectRatioValue.textContent = `${this._aspectRatioMultiplier.toFixed(1)}x`;
+            this.aspectRatioValue.textContent = `${this._aspectRatioMultiplier.toFixed(2)}x`;
             this.dispatchEvent(new CustomEvent('aspectRatioChanged', {
                 detail: { aspectRatioMultiplier: this._aspectRatioMultiplier }
             }));

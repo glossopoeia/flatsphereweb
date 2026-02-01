@@ -49,6 +49,10 @@ export class ProjectionApp {
         this.interactionManager.addEventListener('zoomChanged', (e) => {
             this.render();
         });
+
+        this.interactionManager.addEventListener('aspectRatioChanged', (e) => {
+            this.render();
+        });
         
         this.interactionManager.addEventListener('canvasResize', () => {
             this.resizeCanvas();
@@ -227,7 +231,8 @@ export class ProjectionApp {
         const zoom = this.interactionManager.currentZoom;
         const showTissot = this.interactionManager.tissotEnabled ? 1.0 : 0.0;
         const showGraticule = this.interactionManager.graticuleEnabled ? 1.0 : 0.0;
+        const aspectRatioMultiplier = this.interactionManager.aspectRatioMultiplier;
         
-        this.renderer.render(cameraLat, cameraLon, zoom, showTissot, showGraticule);
+        this.renderer.render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier);
     }
 }

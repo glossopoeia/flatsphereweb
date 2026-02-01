@@ -11,6 +11,8 @@ export class InteractionManager extends EventTarget {
         this.loadImageButton = document.getElementById('loadImageButton');
         this.tissotToggle = document.getElementById('tissotToggle');
         this.graticuleToggle = document.getElementById('graticuleToggle');
+        this.aspectRatioSlider = document.getElementById('aspectRatioSlider');
+        this.aspectRatioValue = document.getElementById('aspectRatioValue');
         this.controlsOverlay = document.getElementById('controlsOverlay');
         this.controlsContent = document.getElementById('controlsContent');
         this.toggleControls = document.getElementById('toggleControls');
@@ -21,6 +23,7 @@ export class InteractionManager extends EventTarget {
         this.cameraLat = 90; // degrees
         this.cameraLon = 0;  // degrees
         this.zoom = 1.0;
+        this._aspectRatioMultiplier = 1.0;
         
         // Interaction state
         this.isDragging = false;
@@ -78,6 +81,14 @@ export class InteractionManager extends EventTarget {
         this.sourceProjectionSelect.addEventListener('change', () => {
             this.dispatchEvent(new CustomEvent('sourceProjectionChanged', {
                 detail: { sourceProjection: parseInt(this.sourceProjectionSelect.value) }
+            }));
+        });
+
+        this.aspectRatioSlider.addEventListener('input', () => {
+            this._aspectRatioMultiplier = parseFloat(this.aspectRatioSlider.value);
+            this.aspectRatioValue.textContent = `${this._aspectRatioMultiplier.toFixed(1)}x`;
+            this.dispatchEvent(new CustomEvent('aspectRatioChanged', {
+                detail: { aspectRatioMultiplier: this._aspectRatioMultiplier }
             }));
         });
 
@@ -370,6 +381,10 @@ export class InteractionManager extends EventTarget {
 
     get graticuleEnabled() {
         return this.graticuleToggle.checked;
+    }
+
+    get aspectRatioMultiplier() {
+        return this._aspectRatioMultiplier;
     }
 
     // Methods to update UI state

@@ -31,8 +31,12 @@ export class ProjectionRenderer {
             'mercator',
             'orthographic',
             'vertical-perspective',
-            'polar',
+            'azimuthal-equidistant',
             'stereographic',
+            'sinusoidal',
+            'lambert-azimuthal',
+            'gnomonic',
+            'mollweide',
         ];
 
         const commonSource = await fetch("./shaders/common.wesl").then(v => v.text());

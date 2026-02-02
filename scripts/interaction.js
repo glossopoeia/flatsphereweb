@@ -23,7 +23,7 @@ export class InteractionManager extends EventTarget {
         this.cameraLat = 90; // degrees
         this.cameraLon = 0;  // degrees
         this.zoom = 1.0;
-        this._aspectRatioMultiplier = 1.0;
+        this.aspectRatioScalar = 1.0;
         
         // Interaction state
         this.isDragging = false;
@@ -85,10 +85,10 @@ export class InteractionManager extends EventTarget {
         });
 
         this.aspectRatioSlider.addEventListener('input', () => {
-            this._aspectRatioMultiplier = parseFloat(this.aspectRatioSlider.value);
-            this.aspectRatioValue.textContent = `${this._aspectRatioMultiplier.toFixed(2)}x`;
+            this.aspectRatioScalar = parseFloat(this.aspectRatioSlider.value);
+            this.aspectRatioValue.textContent = `${this.aspectRatioScalar.toFixed(2)}x`;
             this.dispatchEvent(new CustomEvent('aspectRatioChanged', {
-                detail: { aspectRatioMultiplier: this._aspectRatioMultiplier }
+                detail: { aspectRatioMultiplier: this.aspectRatioScalar }
             }));
         });
 
@@ -384,7 +384,7 @@ export class InteractionManager extends EventTarget {
     }
 
     get aspectRatioMultiplier() {
-        return this._aspectRatioMultiplier;
+        return this.aspectRatioScalar;
     }
 
     // Methods to update UI state

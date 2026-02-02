@@ -12,7 +12,7 @@ fn project(lat: f32, lon: f32) -> vec2f {
     // to be adjusted if zooming in on the poles is desired.
     let target_val = PI * sin(lat);
     var theta = lat;
-    for (var i = 0u; i < max_iterations && abs(theta - target_val) > tolerance; i++) {
+    for (var i = 0u; i < max_iterations; i++) {
         let numer = 2.0 * theta + sin(2.0 * theta) - target_val;
         let denom = 2.0 + 2.0 * cos(2.0 * theta);
         let new_theta = theta - (numer / denom);

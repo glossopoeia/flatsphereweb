@@ -62,9 +62,6 @@ export class ProjectionApp {
     
     async init() {
         try {
-            // Show loading screen during initialization
-            this.interactionManager.setLoadingState(true);
-            
             this.renderer = new ProjectionRenderer();
             await this.renderer.initialize(this.canvas);
             this.resizeCanvas();

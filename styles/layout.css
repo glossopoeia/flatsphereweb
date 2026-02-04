@@ -377,7 +377,7 @@
     top: var(--spacing-xl);
     left: 50%;
     transform: translateX(-50%);
-    z-index: 200;
+    z-index: 250;
     padding: var(--spacing-lg) var(--spacing-xl);
     backdrop-filter: blur(10px);
     border-radius: var(--radius-md);

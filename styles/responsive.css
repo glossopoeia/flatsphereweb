@@ -57,6 +57,43 @@
         font-size: var(--font-size-sm);
         padding: 6px var(--spacing-sm);
     }
+    
+    /* Bottom controls mobile adjustments */
+    .bottom-controls {
+        bottom: calc(var(--spacing-xl) + 30px); /* Higher positioning for mobile */
+        left: var(--spacing-xl);
+        gap: var(--spacing-xs); /* Tighter spacing */
+    }
+    
+    .bottom-control-button {
+        width: 56px;
+        height: 56px;
+        font-size: 1.3em;
+    }
+    
+    .projection-panel,
+    .source-panel,
+    .options-panel {
+        bottom: 120px; /* Above larger mobile bottom controls */
+        left: var(--spacing-xl);
+        right: var(--spacing-xl);
+        width: auto;
+        max-width: none;
+    }
+    
+    .panel-content {
+        max-height: calc(100vh - 180px);
+    }
+    
+    .projection-item {
+        padding: var(--spacing-md);
+        min-height: 56px; /* Ensure good touch target */
+    }
+    
+    .projection-item-preview {
+        width: 44px;
+        height: 44px;
+    }
 }
 
 /* Landscape phone optimization */
@@ -85,6 +122,42 @@
         font-size: 0.75em;
         padding: 5px var(--spacing-sm);
     }
+    
+    /* Bottom controls landscape adjustments */
+    .bottom-controls {
+        bottom: calc(8px + 25px); /* Higher positioning for landscape */
+        left: 8px;
+        gap: var(--spacing-xs);
+    }
+    
+    .bottom-control-button {
+        width: 48px;
+        height: 48px;
+        font-size: 1.2em;
+    }
+    
+    .projection-panel,
+    .source-panel,
+    .options-panel {
+        bottom: 110px;
+        left: 8px;
+        right: 8px;
+        max-height: calc(100vh - 130px);
+    }
+    
+    .panel-content {
+        max-height: calc(100vh - 150px);
+    }
+    
+    .projection-item {
+        padding: 10px;
+        min-height: 52px;
+    }
+    
+    .projection-item-preview {
+        width: 40px;
+        height: 40px;
+    }
 }
 
 /* Tablet optimizations */
@@ -96,12 +169,19 @@
     .controls-content {
         grid-template-columns: 1fr 1fr;
     }
+    
+    .projection-panel,
+    .source-panel,
+    .options-panel {
+        width: 360px;
+    }
 }
 
 /* High DPI displays */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
     .fullscreen-button,
-    .control-button {
+    .control-button,
+    .bottom-control-button {
         border-width: 0.5px;
     }
 }
@@ -131,6 +211,23 @@
     top: max(var(--spacing-xl), env(safe-area-inset-top));
 }
 
+:fullscreen .bottom-controls,
+:-webkit-full-screen .bottom-controls {
+    bottom: max(calc(var(--spacing-xl) + 20px), calc(env(safe-area-inset-bottom) + var(--spacing-xl) + 20px));
+    left: max(var(--spacing-xl), env(safe-area-inset-left));
+}
+
+:fullscreen .projection-panel,
+:fullscreen .source-panel,
+:fullscreen .options-panel,
+:-webkit-full-screen .projection-panel,
+:-webkit-full-screen .source-panel,
+:-webkit-full-screen .options-panel {
+    bottom: max(110px, calc(env(safe-area-inset-bottom) + 90px));
+    left: max(var(--spacing-xl), env(safe-area-inset-left));
+    right: max(var(--spacing-xl), env(safe-area-inset-right));
+}
+
 /* Mobile fullscreen safe area adjustments */
 @media (max-width: 768px) {
     :fullscreen .controls-overlay,
@@ -150,6 +247,23 @@
     :-webkit-full-screen .zoom-indicator {
         top: max(70px, calc(env(safe-area-inset-top) + 56px + 4px));
         right: max(15px, env(safe-area-inset-right));
+    }
+    
+    :fullscreen .bottom-controls,
+    :-webkit-full-screen .bottom-controls {
+        bottom: max(calc(10px + 30px), calc(env(safe-area-inset-bottom) + 10px + 30px));
+        left: max(10px, env(safe-area-inset-left));
+    }
+    
+    :fullscreen .projection-panel,
+    :fullscreen .source-panel,
+    :fullscreen .options-panel,
+    :-webkit-full-screen .projection-panel,
+    :-webkit-full-screen .source-panel,
+    :-webkit-full-screen .options-panel {
+        bottom: max(120px, calc(env(safe-area-inset-bottom) + 100px));
+        left: max(10px, env(safe-area-inset-left));
+        right: max(10px, env(safe-area-inset-right));
     }
 }
 
@@ -172,6 +286,23 @@
         top: max(60px, calc(env(safe-area-inset-top) + 48px + 4px));
         right: max(8px, env(safe-area-inset-right));
     }
+    
+    :fullscreen .bottom-controls,
+    :-webkit-full-screen .bottom-controls {
+        bottom: max(calc(8px + 25px), calc(env(safe-area-inset-bottom) + 8px + 25px));
+        left: max(8px, env(safe-area-inset-left));
+    }
+    
+    :fullscreen .projection-panel,
+    :fullscreen .source-panel,
+    :fullscreen .options-panel,
+    :-webkit-full-screen .projection-panel,
+    :-webkit-full-screen .source-panel,
+    :-webkit-full-screen .options-panel {
+        bottom: max(110px, calc(env(safe-area-inset-bottom) + 90px));
+        left: max(8px, env(safe-area-inset-left));
+        right: max(8px, env(safe-area-inset-right));
+    }
 }
 
 /* Reduced motion preferences */
@@ -183,7 +314,11 @@
         scroll-behavior: auto !important;
     }
     
-    .zoom-indicator {
+    .zoom-indicator,
+    .projection-panel,
+    .source-panel,
+    .options-panel,
+    .panel-backdrop {
         transition: none;
     }
 }

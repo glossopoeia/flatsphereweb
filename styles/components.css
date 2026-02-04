@@ -69,6 +69,17 @@ input[type="checkbox"] {
     gap: var(--spacing-sm);
 }
 
+/* Options panel specific styling for right-aligned checkboxes */
+.options-panel .control-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.options-panel .checkbox-group {
+    margin-left: auto;
+}
+
 small {
     color: var(--text-muted);
     font-size: var(--font-size-sm);

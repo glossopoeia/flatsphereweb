@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
-  <path id="rectboundary" stroke="black" stroke-width="8" fill="none"
+  <path id="rectboundary" stroke="white" stroke-width="8" fill="none"
     d="M 350 50 C 350 50 350 350 350 350 C 350 350 50 350 50 350 C 50 350 50 50 50 50 C 50 50 350 50 350 50 Z"></path>
 
   <!-- Globe shape that morphs to square -->
-  <path id="boundary" stroke="black" stroke-width="8" fill="none"
+  <path id="boundary" stroke="white" stroke-width="8" fill="none"
     d="M 306.066,93.934 
        C 364.645,152.513 364.645,247.487 306.066,306.066
        C 247.487,364.645 152.513,364.645 93.934,306.066
@@ -16,8 +16,8 @@
            C 35.355,247.487 35.355,152.513 93.934,93.934
            C 152.513,35.355 247.487,35.355 306.066,93.934 Z"
       to="M 350 50 C 350 50 350 350 350 350 C 350 350 50 350 50 350 C 50 350 50 50 50 50 C 50 50 350 50 350 50 Z"
-      begin="3s; squareToCircle.end + 3s"
-      dur="1s"
+      begin="500ms; squareToCircle.end + 500ms"
+      dur="500ms"
       fill="freeze"/>
     <animate id="squareToCircle" attributeName="d" 
       from="M 350 50 C 350 50 350 350 350 350 C 350 350 50 350 50 350 C 50 350 50 50 50 50 C 50 50 350 50 350 50 Z"
@@ -26,62 +26,62 @@
            C 247.487,364.645 152.513,364.645 93.934,306.066
            C 35.355,247.487 35.355,152.513 93.934,93.934
            C 152.513,35.355 247.487,35.355 306.066,93.934 Z"
-      begin="circleToSquare.end + 3s" 
-      dur="1s" 
+      begin="circleToSquare.end + 500ms" 
+      dur="500ms" 
       fill="freeze"/>
   </path>
   
   <!-- Equator line -->
-  <path id="equator" stroke="black" stroke-width="6" fill="none"
+  <path id="equator" stroke="white" stroke-width="6" fill="none"
     d="M 50 200 Q 200 220 350 200">
     <animate id="equatorCurveToStraight" attributeName="d" 
       from="M 50 200 Q 200 220 350 200"
       to="M 50 200 Q 200 200 350 200"
-      begin="3s; equatorStraightToCurve.end + 3s" 
-      dur="1s" 
+      begin="500ms; equatorStraightToCurve.end + 500ms" 
+      dur="500ms" 
       fill="freeze"/>
     <animate id="equatorStraightToCurve" attributeName="d" 
       from="M 50 200 Q 200 200 350 200"
       to="M 50 200 Q 200 220 350 200"
-      begin="equatorCurveToStraight.end + 3s" 
-      dur="1s" 
+      begin="equatorCurveToStraight.end + 500ms" 
+      dur="500ms" 
       fill="freeze"/>
   </path>
   
   <!-- Prime meridian - stays straight -->
-  <path id="primemeridian" d="M 200 50 L 200 350" stroke="black" stroke-width="6" fill="none"/>
+  <path id="primemeridian" d="M 200 50 L 200 350" stroke="white" stroke-width="6" fill="none"/>
   
   <!-- Left meridian -->
-  <path id="leftmeridian" stroke="black" stroke-width="6" fill="none"
+  <path id="leftmeridian" stroke="white" stroke-width="6" fill="none"
     d="M 200 50 Q 50 200 200 350">
     <animate id="leftCurveToStraight" attributeName="d" 
       from="M 200 50 Q 50 200 200 350"
       to="M 125 50 Q 125 200 125 350"
-      begin="3s; leftStraightToCurve.end + 3s" 
-      dur="1s" 
+      begin="500ms; leftStraightToCurve.end + 500ms" 
+      dur="500ms" 
       fill="freeze"/>
     <animate id="leftStraightToCurve" attributeName="d" 
       from="M 125 50 Q 125 200 125 350"
       to="M 200 50 Q 50 200 200 350"
-      begin="leftCurveToStraight.end + 3s" 
-      dur="1s" 
+      begin="leftCurveToStraight.end + 500ms" 
+      dur="500ms" 
       fill="freeze"/>
   </path>
   
   <!-- Right meridian -->
-  <path id="rightmeridian" stroke="black" stroke-width="6" fill="none"
+  <path id="rightmeridian" stroke="white" stroke-width="6" fill="none"
     d="M 200 50 Q 350 200 200 350">
     <animate id="rightCurveToStraight" attributeName="d" 
       from="M 200 50 Q 350 200 200 350"
       to="M 275 50 Q 275 200 275 350"
-      begin="3s; rightStraightToCurve.end + 3s" 
-      dur="1s" 
+      begin="500ms; rightStraightToCurve.end + 500ms" 
+      dur="500ms" 
       fill="freeze"/>
     <animate id="rightStraightToCurve" attributeName="d" 
       from="M 275 50 Q 275 200 275 350"
       to="M 200 50 Q 350 200 200 350"
-      begin="rightCurveToStraight.end + 3s" 
-      dur="1s" 
+      begin="rightCurveToStraight.end + 500ms" 
+      dur="500ms" 
       fill="freeze"/>
   </path>
 </svg>

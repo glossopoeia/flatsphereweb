@@ -28,6 +28,7 @@ export class InteractionManager extends EventTarget {
         this.sourcePanelClose = document.getElementById('sourcePanelClose');
         this.optionsPanelClose = document.getElementById('optionsPanelClose');
         this.panelBackdrop = document.getElementById('panelBackdrop');
+        this.loadingBackdrop = document.getElementById('loadingBackdrop');
         this.projectionGrid = document.getElementById('projectionGrid');
         this.sourceGrid = document.getElementById('sourceGrid');
         this.projectionPreview = document.getElementById('projectionPreview');
@@ -455,6 +456,13 @@ export class InteractionManager extends EventTarget {
     setLoadingState(isLoading) {
         this.loadImageButton.textContent = isLoading ? 'Loading...' : 'Load Image';
         this.loadImageButton.disabled = isLoading;
+        
+        // Show/hide loading backdrop
+        if (isLoading) {
+            this.loadingBackdrop.classList.add('open');
+        } else {
+            this.loadingBackdrop.classList.remove('open');
+        }
     }
 
     // Panel management methods

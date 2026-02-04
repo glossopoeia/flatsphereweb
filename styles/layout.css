@@ -151,8 +151,7 @@
 }
 
 /* Panel overlays */
-.projection-panel,
-.source-panel,
+.unified-projection-panel,
 .options-panel {
     position: absolute;
     bottom: 110px; /* Above bottom controls */
@@ -172,8 +171,7 @@
     transition: all var(--transition-normal);
 }
 
-.projection-panel.open,
-.source-panel.open,
+.unified-projection-panel.open,
 .options-panel.open {
     opacity: 1;
     visibility: visible;

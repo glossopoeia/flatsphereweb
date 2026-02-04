@@ -76,8 +76,8 @@ export class InteractionManager extends EventTarget {
         this.initialZoom = this.zoom;
         
         this.setupEventListeners();
-        this.populateProjectionGrid();
-        this.populateSourceGrid();
+        this.populateProjectionGrid('destination');
+        this.populateProjectionGrid('source');
     }
     
     setupEventListeners() {
@@ -512,18 +512,22 @@ export class InteractionManager extends EventTarget {
         }
     }
 
-    // Populate projection grid
-    populateProjectionGrid() {
-        this.projectionGrid.innerHTML = '';
+    // Unified projection grid population
+    populateProjectionGrid(panelType = 'destination') {
+        const gridId = panelType === 'destination' ? 'projectionGrid' : 'sourceGrid';
+        const grid = document.getElementById(gridId);
+        const currentSelection = panelType === 'destination' ? this.currentShownProjection : this.currentSourceProjection;
+        
+        grid.innerHTML = '';
         
         this.projections.forEach(projection => {
             const item = document.createElement('button');
             item.className = 'projection-item';
             item.setAttribute('data-projection-id', projection.id);
             item.setAttribute('type', 'button');
-            item.setAttribute('aria-pressed', projection.id === this.currentShownProjection);
+            item.setAttribute('aria-pressed', projection.id === currentSelection);
             
-            if (projection.id === this.currentShownProjection) {
+            if (projection.id === currentSelection) {
                 item.classList.add('selected');
             }
             
@@ -538,51 +542,27 @@ export class InteractionManager extends EventTarget {
             `;
             
             item.addEventListener('click', () => {
-                this.selectProjection(projection.id);
+                this.selectProjection(projection.id, panelType);
             });
             
-            this.projectionGrid.appendChild(item);
+            grid.appendChild(item);
         });
     }
 
-    // Populate source projection grid
-    populateSourceGrid() {
-        this.sourceGrid.innerHTML = '';
+    // Unified projection selection
+    selectProjection(projectionId, panelType = 'destination') {
+        const isDestination = panelType === 'destination';
         
-        this.projections.forEach(projection => {
-            const item = document.createElement('button');
-            item.className = 'projection-item';
-            item.setAttribute('data-projection-id', projection.id);
-            item.setAttribute('type', 'button');
-            item.setAttribute('aria-pressed', projection.id === this.currentSourceProjection);
-            
-            if (projection.id === this.currentSourceProjection) {
-                item.classList.add('selected');
-            }
-            
-            item.innerHTML = `
-                <div class="projection-item-preview">
-                    ${projection.emoji}
-                </div>
-                <div class="projection-item-info">
-                    <div class="projection-item-name">${projection.name}</div>
-                    <div class="projection-item-description">${projection.description}</div>
-                </div>
-            `;
-            
-            item.addEventListener('click', () => {
-                this.selectSourceProjection(projection.id);
-            });
-            
-            this.sourceGrid.appendChild(item);
-        });
-    }
-
-    selectProjection(projectionId) {
-        this.currentShownProjection = projectionId;
+        if (isDestination) {
+            this.currentShownProjection = projectionId;
+        } else {
+            this.currentSourceProjection = projectionId;
+        }
         
-        // Update projection grid selection
-        this.projectionGrid.querySelectorAll('.projection-item').forEach(item => {
+        // Update grid selection
+        const gridId = isDestination ? 'projectionGrid' : 'sourceGrid';
+        const grid = document.getElementById(gridId);
+        grid.querySelectorAll('.projection-item').forEach(item => {
             const itemId = parseInt(item.getAttribute('data-projection-id'));
             if (itemId === projectionId) {
                 item.classList.add('selected');
@@ -596,44 +576,27 @@ export class InteractionManager extends EventTarget {
         // Update button preview
         const selectedProjection = this.projections.find(p => p.id === projectionId);
         if (selectedProjection) {
-            this.projectionPreview.textContent = selectedProjection.emoji;
-            this.projectionButton.setAttribute('title', `Select Projection (Current: ${selectedProjection.name})`);
-        }
-        
-        // Dispatch projection change event
-        this.dispatchEvent(new CustomEvent('destinationProjectionChanged', {
-            detail: { projectionType: projectionId }
-        }));
-    }
-        
-    selectSourceProjection(projectionId) {
-        this.currentSourceProjection = projectionId;
-        
-        // Update source grid selection
-        this.sourceGrid.querySelectorAll('.projection-item').forEach(item => {
-            const itemId = parseInt(item.getAttribute('data-projection-id'));
-            if (itemId === projectionId) {
-                item.classList.add('selected');
-                item.setAttribute('aria-pressed', 'true');
+            if (isDestination) {
+                this.projectionPreview.textContent = selectedProjection.emoji;
+                this.projectionButton.setAttribute('title', `Select Projection (Current: ${selectedProjection.name})`);
             } else {
-                item.classList.remove('selected');
-                item.setAttribute('aria-pressed', 'false');
+                this.sourcePreview.textContent = selectedProjection.emoji;
+                this.sourceButton.setAttribute('title', `Select Source Projection (Current: ${selectedProjection.name})`);
             }
-        });
-        
-        // Update source button preview
-        const selectedProjection = this.projections.find(p => p.id === projectionId);
-        if (selectedProjection) {
-            this.sourcePreview.textContent = selectedProjection.emoji;
-            this.sourceButton.setAttribute('title', `Select Source Projection (Current: ${selectedProjection.name})`);
         }
         
-        // Dispatch source projection change event
-        this.dispatchEvent(new CustomEvent('sourceProjectionChanged', {
-            detail: { sourceProjection: projectionId }
-        }));
-        
-        // Close panel after selection
-        this.closePanel('source');
+        // Dispatch appropriate event
+        if (isDestination) {
+            this.dispatchEvent(new CustomEvent('destinationProjectionChanged', {
+                detail: { projectionType: projectionId }
+            }));
+        } else {
+            this.dispatchEvent(new CustomEvent('sourceProjectionChanged', {
+                detail: { sourceProjection: projectionId }
+            }));
+            
+            // Close panel after selection
+            this.closePanel('source');
+        }
     }
 }

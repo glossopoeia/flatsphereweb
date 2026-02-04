@@ -71,8 +71,7 @@
         font-size: 1.3em;
     }
     
-    .projection-panel,
-    .source-panel,
+    .unified-projection-panel,
     .options-panel {
         bottom: 120px; /* Above larger mobile bottom controls */
         left: var(--spacing-xl);
@@ -136,8 +135,7 @@
         font-size: 1.2em;
     }
     
-    .projection-panel,
-    .source-panel,
+    .unified-projection-panel,
     .options-panel {
         bottom: 110px;
         left: 8px;
@@ -170,8 +168,7 @@
         grid-template-columns: 1fr 1fr;
     }
     
-    .projection-panel,
-    .source-panel,
+    .unified-projection-panel,
     .options-panel {
         width: 360px;
     }
@@ -217,11 +214,9 @@
     left: max(var(--spacing-xl), env(safe-area-inset-left));
 }
 
-:fullscreen .projection-panel,
-:fullscreen .source-panel,
+:fullscreen .unified-projection-panel,
 :fullscreen .options-panel,
-:-webkit-full-screen .projection-panel,
-:-webkit-full-screen .source-panel,
+:-webkit-full-screen .unified-projection-panel,
 :-webkit-full-screen .options-panel {
     bottom: max(110px, calc(env(safe-area-inset-bottom) + 90px));
     left: max(var(--spacing-xl), env(safe-area-inset-left));
@@ -255,11 +250,9 @@
         left: max(10px, env(safe-area-inset-left));
     }
     
-    :fullscreen .projection-panel,
-    :fullscreen .source-panel,
+    :fullscreen .unified-projection-panel,
     :fullscreen .options-panel,
-    :-webkit-full-screen .projection-panel,
-    :-webkit-full-screen .source-panel,
+    :-webkit-full-screen .unified-projection-panel,
     :-webkit-full-screen .options-panel {
         bottom: max(120px, calc(env(safe-area-inset-bottom) + 100px));
         left: max(10px, env(safe-area-inset-left));
@@ -293,11 +286,9 @@
         left: max(8px, env(safe-area-inset-left));
     }
     
-    :fullscreen .projection-panel,
-    :fullscreen .source-panel,
+    :fullscreen .unified-projection-panel,
     :fullscreen .options-panel,
-    :-webkit-full-screen .projection-panel,
-    :-webkit-full-screen .source-panel,
+    :-webkit-full-screen .unified-projection-panel,
     :-webkit-full-screen .options-panel {
         bottom: max(110px, calc(env(safe-area-inset-bottom) + 90px));
         left: max(8px, env(safe-area-inset-left));
@@ -315,8 +306,7 @@
     }
     
     .zoom-indicator,
-    .projection-panel,
-    .source-panel,
+    .unified-projection-panel,
     .options-panel,
     .panel-backdrop {
         transition: none;

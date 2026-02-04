@@ -33,12 +33,6 @@ export class InteractionManager extends EventTarget {
         this.projectionPreview = document.getElementById('projectionPreview');
         this.sourcePreview = document.getElementById('sourcePreview');
         
-        // Options controls
-        this.tissotToggle = document.getElementById('tissotToggle');
-        this.graticuleToggle = document.getElementById('graticuleToggle');
-        this.aspectRatioSlider = document.getElementById('aspectRatioSlider');
-        this.aspectRatioValue = document.getElementById('aspectRatioValue');
-        
         // Projection data
         this.projections = [
             { id: 0, name: 'Plate Carrée (Equirectangular)', description: 'Simple rectangular projection', emoji: '🗺️' },

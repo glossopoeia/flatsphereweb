@@ -5,9 +5,7 @@ export class InteractionManager extends EventTarget {
         this.canvas = canvas;
         
         // DOM control elements
-        this.projectionSelect = document.getElementById('projectionSelect');
         this.imageUrlInput = document.getElementById('imageUrl');
-        this.sourceProjectionSelect = document.getElementById('sourceProjection');
         this.loadImageButton = document.getElementById('loadImageButton');
         this.tissotToggle = document.getElementById('tissotToggle');
         this.graticuleToggle = document.getElementById('graticuleToggle');
@@ -18,6 +16,39 @@ export class InteractionManager extends EventTarget {
         this.toggleControls = document.getElementById('toggleControls');
         this.fullscreenButton = document.getElementById('fullscreenButton');
         this.zoomIndicator = document.getElementById('zoomIndicator');
+        
+        // Projection and option buttons and panels
+        this.projectionButton = document.getElementById('projectionButton');
+        this.sourceButton = document.getElementById('sourceButton');
+        this.optionsButton = document.getElementById('optionsButton');
+        this.projectionPanel = document.getElementById('projectionPanel');
+        this.sourcePanel = document.getElementById('sourcePanel');
+        this.optionsPanel = document.getElementById('optionsPanel');
+        this.projectionPanelClose = document.getElementById('projectionPanelClose');
+        this.sourcePanelClose = document.getElementById('sourcePanelClose');
+        this.optionsPanelClose = document.getElementById('optionsPanelClose');
+        this.panelBackdrop = document.getElementById('panelBackdrop');
+        this.projectionGrid = document.getElementById('projectionGrid');
+        this.sourceGrid = document.getElementById('sourceGrid');
+        this.projectionPreview = document.getElementById('projectionPreview');
+        this.sourcePreview = document.getElementById('sourcePreview');
+        
+        // Projection data
+        this.projections = [
+            { id: 0, name: 'Plate Carrée (Equirectangular)', description: 'Simple rectangular projection', emoji: '🗺️' },
+            { id: 1, name: 'Mercator', description: 'Preserves angles, distorts area', emoji: '🧭' },
+            { id: 2, name: 'Orthographic', description: 'Earth as seen from space', emoji: '🌍' },
+            { id: 3, name: 'Vertical Perspective', description: 'Perspective from altitude', emoji: '🛰️' },
+            { id: 4, name: 'Azimuthal Equidistant', description: 'Preserves distance from center', emoji: '📡' },
+            { id: 5, name: 'Stereographic', description: 'Conformal azimuthal projection', emoji: '⭕' },
+            { id: 6, name: 'Sinusoidal', description: 'Equal-area pseudocylindrical', emoji: '〰️' },
+            { id: 7, name: 'Lambert Azimuthal Equal-Area', description: 'Preserves area', emoji: '🎯' },
+            { id: 8, name: 'Gnomonic', description: 'Great circles as straight lines', emoji: '📐' },
+            { id: 9, name: 'Mollweide', description: 'Equal-area elliptical projection', emoji: '🥚' }
+        ];
+        
+        this.currentShownProjection = 0; // Index of the projection the user has selected to transform the image into
+        this.currentSourceProjection = 0; // Index of the projection the user's source image is transformed from
         
         // Camera state
         this.cameraLat = 90; // degrees
@@ -32,22 +63,18 @@ export class InteractionManager extends EventTarget {
         this.controlsVisible = true;
         this.isFullscreen = false;
         this.zoomIndicatorTimeout = null;
+        this.activePanelId = null;
         
         // Touch zoom state
         this.lastTouchDistance = 0;
         this.initialZoom = this.zoom;
         
         this.setupEventListeners();
+        this.populateProjectionGrid('destination');
+        this.populateProjectionGrid('source');
     }
     
     setupEventListeners() {
-        // Control event listeners
-        this.projectionSelect.addEventListener('change', () => {
-            this.dispatchEvent(new CustomEvent('destinationProjectionChanged', {
-                detail: { projectionType: parseInt(this.projectionSelect.value) }
-            }));
-        });
-        
         this.tissotToggle.addEventListener('change', () => {
             this.dispatchEvent(new CustomEvent('tissotToggled', {
                 detail: { enabled: this.tissotToggle.checked }
@@ -62,7 +89,7 @@ export class InteractionManager extends EventTarget {
 
         this.loadImageButton.addEventListener('click', () => {
             const imageUrl = this.imageUrlInput.value.trim();
-            const sourceProjection = parseInt(this.sourceProjectionSelect.value);
+            const sourceProjection = this.currentSourceProjection;
             this.dispatchEvent(new CustomEvent('imageLoaded', {
                 detail: { imageUrl, sourceProjection }
             }));
@@ -71,17 +98,11 @@ export class InteractionManager extends EventTarget {
         this.imageUrlInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
                 const imageUrl = this.imageUrlInput.value.trim();
-                const sourceProjection = parseInt(this.sourceProjectionSelect.value);
+                const sourceProjection = this.currentSourceProjection;
                 this.dispatchEvent(new CustomEvent('imageLoaded', {
                     detail: { imageUrl, sourceProjection }
                 }));
             }
-        });
-
-        this.sourceProjectionSelect.addEventListener('change', () => {
-            this.dispatchEvent(new CustomEvent('sourceProjectionChanged', {
-                detail: { sourceProjection: parseInt(this.sourceProjectionSelect.value) }
-            }));
         });
 
         this.aspectRatioSlider.addEventListener('input', () => {
@@ -92,10 +113,53 @@ export class InteractionManager extends EventTarget {
             }));
         });
 
-        // Controls visibility toggle
-        this.toggleControls.addEventListener('click', () => {
-            this.toggleControlsVisibility();
+        // Bottom control buttons
+        this.projectionButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.togglePanel('projection');
         });
+
+        this.sourceButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.togglePanel('source');
+        });
+
+        this.optionsButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.togglePanel('options');
+        });
+
+        // Panel close buttons
+        this.projectionPanelClose.addEventListener('click', () => {
+            this.closePanel('projection');
+        });
+
+        this.sourcePanelClose.addEventListener('click', () => {
+            this.closePanel('source');
+        });
+
+        this.optionsPanelClose.addEventListener('click', () => {
+            this.closePanel('options');
+        });
+
+        // Panel backdrop
+        this.panelBackdrop.addEventListener('click', () => {
+            this.closeAllPanels();
+        });
+
+        // Escape key to close panels
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.activePanelId) {
+                this.closeAllPanels();
+            }
+        });
+
+        // Controls visibility toggle
+        if (this.toggleControls) {
+            this.toggleControls.addEventListener('click', () => {
+                this.toggleControlsVisibility();
+            });
+        }
 
         // Fullscreen toggle
         this.fullscreenButton.addEventListener('click', () => {
@@ -368,11 +432,11 @@ export class InteractionManager extends EventTarget {
     }
 
     get destinationProjection() {
-        return parseInt(this.projectionSelect.value);
+        return this.currentShownProjection;
     }
 
     get sourceProjection() {
-        return parseInt(this.sourceProjectionSelect.value);
+        return this.currentSourceProjection;
     }
 
     get tissotEnabled() {
@@ -391,5 +455,142 @@ export class InteractionManager extends EventTarget {
     setLoadingState(isLoading) {
         this.loadImageButton.textContent = isLoading ? 'Loading...' : 'Load Image';
         this.loadImageButton.disabled = isLoading;
+    }
+
+    // Panel management methods
+    togglePanel(panelId) {
+        if (this.activePanelId === panelId) {
+            this.closePanel(panelId);
+        } else {
+            this.openPanel(panelId);
+        }
+    }
+
+    openPanel(panelId) {
+        // Close any currently open panel
+        this.closeAllPanels();
+        
+        this.activePanelId = panelId;
+        const panel = document.getElementById(`${panelId}Panel`);
+        const button = document.getElementById(`${panelId}Button`);
+        
+        panel.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+        button.classList.add('active');
+        this.panelBackdrop.classList.add('open');
+        
+        // Focus first interactive element in panel
+        const firstInteractive = panel.querySelector('button, [tabindex="0"]');
+        if (firstInteractive) {
+            firstInteractive.focus();
+        }
+    }
+
+    closePanel(panelId) {
+        const panel = document.getElementById(`${panelId}Panel`);
+        const button = document.getElementById(`${panelId}Button`);
+        
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        button.classList.remove('active');
+        
+        if (this.activePanelId === panelId) {
+            this.activePanelId = null;
+            this.panelBackdrop.classList.remove('open');
+        }
+    }
+
+    closeAllPanels() {
+        if (this.activePanelId) {
+            this.closePanel(this.activePanelId);
+        }
+    }
+
+    // Unified projection grid population
+    populateProjectionGrid(panelType = 'destination') {
+        const gridId = panelType === 'destination' ? 'projectionGrid' : 'sourceGrid';
+        const grid = document.getElementById(gridId);
+        const currentSelection = panelType === 'destination' ? this.currentShownProjection : this.currentSourceProjection;
+        
+        grid.innerHTML = '';
+        
+        this.projections.forEach(projection => {
+            const item = document.createElement('button');
+            item.className = 'projection-item';
+            item.setAttribute('data-projection-id', projection.id);
+            item.setAttribute('type', 'button');
+            item.setAttribute('aria-pressed', projection.id === currentSelection);
+            
+            if (projection.id === currentSelection) {
+                item.classList.add('selected');
+            }
+            
+            item.innerHTML = `
+                <div class="projection-item-preview">
+                    ${projection.emoji}
+                </div>
+                <div class="projection-item-info">
+                    <div class="projection-item-name">${projection.name}</div>
+                    <div class="projection-item-description">${projection.description}</div>
+                </div>
+            `;
+            
+            item.addEventListener('click', () => {
+                this.selectProjection(projection.id, panelType);
+            });
+            
+            grid.appendChild(item);
+        });
+    }
+
+    // Unified projection selection
+    selectProjection(projectionId, panelType = 'destination') {
+        const isDestination = panelType === 'destination';
+        
+        if (isDestination) {
+            this.currentShownProjection = projectionId;
+        } else {
+            this.currentSourceProjection = projectionId;
+        }
+        
+        // Update grid selection
+        const gridId = isDestination ? 'projectionGrid' : 'sourceGrid';
+        const grid = document.getElementById(gridId);
+        grid.querySelectorAll('.projection-item').forEach(item => {
+            const itemId = parseInt(item.getAttribute('data-projection-id'));
+            if (itemId === projectionId) {
+                item.classList.add('selected');
+                item.setAttribute('aria-pressed', 'true');
+            } else {
+                item.classList.remove('selected');
+                item.setAttribute('aria-pressed', 'false');
+            }
+        });
+        
+        // Update button preview
+        const selectedProjection = this.projections.find(p => p.id === projectionId);
+        if (selectedProjection) {
+            if (isDestination) {
+                this.projectionPreview.textContent = selectedProjection.emoji;
+                this.projectionButton.setAttribute('title', `Select Projection (Current: ${selectedProjection.name})`);
+            } else {
+                this.sourcePreview.textContent = selectedProjection.emoji;
+                this.sourceButton.setAttribute('title', `Select Source Projection (Current: ${selectedProjection.name})`);
+            }
+        }
+        
+        // Dispatch appropriate event
+        if (isDestination) {
+            this.dispatchEvent(new CustomEvent('destinationProjectionChanged', {
+                detail: { projectionType: projectionId }
+            }));
+        } else {
+            this.dispatchEvent(new CustomEvent('sourceProjectionChanged', {
+                detail: { sourceProjection: projectionId }
+            }));
+            
+            // Close panel after selection
+            this.closePanel('source');
+        }
     }
 }

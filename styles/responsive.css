@@ -308,7 +308,17 @@
     .zoom-indicator,
     .unified-projection-panel,
     .options-panel,
-    .panel-backdrop {
+    .panel-backdrop,
+    .loading-backdrop {
         transition: none;
+    }
+    
+    .loading-logo {
+        width: min(150px, 35vw);
+        height: min(150px, 35vw);
+    }
+    
+    .loading-text {
+        font-size: var(--font-size-base);
     }
 }

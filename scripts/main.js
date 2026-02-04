@@ -51,6 +51,12 @@ async function checkWebGPUSupport() {
 // Initialize app only if WebGPU is supported
 checkWebGPUSupport().then(supported => {
     if (supported) {
+        // Show loading screen immediately
+        const loadingBackdrop = document.getElementById('loadingBackdrop');
+        if (loadingBackdrop) {
+            loadingBackdrop.classList.add('open');
+        }
+        
         new ProjectionApp();
     }
 });

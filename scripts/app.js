@@ -66,7 +66,13 @@ export class ProjectionApp {
             await this.renderer.initialize(this.canvas);
             this.resizeCanvas();
             this.render();
+            
+            // Hide loading screen once initialization is complete
+            this.interactionManager.setLoadingState(false);
         } catch (error) {
+            // Hide loading screen on error
+            this.interactionManager.setLoadingState(false);
+            
             let message = 'Failed to initialize WebGPU renderer: ';
             
             if (error.message.includes('adapter')) {

@@ -15,21 +15,21 @@ export class InteractionManager extends EventTarget {
         this.graticuleToggle = document.getElementById('graticuleToggle');
         this.aspectRatioSlider = document.getElementById('aspectRatioSlider');
         this.aspectRatioValue = document.getElementById('aspectRatioValue');
-        this.controlsOverlay = document.getElementById('controlsOverlay');
-        this.controlsContent = document.getElementById('controlsContent');
-        this.toggleControls = document.getElementById('toggleControls');
         this.fullscreenButton = document.getElementById('fullscreenButton');
         this.zoomIndicator = document.getElementById('zoomIndicator');
         
         // Projection and option buttons and panels
         this.projectionButton = document.getElementById('projectionButton');
         this.sourceButton = document.getElementById('sourceButton');
+        this.imageSourceButton = document.getElementById('imageSourceButton');
         this.optionsButton = document.getElementById('optionsButton');
         this.projectionPanel = document.getElementById('projectionPanel');
         this.sourcePanel = document.getElementById('sourcePanel');
+        this.imageSourcePanel = document.getElementById('imageSourcePanel');
         this.optionsPanel = document.getElementById('optionsPanel');
         this.projectionPanelClose = document.getElementById('projectionPanelClose');
         this.sourcePanelClose = document.getElementById('sourcePanelClose');
+        this.imageSourcePanelClose = document.getElementById('imageSourcePanelClose');
         this.optionsPanelClose = document.getElementById('optionsPanelClose');
         this.panelBackdrop = document.getElementById('panelBackdrop');
         this.loadingBackdrop = document.getElementById('loadingBackdrop');
@@ -65,7 +65,6 @@ export class InteractionManager extends EventTarget {
         this.isDragging = false;
         this.lastX = 0;
         this.lastY = 0;
-        this.controlsVisible = true;
         this.isFullscreen = false;
         this.zoomIndicatorTimeout = null;
         this.activePanelId = null;
@@ -167,6 +166,11 @@ export class InteractionManager extends EventTarget {
             this.togglePanel('source');
         });
 
+        this.imageSourceButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.togglePanel('imageSource');
+        });
+
         this.optionsButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.togglePanel('options');
@@ -179,6 +183,10 @@ export class InteractionManager extends EventTarget {
 
         this.sourcePanelClose.addEventListener('click', () => {
             this.closePanel('source');
+        });
+
+        this.imageSourcePanelClose.addEventListener('click', () => {
+            this.closePanel('imageSource');
         });
 
         this.optionsPanelClose.addEventListener('click', () => {
@@ -196,13 +204,6 @@ export class InteractionManager extends EventTarget {
                 this.closeAllPanels();
             }
         });
-
-        // Controls visibility toggle
-        if (this.toggleControls) {
-            this.toggleControls.addEventListener('click', () => {
-                this.toggleControlsVisibility();
-            });
-        }
 
         // Fullscreen toggle
         this.fullscreenButton.addEventListener('click', () => {
@@ -312,26 +313,6 @@ export class InteractionManager extends EventTarget {
         
         // Set initial cursor
         this.canvas.style.cursor = 'grab';
-
-        // Hide controls after inactivity on mobile
-        let hideTimeout;
-        const resetHideTimeout = () => {
-            clearTimeout(hideTimeout);
-            if (window.innerWidth <= 768) {
-                hideTimeout = setTimeout(() => {
-                    if (this.controlsVisible) {
-                        this.controlsOverlay.classList.add('controls-collapsed');
-                    }
-                }, 3000);
-            }
-        };
-
-        this.canvas.addEventListener('touchstart', resetHideTimeout);
-        this.canvas.addEventListener('touchmove', resetHideTimeout);
-        this.controlsOverlay.addEventListener('touchstart', () => {
-            clearTimeout(hideTimeout);
-            this.controlsOverlay.classList.remove('controls-collapsed');
-        });
     }
 
     startDrag(x, y) {
@@ -400,19 +381,6 @@ export class InteractionManager extends EventTarget {
         this.zoomIndicatorTimeout = setTimeout(() => {
             this.zoomIndicator.classList.remove('visible');
         }, 2000);
-    }
-
-    toggleControlsVisibility() {
-        this.controlsVisible = !this.controlsVisible;
-        
-        if (this.controlsVisible) {
-            this.controlsContent.style.display = 'grid';
-            this.toggleControls.textContent = 'Hide';
-            this.controlsOverlay.classList.remove('controls-collapsed');
-        } else {
-            this.controlsContent.style.display = 'none';
-            this.toggleControls.textContent = 'Show';
-        }
     }
 
     async toggleFullscreen() {

@@ -9,44 +9,7 @@
     display: block;
 }
 
-.controls-overlay {
-    position: absolute;
-    top: var(--spacing-xl);
-    left: var(--spacing-xl);
-    right: var(--spacing-xl);
-    z-index: 100;
-    background: var(--bg-secondary);
-    backdrop-filter: blur(10px);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    max-width: 350px;
-    transition: opacity var(--transition-normal);
-}
-
-.controls-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
-}
-
-.app-title {
-    font-size: var(--font-size-xl);
-    font-weight: bold;
-    margin: 0;
-}
-
-.header-buttons {
-    display: flex;
-    gap: var(--spacing-sm);
-}
-
-.controls-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-lg);
-}
-
+/* Fullscreen button styles moved here from old controls */
 .fullscreen-button {
     position: absolute;
     top: var(--spacing-xl);
@@ -152,7 +115,8 @@
 
 /* Panel overlays */
 .unified-projection-panel,
-.options-panel {
+.options-panel,
+.image-source-panel {
     position: absolute;
     bottom: 110px; /* Above bottom controls */
     left: var(--spacing-xl);
@@ -172,7 +136,8 @@
 }
 
 .unified-projection-panel.open,
-.options-panel.open {
+.options-panel.open,
+.image-source-panel.open {
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
@@ -402,7 +367,3 @@
     border-color: var(--success-border);
 }
 
-/* State classes */
-.controls-collapsed {
-    opacity: 0.3;
-}

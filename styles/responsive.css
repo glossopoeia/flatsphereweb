@@ -5,21 +5,17 @@
         --spacing-lg: 12px;
     }
     
-    .controls-overlay {
-        top: var(--spacing-xl);
+    /* Bottom controls mobile adjustments */
+    .bottom-controls {
+        bottom: calc(var(--spacing-xl) + 30px); /* Higher positioning for mobile */
         left: var(--spacing-xl);
-        right: 70px; /* Make room for fullscreen button */
-        padding: var(--spacing-lg);
-        max-width: none;
+        gap: var(--spacing-xs); /* Tighter spacing */
     }
     
-    .app-title {
-        font-size: var(--font-size-lg);
-    }
-    
-    .controls-content {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
+    .bottom-control-button {
+        width: 56px;
+        height: 56px;
+        font-size: 1.3em;
     }
     
     .control-button {
@@ -58,21 +54,9 @@
         padding: 6px var(--spacing-sm);
     }
     
-    /* Bottom controls mobile adjustments */
-    .bottom-controls {
-        bottom: calc(var(--spacing-xl) + 30px); /* Higher positioning for mobile */
-        left: var(--spacing-xl);
-        gap: var(--spacing-xs); /* Tighter spacing */
-    }
-    
-    .bottom-control-button {
-        width: 56px;
-        height: 56px;
-        font-size: 1.3em;
-    }
-    
     .unified-projection-panel,
-    .options-panel {
+    .options-panel,
+    .image-source-panel {
         bottom: 120px; /* Above larger mobile bottom controls */
         left: var(--spacing-xl);
         right: var(--spacing-xl);
@@ -114,17 +98,6 @@
 
 /* Landscape phone optimization */
 @media (max-width: 768px) and (orientation: landscape) {
-    .controls-overlay {
-        top: 8px;
-        right: 60px; /* Make room for fullscreen button in landscape */
-        padding: 10px;
-    }
-    
-    .controls-content {
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-    }
-    
     .fullscreen-button {
         top: 8px;
         right: 8px;
@@ -153,7 +126,8 @@
     }
     
     .unified-projection-panel,
-    .options-panel {
+    .options-panel,
+    .image-source-panel {
         bottom: 110px;
         left: 8px;
         right: 8px;
@@ -177,16 +151,9 @@
 
 /* Tablet optimizations */
 @media (min-width: 769px) and (max-width: 1024px) {
-    .controls-overlay {
-        max-width: 400px;
-    }
-    
-    .controls-content {
-        grid-template-columns: 1fr 1fr;
-    }
-    
     .unified-projection-panel,
-    .options-panel {
+    .options-panel,
+    .image-source-panel {
         width: 360px;
     }
 }
@@ -201,13 +168,6 @@
 }
 
 /* Fullscreen mode safe area adjustments */
-:fullscreen .controls-overlay,
-:-webkit-full-screen .controls-overlay {
-    top: max(var(--spacing-xl), env(safe-area-inset-top));
-    left: max(var(--spacing-xl), env(safe-area-inset-left));
-    right: max(var(--spacing-xl), env(safe-area-inset-right));
-}
-
 :fullscreen .fullscreen-button,
 :-webkit-full-screen .fullscreen-button {
     top: max(var(--spacing-xl), env(safe-area-inset-top));
@@ -233,8 +193,10 @@
 
 :fullscreen .unified-projection-panel,
 :fullscreen .options-panel,
+:fullscreen .image-source-panel,
 :-webkit-full-screen .unified-projection-panel,
-:-webkit-full-screen .options-panel {
+:-webkit-full-screen .options-panel,
+:-webkit-full-screen .image-source-panel {
     bottom: max(110px, calc(env(safe-area-inset-bottom) + 90px));
     left: max(var(--spacing-xl), env(safe-area-inset-left));
     right: max(var(--spacing-xl), env(safe-area-inset-right));
@@ -242,13 +204,6 @@
 
 /* Mobile fullscreen safe area adjustments */
 @media (max-width: 768px) {
-    :fullscreen .controls-overlay,
-    :-webkit-full-screen .controls-overlay {
-        top: max(10px, env(safe-area-inset-top));
-        left: max(10px, env(safe-area-inset-left));
-        right: max(70px, calc(env(safe-area-inset-right) + 56px + 10px));
-    }
-    
     :fullscreen .fullscreen-button,
     :-webkit-full-screen .fullscreen-button {
         top: max(10px, env(safe-area-inset-top));
@@ -269,8 +224,10 @@
     
     :fullscreen .unified-projection-panel,
     :fullscreen .options-panel,
+    :fullscreen .image-source-panel,
     :-webkit-full-screen .unified-projection-panel,
-    :-webkit-full-screen .options-panel {
+    :-webkit-full-screen .options-panel,
+    :-webkit-full-screen .image-source-panel {
         bottom: max(120px, calc(env(safe-area-inset-bottom) + 100px));
         left: max(10px, env(safe-area-inset-left));
         right: max(10px, env(safe-area-inset-right));
@@ -278,13 +235,6 @@
 }
 
 @media (max-width: 768px) and (orientation: landscape) {
-    :fullscreen .controls-overlay,
-    :-webkit-full-screen .controls-overlay {
-        top: max(8px, env(safe-area-inset-top));
-        left: max(8px, env(safe-area-inset-left));
-        right: max(60px, calc(env(safe-area-inset-right) + 48px + 8px));
-    }
-    
     :fullscreen .fullscreen-button,
     :-webkit-full-screen .fullscreen-button {
         top: max(8px, env(safe-area-inset-top));
@@ -305,8 +255,10 @@
     
     :fullscreen .unified-projection-panel,
     :fullscreen .options-panel,
+    :fullscreen .image-source-panel,
     :-webkit-full-screen .unified-projection-panel,
-    :-webkit-full-screen .options-panel {
+    :-webkit-full-screen .options-panel,
+    :-webkit-full-screen .image-source-panel {
         bottom: max(110px, calc(env(safe-area-inset-bottom) + 90px));
         left: max(8px, env(safe-area-inset-left));
         right: max(8px, env(safe-area-inset-right));
@@ -333,6 +285,7 @@
     .zoom-indicator,
     .unified-projection-panel,
     .options-panel,
+    .image-source-panel,
     .panel-backdrop,
     .loading-backdrop {
         transition: none;

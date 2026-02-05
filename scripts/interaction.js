@@ -706,7 +706,7 @@ export class InteractionManager extends EventTarget {
             <div class="drag-drop-icon" aria-hidden="true">❌</div>
             <div class="drag-drop-text">
                 <strong class="error-text">Error</strong>
-                <span style="error-text error-message">${message}</span>
+                <span class="error-text error-message">${message}</span>
             </div>
         `;
         

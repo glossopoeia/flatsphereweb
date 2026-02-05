@@ -1,4 +1,5 @@
 import { link } from "https://cdn.jsdelivr.net/npm/wesl/+esm";
+import { projections } from "./projections.js";
 
 export class ProjectionRenderer {
     constructor() {
@@ -26,25 +27,14 @@ export class ProjectionRenderer {
         this.device = await adapter.requestDevice();
 
         // Get projection shaders
-        const projections = [
-            'plate-carree',
-            'mercator',
-            'orthographic',
-            'vertical-perspective',
-            'azimuthal-equidistant',
-            'stereographic',
-            'sinusoidal',
-            'lambert-azimuthal',
-            'gnomonic',
-            'mollweide',
-        ];
-
         const commonSource = await fetch("./shaders/common.wesl").then(v => v.text());
         const tissotSource = await fetch("./shaders/tissot.wesl").then(v => v.text());
         const graticuleSource = await fetch("./shaders/graticule.wesl").then(v => v.text());
         const reprojectSource = await fetch("./shaders/reproject.wesl").then(v => v.text());
 
-        const projectionPromises = projections.map(proj => fetch(`./shaders/${proj}.wesl`).then(v => v.text()));
+        const projectionPromises = projections
+            .map(projObj => projObj.shader)
+            .map(projShader => fetch(`./shaders/${projShader}.wesl`).then(v => v.text()));
         const projectionSources = await Promise.all(projectionPromises);
 
         const shaderPromises = projectionSources.map(async (dstProjSource) => {

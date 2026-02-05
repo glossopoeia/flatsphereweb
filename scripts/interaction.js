@@ -1,3 +1,5 @@
+import { SecurityManager } from './security.js';
+
 export class InteractionManager extends EventTarget {
     constructor(canvas) {
         super();
@@ -7,25 +9,27 @@ export class InteractionManager extends EventTarget {
         // DOM control elements
         this.imageUrlInput = document.getElementById('imageUrl');
         this.loadImageButton = document.getElementById('loadImageButton');
+        this.dragDropArea = document.getElementById('dragDropArea');
+        this.fileInput = document.getElementById('fileInput');
         this.tissotToggle = document.getElementById('tissotToggle');
         this.graticuleToggle = document.getElementById('graticuleToggle');
         this.aspectRatioSlider = document.getElementById('aspectRatioSlider');
         this.aspectRatioValue = document.getElementById('aspectRatioValue');
-        this.controlsOverlay = document.getElementById('controlsOverlay');
-        this.controlsContent = document.getElementById('controlsContent');
-        this.toggleControls = document.getElementById('toggleControls');
         this.fullscreenButton = document.getElementById('fullscreenButton');
         this.zoomIndicator = document.getElementById('zoomIndicator');
         
         // Projection and option buttons and panels
         this.projectionButton = document.getElementById('projectionButton');
         this.sourceButton = document.getElementById('sourceButton');
+        this.imageSourceButton = document.getElementById('imageSourceButton');
         this.optionsButton = document.getElementById('optionsButton');
         this.projectionPanel = document.getElementById('projectionPanel');
         this.sourcePanel = document.getElementById('sourcePanel');
+        this.imageSourcePanel = document.getElementById('imageSourcePanel');
         this.optionsPanel = document.getElementById('optionsPanel');
         this.projectionPanelClose = document.getElementById('projectionPanelClose');
         this.sourcePanelClose = document.getElementById('sourcePanelClose');
+        this.imageSourcePanelClose = document.getElementById('imageSourcePanelClose');
         this.optionsPanelClose = document.getElementById('optionsPanelClose');
         this.panelBackdrop = document.getElementById('panelBackdrop');
         this.loadingBackdrop = document.getElementById('loadingBackdrop');
@@ -61,10 +65,10 @@ export class InteractionManager extends EventTarget {
         this.isDragging = false;
         this.lastX = 0;
         this.lastY = 0;
-        this.controlsVisible = true;
         this.isFullscreen = false;
         this.zoomIndicatorTimeout = null;
         this.activePanelId = null;
+        this.currentFile = null; // Currently selected local file
         
         // Touch zoom state
         this.lastTouchDistance = 0;
@@ -91,20 +95,57 @@ export class InteractionManager extends EventTarget {
         this.loadImageButton.addEventListener('click', () => {
             const imageUrl = this.imageUrlInput.value.trim();
             const sourceProjection = this.currentSourceProjection;
-            this.dispatchEvent(new CustomEvent('imageLoaded', {
-                detail: { imageUrl, sourceProjection }
-            }));
+            
+            // Check if input matches current file name
+            if (this.currentFile && imageUrl === this.currentFile.name) {
+                this.dispatchEvent(new CustomEvent('imageLoaded', {
+                    detail: { 
+                        file: this.currentFile,
+                        imageUrl: null,
+                        sourceProjection 
+                    }
+                }));
+            } else {
+                this.dispatchEvent(new CustomEvent('imageLoaded', {
+                    detail: { imageUrl, sourceProjection }
+                }));
+            }
         });
 
         this.imageUrlInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
                 const imageUrl = this.imageUrlInput.value.trim();
                 const sourceProjection = this.currentSourceProjection;
-                this.dispatchEvent(new CustomEvent('imageLoaded', {
-                    detail: { imageUrl, sourceProjection }
-                }));
+                
+                // Check if input matches current file name
+                if (this.currentFile && imageUrl === this.currentFile.name) {
+                    this.dispatchEvent(new CustomEvent('imageLoaded', {
+                        detail: { 
+                            file: this.currentFile,
+                            imageUrl: null,
+                            sourceProjection 
+                        }
+                    }));
+                } else {
+                    this.dispatchEvent(new CustomEvent('imageLoaded', {
+                        detail: { imageUrl, sourceProjection }
+                    }));
+                }
             }
         });
+
+        // Clear file reference when URL input changes
+        this.imageUrlInput.addEventListener('input', (e) => {
+            const currentValue = e.target.value.trim();
+            if (this.currentFile && currentValue !== this.currentFile.name) {
+                // User is typing something different than the file name
+                this.currentFile = null;
+                this.resetDragDropDisplay();
+            }
+        });
+
+        // Drag and drop functionality
+        this.setupDragAndDrop();
 
         this.aspectRatioSlider.addEventListener('input', () => {
             this.aspectRatioScalar = parseFloat(this.aspectRatioSlider.value);
@@ -125,6 +166,11 @@ export class InteractionManager extends EventTarget {
             this.togglePanel('source');
         });
 
+        this.imageSourceButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.togglePanel('imageSource');
+        });
+
         this.optionsButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.togglePanel('options');
@@ -137,6 +183,10 @@ export class InteractionManager extends EventTarget {
 
         this.sourcePanelClose.addEventListener('click', () => {
             this.closePanel('source');
+        });
+
+        this.imageSourcePanelClose.addEventListener('click', () => {
+            this.closePanel('imageSource');
         });
 
         this.optionsPanelClose.addEventListener('click', () => {
@@ -154,13 +204,6 @@ export class InteractionManager extends EventTarget {
                 this.closeAllPanels();
             }
         });
-
-        // Controls visibility toggle
-        if (this.toggleControls) {
-            this.toggleControls.addEventListener('click', () => {
-                this.toggleControlsVisibility();
-            });
-        }
 
         // Fullscreen toggle
         this.fullscreenButton.addEventListener('click', () => {
@@ -270,26 +313,6 @@ export class InteractionManager extends EventTarget {
         
         // Set initial cursor
         this.canvas.style.cursor = 'grab';
-
-        // Hide controls after inactivity on mobile
-        let hideTimeout;
-        const resetHideTimeout = () => {
-            clearTimeout(hideTimeout);
-            if (window.innerWidth <= 768) {
-                hideTimeout = setTimeout(() => {
-                    if (this.controlsVisible) {
-                        this.controlsOverlay.classList.add('controls-collapsed');
-                    }
-                }, 3000);
-            }
-        };
-
-        this.canvas.addEventListener('touchstart', resetHideTimeout);
-        this.canvas.addEventListener('touchmove', resetHideTimeout);
-        this.controlsOverlay.addEventListener('touchstart', () => {
-            clearTimeout(hideTimeout);
-            this.controlsOverlay.classList.remove('controls-collapsed');
-        });
     }
 
     startDrag(x, y) {
@@ -358,19 +381,6 @@ export class InteractionManager extends EventTarget {
         this.zoomIndicatorTimeout = setTimeout(() => {
             this.zoomIndicator.classList.remove('visible');
         }, 2000);
-    }
-
-    toggleControlsVisibility() {
-        this.controlsVisible = !this.controlsVisible;
-        
-        if (this.controlsVisible) {
-            this.controlsContent.style.display = 'grid';
-            this.toggleControls.textContent = 'Hide';
-            this.controlsOverlay.classList.remove('controls-collapsed');
-        } else {
-            this.controlsContent.style.display = 'none';
-            this.toggleControls.textContent = 'Show';
-        }
     }
 
     async toggleFullscreen() {
@@ -600,5 +610,122 @@ export class InteractionManager extends EventTarget {
             // Close panel after selection
             this.closePanel('source');
         }
+    }
+
+    setupDragAndDrop() {
+        // Drag and drop area events
+        this.dragDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            this.dragDropArea.classList.add('drag-over');
+        });
+
+        this.dragDropArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            // Only remove drag-over if leaving the entire drop zone
+            if (!this.dragDropArea.contains(e.relatedTarget)) {
+                this.dragDropArea.classList.remove('drag-over');
+            }
+        });
+
+        this.dragDropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.dragDropArea.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                this.handleFileSelection(files[0]);
+            }
+        });
+
+        // Click to browse
+        this.dragDropArea.addEventListener('click', () => {
+            this.fileInput.click();
+        });
+
+        // Keyboard accessibility
+        this.dragDropArea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.fileInput.click();
+            }
+        });
+
+        // File input change
+        this.fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                this.handleFileSelection(e.target.files[0]);
+            }
+        });
+    }
+
+    handleFileSelection(file) {
+        // Validate file
+        if (!SecurityManager.validateImageFile(file)) {
+            this.showFileError('Invalid file. Please select a valid image file (JPEG, PNG, GIF, WebP, BMP) under 50MB.');
+            return;
+        }
+
+        // Update UI to show file is selected
+        this.currentFile = file;
+        this.updateDragDropDisplay(file.name);
+        this.imageUrlInput.value = file.name;
+
+        // Auto-load the file
+        this.dispatchEvent(new CustomEvent('imageLoaded', {
+            detail: { 
+                file: file,
+                imageUrl: null, // Indicate this is a file, not URL
+                sourceProjection: this.currentSourceProjection 
+            }
+        }));
+    }
+
+    updateDragDropDisplay(filename) {
+        this.dragDropArea.classList.add('has-file');
+        const content = this.dragDropArea.querySelector('.drag-drop-content');
+        content.innerHTML = `
+            <div class="drag-drop-icon" aria-hidden="true">✅</div>
+            <div class="drag-drop-text">
+                <strong>File selected</strong>
+                <span>${filename}</span>
+            </div>
+        `;
+    }
+
+    showFileError(message) {
+        // Reset UI state
+        this.dragDropArea.classList.remove('has-file', 'drag-over');
+        this.currentFile = null;
+        
+        // Show error in the drag drop area temporarily
+        const content = this.dragDropArea.querySelector('.drag-drop-content');
+        const originalContent = content.innerHTML;
+        
+        content.innerHTML = `
+            <div class="drag-drop-icon" aria-hidden="true">❌</div>
+            <div class="drag-drop-text">
+                <strong class="error-text">Error</strong>
+                <span class="error-text error-message">${message}</span>
+            </div>
+        `;
+        
+        // Reset after 3 seconds
+        setTimeout(() => {
+            content.innerHTML = originalContent;
+        }, 3000);
+    }
+
+    resetDragDropDisplay() {
+        this.dragDropArea.classList.remove('has-file', 'drag-over');
+        this.currentFile = null;
+        const content = this.dragDropArea.querySelector('.drag-drop-content');
+        content.innerHTML = `
+            <div class="drag-drop-icon" aria-hidden="true">📁</div>
+            <div class="drag-drop-text">
+                <strong>Drop image here</strong>
+                <span>or click to browse</span>
+            </div>
+        `;
     }
 }

@@ -34,16 +34,29 @@
             
             <div class="controls-content" id="controlsContent">
                 <div class="control-group full-width">
-                    <label for="imageUrl">Image URL:</label>
-                    <input type="text" id="imageUrl" placeholder="Enter image URL or leave empty for default" aria-describedby="imageUrl-help">
+                    <label for="imageUrl">Image URL or Local File:</label>
+                    <input type="text" id="imageUrl" placeholder="Enter image URL or drag & drop a file below" aria-describedby="imageUrl-help">
                     <small class="help-text" id="imageUrl-help">
                         Try: https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/512px-Equirectangular_projection_SW.jpg
                     </small>
                 </div>
                 
                 <div class="control-group full-width">
+                    <div class="drag-drop-area" id="dragDropArea" tabindex="0" role="button" aria-label="Drag and drop image file or click to browse">
+                        <div class="drag-drop-content">
+                            <div class="drag-drop-icon" aria-hidden="true">📁</div>
+                            <div class="drag-drop-text">
+                                <strong>Drop image here</strong>
+                                <span>or click to browse</span>
+                            </div>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" aria-hidden="true">
+                    </div>
+                </div>
+                
+                <div class="control-group full-width">
                     <button class="control-button full-width-button" id="loadImageButton" type="button" aria-describedby="load-help">Load Image</button>
-                    <div id="load-help" class="sr-only">Load the specified image</div>
+                    <div id="load-help" class="sr-only">Load the specified image or file</div>
                 </div>
                 
                 <div class="control-group full-width">

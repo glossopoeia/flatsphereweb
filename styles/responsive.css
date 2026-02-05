@@ -93,6 +93,23 @@
         width: 44px;
         height: 44px;
     }
+
+    .drag-drop-area {
+        min-height: 70px;
+        border-width: 1px;
+    }
+    
+    .drag-drop-icon {
+        font-size: 1.5em;
+    }
+    
+    .drag-drop-text strong {
+        font-size: var(--font-size-sm);
+    }
+    
+    .drag-drop-text span {
+        font-size: 0.75em;
+    }
 }
 
 /* Landscape phone optimization */
@@ -293,6 +310,14 @@
         bottom: max(110px, calc(env(safe-area-inset-bottom) + 90px));
         left: max(8px, env(safe-area-inset-left));
         right: max(8px, env(safe-area-inset-right));
+    }
+}
+
+/* Touch devices */
+@media (hover: none) {
+    .drag-drop-area:hover {
+        border-color: var(--border-color);
+        background: var(--bg-tertiary);
     }
 }
 

@@ -4,23 +4,6 @@
 
 export class SecurityManager {
   /**
-   * Content Security Policy configuration
-   */
-  static getCSPDirectives() {
-    return {
-      'default-src': "'self'",
-      'script-src': "'self' https://cdn.jsdelivr.net",
-      'img-src': "'self' data: blob: https:",
-      'connect-src': "'self' https://api.allorigins.win",
-      'worker-src': "'self'",
-      'object-src': "'none'",
-      'base-uri': "'self'",
-      'form-action': "'self'",
-      'frame-ancestors': "'none'"
-    };
-  }
-
-  /**
    * Validates image URLs for security
    * @param {string} url - URL to validate
    * @returns {boolean} Whether URL is safe
@@ -46,40 +29,34 @@ export class SecurityManager {
   }
 
   /**
-   * Sanitizes text input to prevent XSS
-   * @param {string} input - Input to sanitize
-   * @returns {string} Sanitized input
+   * Validates local image files
+   * @param {File} file - File to validate
+   * @returns {boolean} Whether file is safe to load
    */
-  static sanitizeInput(input) {
-    if (typeof input !== 'string') return '';
-    
-    return input
-      .replace(/[<>]/g, '') // Remove angle brackets
-      .replace(/javascript:/gi, '') // Remove javascript: protocol
-      .replace(/on\w+=/gi, '') // Remove event handlers
-      .trim();
-  }
+  static validateImageFile(file) {
+    // Check if it's a valid File object
+    if (!(file instanceof File)) {
+      return false;
+    }
 
-  /**
-   * Rate limiting for API calls
-   */
-  static createRateLimiter(maxCalls = 10, windowMs = 60000) {
-    const calls = [];
-    
-    return function() {
-      const now = Date.now();
-      
-      // Remove old calls outside the window
-      while (calls.length > 0 && calls[0] <= now - windowMs) {
-        calls.shift();
-      }
-      
-      if (calls.length >= maxCalls) {
-        throw new Error('Rate limit exceeded. Please wait before making another request.');
-      }
-      
-      calls.push(now);
-      return true;
-    };
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+    if (!allowedTypes.includes(file.type)) {
+      return false;
+    }
+
+    // Check file size (limit to 50MB)
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return false;
+    }
+
+    // Check filename for potentially dangerous patterns
+    const filename = file.name.toLowerCase();
+    if (filename.includes('..') || filename.includes('<script') || filename.includes('javascript:')) {
+      return false;
+    }
+
+    return true;
   }
 }

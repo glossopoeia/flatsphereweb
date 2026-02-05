@@ -32,7 +32,12 @@ export class ProjectionApp {
         });
         
         this.interactionManager.addEventListener('imageLoaded', (e) => {
-            this.loadUserImage(e.detail.imageUrl, e.detail.sourceProjection);
+            const { file, imageUrl, sourceProjection } = e.detail;
+            if (file) {
+                this.loadUserFile(file, sourceProjection);
+            } else {
+                this.loadUserImage(imageUrl, sourceProjection);
+            }
         });
         
         this.interactionManager.addEventListener('sourceProjectionChanged', (e) => {
@@ -107,6 +112,26 @@ export class ProjectionApp {
         // Keep CSS size in logical (CSS) pixels to match the viewport
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
+    }
+    
+    async loadUserFile(file, sourceProjection) {
+        try {
+            this.interactionManager.setLoadingState(true);
+            
+            // Convert file to blob and load
+            await this.renderer.loadCustomTexture(file);
+            this.renderer.setSourceProjection(sourceProjection);
+            this.render();
+            this.notifications.showSuccess(`Loaded local file: ${file.name}`);
+            
+        } catch (error) {
+            console.error('File loading failed:', error);
+            this.notifications.showError(`Failed to load file: ${error.message}`);
+            // Reset UI on error
+            this.interactionManager.resetDragDropDisplay();
+        } finally {
+            this.interactionManager.setLoadingState(false);
+        }
     }
     
     async loadUserImage(imageUrl, sourceProjection) {

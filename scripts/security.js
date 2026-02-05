@@ -40,7 +40,7 @@ export class SecurityManager {
     }
 
     // Check file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
     if (!allowedTypes.includes(file.type)) {
       return false;
     }

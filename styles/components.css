@@ -221,3 +221,11 @@ small {
     opacity: 0;
     cursor: pointer;
 }
+
+.error-text {
+    color: var(--error-text);
+}
+
+.error-message {
+    font-size: 0.8em;
+}

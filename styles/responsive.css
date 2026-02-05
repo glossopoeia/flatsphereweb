@@ -314,7 +314,7 @@
 }
 
 /* Touch devices */
-@media (hover: none) {
+@media (hover: none) and (pointer: coarse) {
     .drag-drop-area:hover {
         border-color: var(--border-color);
         background: var(--bg-tertiary);

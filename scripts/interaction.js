@@ -1,4 +1,5 @@
 import { SecurityManager } from './security.js';
+import { projections } from './projections.js';
 
 export class InteractionManager extends EventTarget {
     constructor(canvas) {
@@ -37,20 +38,6 @@ export class InteractionManager extends EventTarget {
         this.sourceGrid = document.getElementById('sourceGrid');
         this.projectionPreview = document.getElementById('projectionPreview');
         this.sourcePreview = document.getElementById('sourcePreview');
-        
-        // Projection data
-        this.projections = [
-            { id: 0, name: 'Plate Carrée (Equirectangular)', description: 'Simple rectangular projection', emoji: '🗺️' },
-            { id: 1, name: 'Mercator', description: 'Preserves angles, distorts area', emoji: '🧭' },
-            { id: 2, name: 'Orthographic', description: 'Earth as seen from space', emoji: '🌍' },
-            { id: 3, name: 'Vertical Perspective', description: 'Perspective from altitude', emoji: '🛰️' },
-            { id: 4, name: 'Azimuthal Equidistant', description: 'Preserves distance from center', emoji: '📡' },
-            { id: 5, name: 'Stereographic', description: 'Conformal azimuthal projection', emoji: '⭕' },
-            { id: 6, name: 'Sinusoidal', description: 'Equal-area pseudocylindrical', emoji: '〰️' },
-            { id: 7, name: 'Lambert Azimuthal Equal-Area', description: 'Preserves area', emoji: '🎯' },
-            { id: 8, name: 'Gnomonic', description: 'Great circles as straight lines', emoji: '📐' },
-            { id: 9, name: 'Mollweide', description: 'Equal-area elliptical projection', emoji: '🥚' }
-        ];
         
         this.currentShownProjection = 0; // Index of the projection the user has selected to transform the image into
         this.currentSourceProjection = 0; // Index of the projection the user's source image is transformed from
@@ -532,7 +519,7 @@ export class InteractionManager extends EventTarget {
         
         grid.innerHTML = '';
         
-        this.projections.forEach(projection => {
+        projections.forEach(projection => {
             const item = document.createElement('button');
             item.className = 'projection-item';
             item.setAttribute('data-projection-id', projection.id);
@@ -586,7 +573,7 @@ export class InteractionManager extends EventTarget {
         });
         
         // Update button preview
-        const selectedProjection = this.projections.find(p => p.id === projectionId);
+        const selectedProjection = projections.find(p => p.id === projectionId);
         if (selectedProjection) {
             if (isDestination) {
                 this.projectionPreview.textContent = selectedProjection.emoji;

@@ -28,9 +28,17 @@
         <aside id="sidebar" data-theme="dark">
             <header>
                 <h2 class="sidebar-title">Flatsphere</h2>
-                <button id="sidebarToggle" type="button" class="sidebar-toggle" aria-label="Toggle sidebar">
-                    <span class="sidebar-toggle-icon" aria-hidden="true"></span>
-                </button>
+                <div class="sidebar-header-buttons">
+                    <button id="sidebarSideToggle" type="button" class="sidebar-side-toggle" aria-label="Move sidebar to other side">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                            <rect class="sidebar-side-indicator" x="1" y="1" width="5" height="14" rx="2" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button id="sidebarToggle" type="button" class="sidebar-toggle" aria-label="Toggle sidebar">
+                        <span class="sidebar-toggle-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
             </header>
             <nav class="sidebar-content">
                 <details>

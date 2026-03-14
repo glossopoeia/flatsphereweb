@@ -101,6 +101,12 @@
     left: max(0px, env(safe-area-inset-left));
 }
 
+:fullscreen #sidebar.right,
+:-webkit-full-screen #sidebar.right {
+    left: auto;
+    right: max(0px, env(safe-area-inset-right));
+}
+
 /* Mobile fullscreen safe area adjustments */
 @media (max-width: 768px) {
     :fullscreen .fullscreen-button,

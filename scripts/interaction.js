@@ -21,6 +21,7 @@ export class InteractionManager extends EventTarget {
         // Sidebar elements
         this.sidebar = document.getElementById('sidebar');
         this.sidebarToggle = document.getElementById('sidebarToggle');
+        this.sidebarSideToggle = document.getElementById('sidebarSideToggle');
         this.loadingBackdrop = document.getElementById('loadingBackdrop');
         this.projectionGrid = document.getElementById('projectionGrid');
         this.sourceGrid = document.getElementById('sourceGrid');
@@ -55,6 +56,11 @@ export class InteractionManager extends EventTarget {
         // Sidebar toggle
         this.sidebarToggle.addEventListener('click', () => {
             this.toggleSidebar();
+        });
+
+        // Sidebar side toggle
+        this.sidebarSideToggle.addEventListener('click', () => {
+            this.toggleSidebarSide();
         });
 
         this.tissotToggle.addEventListener('change', () => {
@@ -236,6 +242,10 @@ export class InteractionManager extends EventTarget {
     // Sidebar management
     toggleSidebar() {
         this.sidebar.classList.toggle('collapsed');
+    }
+
+    toggleSidebarSide() {
+        this.sidebar.classList.toggle('right');
     }
 
     startDrag(x, y) {

@@ -10,7 +10,6 @@ export class InteractionManager extends EventTarget {
         // DOM control elements
         this.imageUrlInput = document.getElementById('imageUrl');
         this.loadImageButton = document.getElementById('loadImageButton');
-        this.dragDropArea = document.getElementById('dragDropArea');
         this.fileInput = document.getElementById('fileInput');
         this.tissotToggle = document.getElementById('tissotToggle');
         this.graticuleToggle = document.getElementById('graticuleToggle');
@@ -131,8 +130,12 @@ export class InteractionManager extends EventTarget {
             }
         });
 
-        // Drag and drop functionality
-        this.setupDragAndDrop();
+        // File input change
+        this.fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                this.handleFileSelection(e.target.files[0]);
+            }
+        });
 
         this.aspectRatioSlider.addEventListener('input', () => {
             this.aspectRatioScalar = parseFloat(this.aspectRatioSlider.value);
@@ -599,53 +602,6 @@ export class InteractionManager extends EventTarget {
         }
     }
 
-    setupDragAndDrop() {
-        // Drag and drop area events
-        this.dragDropArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'copy';
-            this.dragDropArea.classList.add('drag-over');
-        });
-
-        this.dragDropArea.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            // Only remove drag-over if leaving the entire drop zone
-            if (!this.dragDropArea.contains(e.relatedTarget)) {
-                this.dragDropArea.classList.remove('drag-over');
-            }
-        });
-
-        this.dragDropArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            this.dragDropArea.classList.remove('drag-over');
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                this.handleFileSelection(files[0]);
-            }
-        });
-
-        // Click to browse
-        this.dragDropArea.addEventListener('click', () => {
-            this.fileInput.click();
-        });
-
-        // Keyboard accessibility
-        this.dragDropArea.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                this.fileInput.click();
-            }
-        });
-
-        // File input change
-        this.fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                this.handleFileSelection(e.target.files[0]);
-            }
-        });
-    }
-
     handleFileSelection(file) {
         // Validate file
         if (!SecurityManager.validateImageFile(file)) {
@@ -655,7 +611,6 @@ export class InteractionManager extends EventTarget {
 
         // Update UI to show file is selected
         this.currentFile = file;
-        this.updateDragDropDisplay(file.name);
         this.imageUrlInput.value = file.name;
 
         // Auto-load the file
@@ -668,51 +623,14 @@ export class InteractionManager extends EventTarget {
         }));
     }
 
-    updateDragDropDisplay(filename) {
-        this.dragDropArea.classList.add('has-file');
-        const content = this.dragDropArea.querySelector('.drag-drop-content');
-        content.innerHTML = `
-            <div class="drag-drop-icon" aria-hidden="true">✅</div>
-            <div class="drag-drop-text">
-                <strong>File selected</strong>
-                <span>${filename}</span>
-            </div>
-        `;
-    }
-
     showFileError(message) {
         // Reset UI state
-        this.dragDropArea.classList.remove('has-file', 'drag-over');
         this.currentFile = null;
-        
-        // Show error in the drag drop area temporarily
-        const content = this.dragDropArea.querySelector('.drag-drop-content');
-        const originalContent = content.innerHTML;
-        
-        content.innerHTML = `
-            <div class="drag-drop-icon" aria-hidden="true">❌</div>
-            <div class="drag-drop-text">
-                <strong class="error-text">Error</strong>
-                <span class="error-text error-message">${message}</span>
-            </div>
-        `;
-        
-        // Reset after 3 seconds
-        setTimeout(() => {
-            content.innerHTML = originalContent;
-        }, 3000);
+
+        // TODO:
     }
 
     resetDragDropDisplay() {
-        this.dragDropArea.classList.remove('has-file', 'drag-over');
         this.currentFile = null;
-        const content = this.dragDropArea.querySelector('.drag-drop-content');
-        content.innerHTML = `
-            <div class="drag-drop-icon" aria-hidden="true">📁</div>
-            <div class="drag-drop-text">
-                <strong>Drop image here</strong>
-                <span>or click to browse</span>
-            </div>
-        `;
     }
 }

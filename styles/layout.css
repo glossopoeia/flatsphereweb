@@ -120,7 +120,7 @@
     position: absolute;
     bottom: 110px; /* Above bottom controls */
     left: var(--spacing-xl);
-    width: 320px;
+    width: 640px;
     max-width: calc(100vw - 2 * var(--spacing-xl));
     max-height: calc(100vh - 140px); /* Leave space for bottom controls and margins */
     background: var(--bg-secondary);
@@ -141,45 +141,6 @@
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
-}
-
-.panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.panel-header h2 {
-    font-size: var(--font-size-lg);
-    font-weight: bold;
-    margin: 0;
-}
-
-.panel-close {
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    font-size: 1.5em;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background var(--transition-fast);
-}
-
-.panel-close:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.panel-content {
-    padding: var(--spacing-lg);
-    overflow-y: auto;
-    max-height: calc(100vh - 200px);
 }
 
 /* Projection grid */

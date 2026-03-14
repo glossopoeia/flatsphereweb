@@ -24,21 +24,6 @@
         min-height: 44px; /* iOS touch target minimum */
     }
     
-    select, 
-    input[type="text"], 
-    input[type="range"] {
-        padding: 10px;
-        font-size: 16px; /* Prevents iOS zoom */
-        min-height: 44px; /* iOS touch target minimum */
-    }
-    
-    input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-        padding: 12px; /* Enlarged touch target to ~44px while keeping 20px visual size */
-        margin: -12px; /* Counteracts padding so layout spacing stays consistent */
-    }
-    
     .fullscreen-button {
         top: var(--spacing-xl);
         right: var(--spacing-xl);
@@ -64,10 +49,6 @@
         max-width: none;
     }
     
-    .panel-content {
-        max-height: calc(100vh - 180px);
-    }
-    
     .projection-item {
         padding: var(--spacing-md);
         min-height: 56px; /* Ensure good touch target */
@@ -76,23 +57,6 @@
     .projection-item-preview {
         width: 44px;
         height: 44px;
-    }
-
-    .drag-drop-area {
-        min-height: 70px;
-        border-width: 1px;
-    }
-    
-    .drag-drop-icon {
-        font-size: 1.5em;
-    }
-    
-    .drag-drop-text strong {
-        font-size: var(--font-size-sm);
-    }
-    
-    .drag-drop-text span {
-        font-size: 0.75em;
     }
 }
 
@@ -134,10 +98,6 @@
         max-height: calc(100vh - 130px);
     }
     
-    .panel-content {
-        max-height: calc(100vh - 150px);
-    }
-    
     .projection-item {
         padding: 10px;
         min-height: 52px;
@@ -154,7 +114,7 @@
     .unified-projection-panel,
     .options-panel,
     .image-source-panel {
-        width: 360px;
+        width: 720px;
     }
 }
 
@@ -262,14 +222,6 @@
         bottom: max(110px, calc(env(safe-area-inset-bottom) + 90px));
         left: max(8px, env(safe-area-inset-left));
         right: max(8px, env(safe-area-inset-right));
-    }
-}
-
-/* Touch devices */
-@media (hover: none) and (pointer: coarse) {
-    .drag-drop-area:hover {
-        border-color: var(--border-color);
-        background: var(--bg-tertiary);
     }
 }
 

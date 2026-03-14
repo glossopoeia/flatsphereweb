@@ -4,26 +4,16 @@
         --spacing-xl: 10px;
         --spacing-lg: 12px;
     }
-    
-    /* Bottom controls mobile adjustments */
-    .bottom-controls {
-        bottom: calc(var(--spacing-xl) + 30px); /* Higher positioning for mobile */
-        left: var(--spacing-xl);
-        gap: var(--spacing-xs); /* Tighter spacing */
+
+    #sidebar {
+        width: 100%;
+        max-width: none;
     }
-    
-    .bottom-control-button {
-        width: 56px;
-        height: 56px;
-        font-size: 1.3em;
+
+    #sidebar.collapsed {
+        width: 48px;
     }
-    
-    .control-button {
-        padding: var(--spacing-sm) var(--spacing-lg);
-        font-size: var(--font-size-base);
-        min-height: 44px; /* iOS touch target minimum */
-    }
-    
+
     .fullscreen-button {
         top: var(--spacing-xl);
         right: var(--spacing-xl);
@@ -31,29 +21,19 @@
         height: 56px;
         font-size: 1.3em;
     }
-    
+
     .zoom-indicator {
         top: 70px;
         right: 15px;
         font-size: var(--font-size-sm);
         padding: 6px var(--spacing-sm);
     }
-    
-    .unified-projection-panel,
-    .options-panel,
-    .image-source-panel {
-        bottom: 120px; /* Above larger mobile bottom controls */
-        left: var(--spacing-xl);
-        right: var(--spacing-xl);
-        width: auto;
-        max-width: none;
-    }
-    
+
     .projection-item {
         padding: var(--spacing-md);
-        min-height: 56px; /* Ensure good touch target */
+        min-height: 56px;
     }
-    
+
     .projection-item-preview {
         width: 44px;
         height: 44px;
@@ -68,61 +48,32 @@
         width: 48px;
         height: 48px;
     }
-    
+
     .zoom-indicator {
         top: 60px;
         right: 8px;
         font-size: 0.75em;
         padding: 5px var(--spacing-sm);
     }
-    
-    /* Bottom controls landscape adjustments */
-    .bottom-controls {
-        bottom: calc(8px + 25px); /* Higher positioning for landscape */
-        left: 8px;
-        gap: var(--spacing-xs);
+
+    #sidebar {
+        width: 280px;
     }
-    
-    .bottom-control-button {
-        width: 48px;
-        height: 48px;
-        font-size: 1.2em;
-    }
-    
-    .unified-projection-panel,
-    .options-panel,
-    .image-source-panel {
-        bottom: 110px;
-        left: 8px;
-        right: 8px;
-        max-height: calc(100vh - 130px);
-    }
-    
+
     .projection-item {
         padding: 10px;
         min-height: 52px;
     }
-    
+
     .projection-item-preview {
         width: 40px;
         height: 40px;
     }
 }
 
-/* Tablet optimizations */
-@media (min-width: 769px) and (max-width: 1024px) {
-    .unified-projection-panel,
-    .options-panel,
-    .image-source-panel {
-        width: 720px;
-    }
-}
-
 /* High DPI displays */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    .fullscreen-button,
-    .control-button,
-    .bottom-control-button {
+    .fullscreen-button {
         border-width: 0.5px;
     }
 }
@@ -145,21 +96,9 @@
     top: max(var(--spacing-xl), env(safe-area-inset-top));
 }
 
-:fullscreen .bottom-controls,
-:-webkit-full-screen .bottom-controls {
-    bottom: max(calc(var(--spacing-xl) + 20px), calc(env(safe-area-inset-bottom) + var(--spacing-xl) + 20px));
-    left: max(var(--spacing-xl), env(safe-area-inset-left));
-}
-
-:fullscreen .unified-projection-panel,
-:fullscreen .options-panel,
-:fullscreen .image-source-panel,
-:-webkit-full-screen .unified-projection-panel,
-:-webkit-full-screen .options-panel,
-:-webkit-full-screen .image-source-panel {
-    bottom: max(110px, calc(env(safe-area-inset-bottom) + 90px));
-    left: max(var(--spacing-xl), env(safe-area-inset-left));
-    right: max(var(--spacing-xl), env(safe-area-inset-right));
+:fullscreen #sidebar,
+:-webkit-full-screen #sidebar {
+    left: max(0px, env(safe-area-inset-left));
 }
 
 /* Mobile fullscreen safe area adjustments */
@@ -169,28 +108,11 @@
         top: max(10px, env(safe-area-inset-top));
         right: max(10px, env(safe-area-inset-right));
     }
-    
+
     :fullscreen .zoom-indicator,
     :-webkit-full-screen .zoom-indicator {
         top: max(70px, calc(env(safe-area-inset-top) + 56px + 4px));
         right: max(15px, env(safe-area-inset-right));
-    }
-    
-    :fullscreen .bottom-controls,
-    :-webkit-full-screen .bottom-controls {
-        bottom: max(calc(10px + 30px), calc(env(safe-area-inset-bottom) + 10px + 30px));
-        left: max(10px, env(safe-area-inset-left));
-    }
-    
-    :fullscreen .unified-projection-panel,
-    :fullscreen .options-panel,
-    :fullscreen .image-source-panel,
-    :-webkit-full-screen .unified-projection-panel,
-    :-webkit-full-screen .options-panel,
-    :-webkit-full-screen .image-source-panel {
-        bottom: max(120px, calc(env(safe-area-inset-bottom) + 100px));
-        left: max(10px, env(safe-area-inset-left));
-        right: max(10px, env(safe-area-inset-right));
     }
 }
 
@@ -200,27 +122,10 @@
         top: max(8px, env(safe-area-inset-top));
         right: max(8px, env(safe-area-inset-right));
     }
-    
+
     :fullscreen .zoom-indicator,
     :-webkit-full-screen .zoom-indicator {
         top: max(60px, calc(env(safe-area-inset-top) + 48px + 4px));
-        right: max(8px, env(safe-area-inset-right));
-    }
-    
-    :fullscreen .bottom-controls,
-    :-webkit-full-screen .bottom-controls {
-        bottom: max(calc(8px + 25px), calc(env(safe-area-inset-bottom) + 8px + 25px));
-        left: max(8px, env(safe-area-inset-left));
-    }
-    
-    :fullscreen .unified-projection-panel,
-    :fullscreen .options-panel,
-    :fullscreen .image-source-panel,
-    :-webkit-full-screen .unified-projection-panel,
-    :-webkit-full-screen .options-panel,
-    :-webkit-full-screen .image-source-panel {
-        bottom: max(110px, calc(env(safe-area-inset-bottom) + 90px));
-        left: max(8px, env(safe-area-inset-left));
         right: max(8px, env(safe-area-inset-right));
     }
 }
@@ -233,21 +138,18 @@
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
-    
+
     .zoom-indicator,
-    .unified-projection-panel,
-    .options-panel,
-    .image-source-panel,
-    .panel-backdrop,
+    #sidebar,
     .loading-backdrop {
         transition: none;
     }
-    
+
     .loading-logo {
         width: min(150px, 35vw);
         height: min(150px, 35vw);
     }
-    
+
     .loading-text {
         font-size: var(--font-size-base);
     }

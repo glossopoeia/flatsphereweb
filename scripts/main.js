@@ -22,10 +22,6 @@ Alpine.store('app', {
     zoomSlider: 0,      // log10 value for the slider
     zoom: 1.0,          // actual zoom value (10^zoomSlider)
 
-    // Camera (updated by canvas drag)
-    cameraLat: 90,
-    cameraLon: 0,
-
     // Image loading
     imageUrl: '',
     currentFile: null,

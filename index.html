@@ -99,7 +99,7 @@
             </div>
         </div>
         
-        <dialog x-ref="notificationDialog" id="notificationDialog" role="dialog" aria-modal="true" aria-labelledby="notificationTitle" aria-describedby="notificationMessage" x-on:click="onDialogBackdropClick">
+        <dialog x-ref="notificationDialog" id="notificationDialog" role="dialog" aria-modal="true" aria-labelledby="notificationTitle" aria-describedby="notificationMessage" x-on:click="onDialogBackdropClick" x-on:cancel="onNotificationClose">
             <article>
                 <header>
                     <button aria-label="Close" rel="prev" x-on:click="onNotificationClose"></button>

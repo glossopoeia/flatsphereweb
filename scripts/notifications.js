@@ -1,33 +1,43 @@
 /**
  * Notification Manager for the cartographic projection tool
- * Provides a centralized way to show notifications to users
+ * Uses Pico CSS dialog modals to show notifications to users
  */
 export class NotificationManager {
-    constructor(notificationElement) {
-        this.notificationDiv = notificationElement;
+    constructor() {
+        this.dialog = document.getElementById('notificationDialog');
+        this.titleEl = document.getElementById('notificationTitle');
+        this.messageEl = document.getElementById('notificationMessage');
+        this.closeBtn = document.getElementById('notificationClose');
         this.currentTimeout = null;
+
+        this.closeBtn.addEventListener('click', () => this.hide());
+
+        // Close on click outside the article
+        this.dialog.addEventListener('click', (e) => {
+            if (e.target === this.dialog) {
+                this.hide();
+            }
+        });
     }
 
     /**
-     * Show a notification message
+     * Show a notification message via dialog
      * @param {string} message - The message to display
-     * @param {string} type - The type of notification ('success', 'error', 'warning', 'info')
+     * @param {string} type - The type of notification ('success', 'error')
      * @param {boolean} persistent - Whether the notification should stay visible until manually dismissed
      * @param {number} duration - Custom duration in milliseconds (overrides default)
      */
     show(message, type = 'error', persistent = false, duration = null) {
-        // Clear any existing timeout
         if (this.currentTimeout) {
             clearTimeout(this.currentTimeout);
             this.currentTimeout = null;
         }
 
-        // Set the notification content and style
-        this.notificationDiv.textContent = message;
-        this.notificationDiv.className = `notification ${type}`;
-        this.notificationDiv.style.display = 'block';
+        this.titleEl.textContent = type === 'success' ? 'Success' : 'Error';
+        this.messageEl.textContent = message;
 
-        // Auto-hide notification unless persistent
+        this.dialog.showModal();
+
         if (!persistent) {
             const hideDelay = duration || this.getDefaultDuration(type);
             this.currentTimeout = setTimeout(() => {
@@ -40,7 +50,7 @@ export class NotificationManager {
      * Hide the current notification
      */
     hide() {
-        this.notificationDiv.style.display = 'none';
+        this.dialog.close();
         if (this.currentTimeout) {
             clearTimeout(this.currentTimeout);
             this.currentTimeout = null;

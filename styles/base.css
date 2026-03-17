@@ -16,13 +16,6 @@
     --text-muted: #aaa;
     --accent-primary: #64a6ff;
     --accent-hover: rgba(100, 150, 255, 0.8);
-    --error-bg: rgba(74, 21, 21, 0.95);
-    --error-border: rgba(255, 107, 107, 0.3);
-    --error-text: #ff6b6b;
-    --success-bg: rgba(21, 74, 21, 0.95);
-    --success-border: rgba(107, 255, 107, 0.3);
-    --success-text: #6bff6b;
-    
     /* Spacing */
     --spacing-xs: 4px;
     --spacing-sm: 8px;

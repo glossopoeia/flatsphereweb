@@ -3,7 +3,7 @@ import { NotificationManager } from './notifications.js';
 
 // Enhanced WebGPU support detection
 async function checkWebGPUSupport() {
-    const notifications = new NotificationManager(document.getElementById('notificationDiv'));
+    const notifications = new NotificationManager();
     
     // Check if WebGPU is available at all
     if (!navigator.gpu) {

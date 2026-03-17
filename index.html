@@ -98,7 +98,15 @@
             </div>
         </div>
         
-        <div id="notificationDiv" class="notification" aria-live="polite" aria-atomic="true" role="status"></div>
+        <dialog id="notificationDialog" aria-live="polite" role="status">
+            <article>
+                <header>
+                    <button id="notificationClose" aria-label="Close" rel="prev"></button>
+                    <p><strong id="notificationTitle">Notice</strong></p>
+                </header>
+                <p id="notificationMessage"></p>
+            </article>
+        </dialog>
 
         <noscript>
             <p>This application requires JavaScript and WebGPU support to function.</p>

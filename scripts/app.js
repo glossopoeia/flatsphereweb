@@ -11,7 +11,7 @@ export class ProjectionApp {
         this.interactionManager = new InteractionManager(this.canvas);
         
         // Initialize notification manager
-        this.notifications = new NotificationManager(document.getElementById('notificationDiv'));
+        this.notifications = new NotificationManager();
         
         this.setupInteractionEventListeners();
         this.init();
@@ -59,6 +59,10 @@ export class ProjectionApp {
             this.render();
         });
         
+        this.interactionManager.addEventListener('fileError', (e) => {
+            this.notifications.showError(e.detail.message);
+        });
+
         this.interactionManager.addEventListener('canvasResize', () => {
             this.resizeCanvas();
             this.render();

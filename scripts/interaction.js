@@ -432,7 +432,9 @@ export class InteractionManager extends EventTarget {
 
     showFileError(message) {
         this.currentFile = null;
-        // TODO: show error notification
+        this.dispatchEvent(new CustomEvent('fileError', {
+            detail: { message }
+        }));
     }
 
     resetDragDropDisplay() {

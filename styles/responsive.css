@@ -25,11 +25,6 @@
 }
 
 /* Fullscreen mode safe area adjustments */
-:fullscreen .notification,
-:-webkit-full-screen .notification {
-    top: max(var(--spacing-xl), env(safe-area-inset-top));
-}
-
 :fullscreen #sidebar,
 :-webkit-full-screen #sidebar {
     left: max(0px, env(safe-area-inset-left));

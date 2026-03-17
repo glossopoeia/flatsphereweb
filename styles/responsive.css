@@ -14,83 +14,17 @@
         width: 48px;
     }
 
-    .fullscreen-button {
-        top: var(--spacing-xl);
-        right: var(--spacing-xl);
-        width: 56px;
-        height: 56px;
-        font-size: 1.3em;
-    }
-
-    .zoom-indicator {
-        top: 70px;
-        right: 15px;
-        font-size: var(--font-size-sm);
-        padding: 6px var(--spacing-sm);
-    }
-
-    .projection-item {
-        padding: var(--spacing-md);
-        min-height: 56px;
-    }
-
-    .projection-item-preview {
-        width: 44px;
-        height: 44px;
-    }
 }
 
 /* Landscape phone optimization */
 @media (max-width: 768px) and (orientation: landscape) {
-    .fullscreen-button {
-        top: 8px;
-        right: 8px;
-        width: 48px;
-        height: 48px;
-    }
-
-    .zoom-indicator {
-        top: 60px;
-        right: 8px;
-        font-size: 0.75em;
-        padding: 5px var(--spacing-sm);
-    }
-
     #sidebar {
         width: 280px;
     }
 
-    .projection-item {
-        padding: 10px;
-        min-height: 52px;
-    }
-
-    .projection-item-preview {
-        width: 40px;
-        height: 40px;
-    }
-}
-
-/* High DPI displays */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    .fullscreen-button {
-        border-width: 0.5px;
-    }
 }
 
 /* Fullscreen mode safe area adjustments */
-:fullscreen .fullscreen-button,
-:-webkit-full-screen .fullscreen-button {
-    top: max(var(--spacing-xl), env(safe-area-inset-top));
-    right: max(var(--spacing-xl), env(safe-area-inset-right));
-}
-
-:fullscreen .zoom-indicator,
-:-webkit-full-screen .zoom-indicator {
-    top: max(80px, calc(env(safe-area-inset-top) + 60px));
-    right: max(var(--spacing-xl), env(safe-area-inset-right));
-}
-
 :fullscreen .notification,
 :-webkit-full-screen .notification {
     top: max(var(--spacing-xl), env(safe-area-inset-top));
@@ -107,35 +41,6 @@
     right: max(0px, env(safe-area-inset-right));
 }
 
-/* Mobile fullscreen safe area adjustments */
-@media (max-width: 768px) {
-    :fullscreen .fullscreen-button,
-    :-webkit-full-screen .fullscreen-button {
-        top: max(10px, env(safe-area-inset-top));
-        right: max(10px, env(safe-area-inset-right));
-    }
-
-    :fullscreen .zoom-indicator,
-    :-webkit-full-screen .zoom-indicator {
-        top: max(70px, calc(env(safe-area-inset-top) + 56px + 4px));
-        right: max(15px, env(safe-area-inset-right));
-    }
-}
-
-@media (max-width: 768px) and (orientation: landscape) {
-    :fullscreen .fullscreen-button,
-    :-webkit-full-screen .fullscreen-button {
-        top: max(8px, env(safe-area-inset-top));
-        right: max(8px, env(safe-area-inset-right));
-    }
-
-    :fullscreen .zoom-indicator,
-    :-webkit-full-screen .zoom-indicator {
-        top: max(60px, calc(env(safe-area-inset-top) + 48px + 4px));
-        right: max(8px, env(safe-area-inset-right));
-    }
-}
-
 /* Reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
     * {
@@ -145,7 +50,6 @@
         scroll-behavior: auto !important;
     }
 
-    .zoom-indicator,
     #sidebar,
     .loading-backdrop {
         transition: none;

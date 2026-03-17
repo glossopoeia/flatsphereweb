@@ -15,16 +15,17 @@ export class InteractionManager extends EventTarget {
         this.graticuleToggle = document.getElementById('graticuleToggle');
         this.aspectRatioSlider = document.getElementById('aspectRatioSlider');
         this.aspectRatioValue = document.getElementById('aspectRatioValue');
-        this.fullscreenButton = document.getElementById('fullscreenButton');
-        this.zoomIndicator = document.getElementById('zoomIndicator');
+        this.fullscreenToggle = document.getElementById('fullscreenToggle');
+        this.zoomSlider = document.getElementById('zoomSlider');
+        this.zoomValueLabel = document.getElementById('zoomValue');
 
         // Sidebar elements
         this.sidebar = document.getElementById('sidebar');
         this.sidebarToggle = document.getElementById('sidebarToggle');
         this.sidebarSideToggle = document.getElementById('sidebarSideToggle');
         this.loadingBackdrop = document.getElementById('loadingBackdrop');
-        this.projectionGrid = document.getElementById('projectionGrid');
-        this.sourceGrid = document.getElementById('sourceGrid');
+        this.destinationSelect = document.getElementById('destinationProjection');
+        this.sourceSelect = document.getElementById('sourceProjection');
 
         this.currentShownProjection = 0;
         this.currentSourceProjection = 0;
@@ -40,7 +41,6 @@ export class InteractionManager extends EventTarget {
         this.lastX = 0;
         this.lastY = 0;
         this.isFullscreen = false;
-        this.zoomIndicatorTimeout = null;
         this.currentFile = null;
 
         // Touch zoom state
@@ -48,8 +48,8 @@ export class InteractionManager extends EventTarget {
         this.initialZoom = this.zoom;
 
         this.setupEventListeners();
-        this.populateProjectionGrid('destination');
-        this.populateProjectionGrid('source');
+        this.populateProjectionSelect(this.destinationSelect);
+        this.populateProjectionSelect(this.sourceSelect);
     }
 
     setupEventListeners() {
@@ -61,6 +61,21 @@ export class InteractionManager extends EventTarget {
         // Sidebar side toggle
         this.sidebarSideToggle.addEventListener('click', () => {
             this.toggleSidebarSide();
+        });
+
+        // Projection selects
+        this.destinationSelect.addEventListener('change', () => {
+            this.currentShownProjection = parseInt(this.destinationSelect.value);
+            this.dispatchEvent(new CustomEvent('destinationProjectionChanged', {
+                detail: { projectionType: this.currentShownProjection }
+            }));
+        });
+
+        this.sourceSelect.addEventListener('change', () => {
+            this.currentSourceProjection = parseInt(this.sourceSelect.value);
+            this.dispatchEvent(new CustomEvent('sourceProjectionChanged', {
+                detail: { sourceProjection: this.currentSourceProjection }
+            }));
         });
 
         this.tissotToggle.addEventListener('change', () => {
@@ -137,8 +152,16 @@ export class InteractionManager extends EventTarget {
             }));
         });
 
+        this.zoomSlider.addEventListener('input', () => {
+            this.zoom = Math.pow(10, parseFloat(this.zoomSlider.value));
+            this.updateZoomDisplay();
+            this.dispatchEvent(new CustomEvent('zoomChanged', {
+                detail: { zoom: this.zoom }
+            }));
+        });
+
         // Fullscreen toggle
-        this.fullscreenButton.addEventListener('click', () => {
+        this.fullscreenToggle.addEventListener('change', () => {
             this.toggleFullscreen();
         });
 
@@ -178,7 +201,7 @@ export class InteractionManager extends EventTarget {
             e.preventDefault();
             const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
             this.zoom = Math.max(0.01, Math.min(10, this.zoom * zoomFactor));
-            this.showZoomIndicator();
+            this.syncZoomSlider();
             this.dispatchEvent(new CustomEvent('zoomChanged', {
                 detail: { zoom: this.zoom }
             }));
@@ -211,7 +234,7 @@ export class InteractionManager extends EventTarget {
                 if (this.lastTouchDistance > 0) {
                     const zoomFactor = this.lastTouchDistance / currentDistance;
                     this.zoom = Math.max(0.01, Math.min(10, this.initialZoom * zoomFactor));
-                    this.showZoomIndicator();
+                    this.syncZoomSlider();
                     this.dispatchEvent(new CustomEvent('zoomChanged', {
                         detail: { zoom: this.zoom }
                     }));
@@ -296,14 +319,13 @@ export class InteractionManager extends EventTarget {
         }));
     }
 
-    showZoomIndicator() {
-        this.zoomIndicator.textContent = `${this.zoom.toFixed(1)}x`;
-        this.zoomIndicator.classList.add('visible');
+    syncZoomSlider() {
+        this.zoomSlider.value = Math.log10(this.zoom);
+        this.updateZoomDisplay();
+    }
 
-        clearTimeout(this.zoomIndicatorTimeout);
-        this.zoomIndicatorTimeout = setTimeout(() => {
-            this.zoomIndicator.classList.remove('visible');
-        }, 2000);
+    updateZoomDisplay() {
+        this.zoomValueLabel.textContent = `${this.zoom.toFixed(2)}x`;
     }
 
     async toggleFullscreen() {
@@ -339,8 +361,7 @@ export class InteractionManager extends EventTarget {
 
     handleFullscreenChange() {
         this.isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
-        this.fullscreenButton.textContent = this.isFullscreen ? '⤫' : '⛶';
-        this.fullscreenButton.title = this.isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen';
+        this.fullscreenToggle.checked = this.isFullscreen;
     }
 
     get currentZoom() {
@@ -382,73 +403,13 @@ export class InteractionManager extends EventTarget {
         }
     }
 
-    populateProjectionGrid(panelType = 'destination') {
-        const gridId = panelType === 'destination' ? 'projectionGrid' : 'sourceGrid';
-        const grid = document.getElementById(gridId);
-        const currentSelection = panelType === 'destination' ? this.currentShownProjection : this.currentSourceProjection;
-
-        grid.innerHTML = '';
-
+    populateProjectionSelect(selectElement) {
         projections.forEach(projection => {
-            const item = document.createElement('button');
-            item.className = 'projection-item';
-            item.setAttribute('data-projection-id', projection.id);
-            item.setAttribute('type', 'button');
-            item.setAttribute('aria-pressed', projection.id === currentSelection);
-
-            if (projection.id === currentSelection) {
-                item.classList.add('selected');
-            }
-
-            item.innerHTML = `
-                <div class="projection-item-preview">
-                    ${projection.emoji}
-                </div>
-                <div class="projection-item-info">
-                    <div class="projection-item-name">${projection.name}</div>
-                    <div class="projection-item-description">${projection.description}</div>
-                </div>
-            `;
-
-            item.addEventListener('click', () => {
-                this.selectProjection(projection.id, panelType);
-            });
-
-            grid.appendChild(item);
+            const option = document.createElement('option');
+            option.value = projection.id;
+            option.textContent = projection.name;
+            selectElement.appendChild(option);
         });
-    }
-
-    selectProjection(projectionId, panelType = 'destination') {
-        const isDestination = panelType === 'destination';
-
-        if (isDestination) {
-            this.currentShownProjection = projectionId;
-        } else {
-            this.currentSourceProjection = projectionId;
-        }
-
-        const gridId = isDestination ? 'projectionGrid' : 'sourceGrid';
-        const grid = document.getElementById(gridId);
-        grid.querySelectorAll('.projection-item').forEach(item => {
-            const itemId = parseInt(item.getAttribute('data-projection-id'));
-            if (itemId === projectionId) {
-                item.classList.add('selected');
-                item.setAttribute('aria-pressed', 'true');
-            } else {
-                item.classList.remove('selected');
-                item.setAttribute('aria-pressed', 'false');
-            }
-        });
-
-        if (isDestination) {
-            this.dispatchEvent(new CustomEvent('destinationProjectionChanged', {
-                detail: { projectionType: projectionId }
-            }));
-        } else {
-            this.dispatchEvent(new CustomEvent('sourceProjectionChanged', {
-                detail: { sourceProjection: projectionId }
-            }));
-        }
     }
 
     handleFileSelection(file) {

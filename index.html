@@ -42,17 +42,15 @@
             </header>
             <nav class="sidebar-content">
                 <details>
-                    <summary>Shown Projection</summary>
-                    <div class="projection-grid" id="projectionGrid">
-                        <!-- Projection options will be populated by JavaScript -->
-                    </div>
-                </details>
-
-                <details>
-                    <summary>Source Projection</summary>
-                    <div class="projection-grid" id="sourceGrid">
-                        <!-- Source projection options will be populated by JavaScript -->
-                    </div>
+                    <summary>Projections</summary>
+                    <label for="destinationProjection">
+                        Shown Projection
+                        <select id="destinationProjection"></select>
+                    </label>
+                    <label for="sourceProjection">
+                        Source Projection
+                        <select id="sourceProjection"></select>
+                    </label>
                 </details>
 
                 <details>
@@ -69,17 +67,26 @@
 
                 <details>
                     <summary>Display Options</summary>
-                    <fieldset>
+                    <label>
+                        <input type="checkbox" role="switch" id="fullscreenToggle">
+                        Fullscreen
+                    </label>
+                    <label>
                         <input type="checkbox" role="switch" id="tissotToggle">
-                        <label for="tissotToggle">Show Tissot's Indicatrices</label>
+                        Show Tissot's Indicatrices
+                    </label>
+                    <label>
                         <input type="checkbox" role="switch" id="graticuleToggle">
-                        <label for="graticuleToggle">Show Graticule</label>
-                    </fieldset>
+                        Show Graticule
+                    </label>
                     <label for="aspectRatioSlider">
-                        Aspect Ratio:
+                        Aspect Ratio: <span id="aspectRatioValue">1.0x</span>
                         <input type="range" id="aspectRatioSlider" min="0.01" max="2.0" step="0.01" value="1.0">
                     </label>
-                    <span id="aspectRatioValue">1.0x</span>
+                    <label for="zoomSlider">
+                        Zoom: <span id="zoomValue">1.0x</span>
+                        <input type="range" id="zoomSlider" min="-2" max="1" step="0.01" value="0">
+                    </label>
                 </details>
             </nav>
         </aside>
@@ -90,10 +97,6 @@
                 <div class="loading-text">Loading...</div>
             </div>
         </div>
-        
-        <button class="fullscreen-button" id="fullscreenButton" type="button" title="Toggle Fullscreen" aria-label="Toggle fullscreen mode">⛶</button>
-        
-        <div class="zoom-indicator" id="zoomIndicator" aria-live="polite" aria-label="Current zoom level">2.0x</div>
         
         <div id="notificationDiv" class="notification" aria-live="polite" aria-atomic="true" role="status"></div>
 

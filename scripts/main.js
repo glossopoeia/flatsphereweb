@@ -9,7 +9,6 @@ window.Alpine = Alpine;
 // Register store before Alpine starts
 Alpine.store('app', {
     // Projection state
-    projections,
     destinationProjection: 0,
     sourceProjection: 0,
 
@@ -86,18 +85,32 @@ Alpine.store('app', {
 Alpine.data('app', () => ({
     init() {
         const store = Alpine.store('app');
-        [this.$refs.dstProjection, this.$refs.srcProjection].forEach(select => {
-            store.projections.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = p.name;
-                select.appendChild(opt);
-            });
-        });
+        const optionsHtml = projections.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        this.$refs.dstProjection.innerHTML = optionsHtml;
+        this.$refs.srcProjection.innerHTML = optionsHtml;
 
         // Sync fullscreen state when changed externally (e.g. Escape key)
         document.addEventListener('fullscreenchange', () => this.syncFullscreenState());
-        document.addEventListener('webkitfullscreenchange', () => this.syncFullscreenState());
+
+        // Sync loading state to button and backdrop
+        Alpine.effect(() => {
+            const isLoading = store.isLoading;
+            const btn = this.$refs.loadImageButton;
+            btn.value = isLoading ? 'Loading...' : 'Load';
+            btn.disabled = isLoading;
+            const backdrop = document.getElementById('loadingBackdrop');
+            if (isLoading) {
+                backdrop.classList.add('open');
+            } else {
+                backdrop.classList.remove('open');
+            }
+        });
+
+        // Sync zoom slider and label when zoom changes (e.g. canvas wheel/pinch)
+        Alpine.effect(() => {
+            this.$refs.zoomSlider.value = store.zoomSlider;
+            this.$refs.zoomLabel.textContent = `${store.zoom.toFixed(2)}x`;
+        });
 
         // Sync notification dialog with store state
         Alpine.effect(() => {
@@ -145,38 +158,19 @@ Alpine.data('app', () => ({
         const store = Alpine.store('app');
         try {
             if (!store.fullscreen) {
-                if (document.documentElement.requestFullscreen) {
-                    await document.documentElement.requestFullscreen();
-                } else if (document.documentElement.webkitRequestFullscreen) {
-                    document.documentElement.webkitRequestFullscreen();
-                } else if (document.documentElement.webkitEnterFullscreen) {
-                    document.documentElement.webkitEnterFullscreen();
-                } else {
-                    throw new Error('Fullscreen not supported');
-                }
+                await document.documentElement.requestFullscreen();
             } else {
-                if (document.exitFullscreen) {
-                    await document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.webkitCancelFullScreen) {
-                    document.webkitCancelFullScreen();
-                } else {
-                    throw new Error('Exit fullscreen not supported');
-                }
+                await document.exitFullscreen();
             }
         } catch (error) {
             console.warn('Fullscreen operation failed:', error);
-            if (/iPhone|iPad|iPod|Safari/.test(navigator.userAgent)) {
-                window.scrollTo(0, 1);
-            }
         } finally {
             this.syncFullscreenState();
         }
     },
 
     syncFullscreenState() {
-        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        const isFs = !!document.fullscreenElement;
         Alpine.store('app').fullscreen = isFs;
         this.$refs.fullscreenToggle.checked = isFs;
     },
@@ -218,17 +212,13 @@ Alpine.data('app', () => ({
         if (files.length > 0) {
             const file = files[0];
             if (!SecurityManager.validateImageFile(file)) {
-                document.dispatchEvent(new CustomEvent('app:fileError', {
-                    detail: { message: 'Invalid file. Please select a valid image file (JPEG, PNG, GIF, WebP, BMP) under 50MB.' }
-                }));
+                Alpine.store('app').showError('Invalid file. Please select a valid image file (JPEG, PNG, GIF, WebP, BMP) under 50MB.');
                 return;
             }
             const store = Alpine.store('app');
             store.currentFile = file;
             this.$refs.imageUrl.value = file.name;
-            document.dispatchEvent(new CustomEvent('app:imageLoaded', {
-                detail: { file, imageUrl: null, sourceProjection: store.sourceProjection }
-            }));
+            store.app.loadUserFile(file, store.sourceProjection);
         }
     },
 
@@ -238,13 +228,9 @@ Alpine.data('app', () => ({
         const sourceProjection = store.sourceProjection;
 
         if (store.currentFile && imageUrl === store.currentFile.name) {
-            document.dispatchEvent(new CustomEvent('app:imageLoaded', {
-                detail: { file: store.currentFile, imageUrl: null, sourceProjection }
-            }));
+            store.app.loadUserFile(store.currentFile, sourceProjection);
         } else {
-            document.dispatchEvent(new CustomEvent('app:imageLoaded', {
-                detail: { imageUrl, sourceProjection }
-            }));
+            store.app.loadUserImage(imageUrl, sourceProjection);
         }
     },
 
@@ -313,12 +299,6 @@ async function checkWebGPUSupport() {
 // Initialize app only if WebGPU is supported
 checkWebGPUSupport().then(supported => {
     if (supported) {
-        // Show loading screen immediately
-        const loadingBackdrop = document.getElementById('loadingBackdrop');
-        if (loadingBackdrop) {
-            loadingBackdrop.classList.add('open');
-        }
-
-        new ProjectionApp();
+        store.app = new ProjectionApp();
     }
 });

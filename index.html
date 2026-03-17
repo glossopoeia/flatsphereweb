@@ -58,7 +58,7 @@
                     <summary role="button" class="outline">Custom Image</summary>
                     <fieldset role="group">
                         <input type="text" x-ref="imageUrl" id="imageUrl" aria-label="Custom Image URL" aria-describedby="image-url-help" placeholder="Enter image URL" x-on:input="onImageUrlInput" x-on:keyup="onImageUrlKeyup"/>
-                        <input type="button" x-ref="loadImageButton" id="loadImageButton" value="Load" x-on:click="onLoadImage"/>
+                        <input type="button" x-ref="loadImageButton" id="loadImageButton" x-on:click="onLoadImage"/>
                     </fieldset>
                     <small id="image-url-help">Use an image from somewhere else on the internet</small>
 
@@ -85,7 +85,7 @@
                         <input type="range" id="aspectRatioSlider" x-ref="aspectRatioSlider" x-on:input="onAspectRatioInput" min="0.01" max="2.0" step="0.01" value="1.0">
                     </label>
                     <label for="zoomSlider">
-                        Zoom: <span x-ref="zoomLabel" id="zoomValue">1.0x</span>
+                        Zoom: <span x-ref="zoomLabel">1.0x</span>
                         <input type="range" id="zoomSlider" x-ref="zoomSlider" x-on:input="onZoomSliderInput" min="-2" max="1" step="0.01" value="0">
                     </label>
                 </details>

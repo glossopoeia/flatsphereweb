@@ -20,7 +20,6 @@ export class ProjectionApp {
         this.initialZoom = 1.0;
 
         this.setupCanvasInteraction();
-        this.setupImageLoadListeners();
         this.init();
     }
 
@@ -56,7 +55,6 @@ export class ProjectionApp {
             const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
             store.zoom = Math.max(0.01, Math.min(10, store.zoom * zoomFactor));
             store.zoomSlider = Math.log10(store.zoom);
-            this.syncZoomSliderDOM();
         });
 
         // Touch interaction
@@ -88,7 +86,6 @@ export class ProjectionApp {
                     const zoomFactor = this.lastTouchDistance / currentDistance;
                     store.zoom = Math.max(0.01, Math.min(10, this.initialZoom * zoomFactor));
                     store.zoomSlider = Math.log10(store.zoom);
-                    this.syncZoomSliderDOM();
                 }
             }
             e.preventDefault();
@@ -154,27 +151,6 @@ export class ProjectionApp {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    syncZoomSliderDOM() {
-        const store = Alpine.store('app');
-        document.getElementById('zoomSlider').value = store.zoomSlider;
-        document.getElementById('zoomValue').textContent = `${store.zoom.toFixed(2)}x`;
-    }
-
-    setupImageLoadListeners() {
-        document.addEventListener('app:imageLoaded', (e) => {
-            const { file, imageUrl, sourceProjection } = e.detail;
-            if (file) {
-                this.loadUserFile(file, sourceProjection);
-            } else {
-                this.loadUserImage(imageUrl, sourceProjection);
-            }
-        });
-
-        document.addEventListener('app:fileError', (e) => {
-            Alpine.store('app').showError(e.detail.message);
-        });
-    }
-
     async init() {
         try {
             this.renderer = new ProjectionRenderer();
@@ -184,10 +160,10 @@ export class ProjectionApp {
             this.render();
 
             // Hide loading screen once initialization is complete
-            this.setLoadingState(false);
+            Alpine.store('app').isLoading = false;
         } catch (error) {
             // Hide loading screen on error
-            this.setLoadingState(false);
+            Alpine.store('app').isLoading = false;
 
             let message = 'Failed to initialize WebGPU renderer: ';
 
@@ -252,23 +228,9 @@ export class ProjectionApp {
         this.canvas.style.height = `${height}px`;
     }
 
-    setLoadingState(isLoading) {
-        const store = Alpine.store('app');
-        store.isLoading = isLoading;
-        const btn = document.getElementById('loadImageButton');
-        btn.value = isLoading ? 'Loading...' : 'Load';
-        btn.disabled = isLoading;
-        const backdrop = document.getElementById('loadingBackdrop');
-        if (isLoading) {
-            backdrop.classList.add('open');
-        } else {
-            backdrop.classList.remove('open');
-        }
-    }
-
     async loadUserFile(file, sourceProjection) {
         try {
-            this.setLoadingState(true);
+            Alpine.store('app').isLoading = true;
 
             await this.renderer.loadCustomTexture(file);
             this.renderer.setSourceProjection(sourceProjection);
@@ -283,7 +245,7 @@ export class ProjectionApp {
             const fileInput = document.getElementById('fileInput');
             if (fileInput) fileInput.value = '';
         } finally {
-            this.setLoadingState(false);
+            Alpine.store('app').isLoading = false;
         }
     }
 
@@ -306,7 +268,7 @@ export class ProjectionApp {
         }
 
         try {
-            this.setLoadingState(true);
+            Alpine.store('app').isLoading = true;
             await this.loadImageDirect(imageUrl, sourceProjection);
         } catch (directError) {
             console.log('Direct loading failed, trying proxy:', directError.message);
@@ -317,7 +279,7 @@ export class ProjectionApp {
                 Alpine.store('app').showError(`Failed to load image. Direct: ${directError.message}. Proxy: ${proxyError.message}. Try a different URL or use a CORS-enabled image.`);
             }
         } finally {
-            this.setLoadingState(false);
+            Alpine.store('app').isLoading = false;
         }
     }
 

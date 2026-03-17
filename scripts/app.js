@@ -1,34 +1,167 @@
+import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm.js';
 import { SecurityManager } from './security.js'
 import { ProjectionRenderer } from './renderer.js';
-import { NotificationManager } from './notifications.js';
-import { InteractionManager } from './interaction.js';
 
 export class ProjectionApp {
-    constructor(notifications = new NotificationManager()) {
+    constructor() {
         this.canvas = document.getElementById('projectionCanvas');
-        
-        this.interactionManager = new InteractionManager(this.canvas);
-        this.notifications = notifications;
-        
-        this.setupInteractionEventListeners();
+
+        // Camera state
+        this.cameraLat = 90;
+        this.cameraLon = 0;
+
+        // Drag state
+        this.isDragging = false;
+        this.lastX = 0;
+        this.lastY = 0;
+
+        // Touch zoom state
+        this.lastTouchDistance = 0;
+        this.initialZoom = 1.0;
+
+        this.setupCanvasInteraction();
+        this.setupImageLoadListeners();
         this.init();
     }
-    
-    setupInteractionEventListeners() {
-        this.interactionManager.addEventListener('destinationProjectionChanged', (e) => {
-            this.renderer.setDestinationProjection(this.interactionManager.destinationProjection);
+
+    setupCanvasInteraction() {
+        window.addEventListener('resize', () => {
+            this.resizeCanvas();
             this.render();
         });
-        
-        this.interactionManager.addEventListener('tissotToggled', (e) => {
-            this.render();
+
+        // Mouse interaction
+        this.canvas.addEventListener('mousedown', (e) => {
+            this.startDrag(e.clientX, e.clientY);
+            e.preventDefault();
         });
-        
-        this.interactionManager.addEventListener('graticuleToggled', (e) => {
-            this.render();
+
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (!this.isDragging) return;
+            this.updateDrag(e.clientX, e.clientY);
+            e.preventDefault();
         });
-        
-        this.interactionManager.addEventListener('imageLoaded', (e) => {
+
+        this.canvas.addEventListener('mouseup', () => {
+            this.endDrag();
+        });
+
+        this.canvas.addEventListener('mouseleave', () => {
+            this.endDrag();
+        });
+
+        this.canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const store = Alpine.store('app');
+            const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+            store.zoom = Math.max(0.01, Math.min(10, store.zoom * zoomFactor));
+            store.zoomSlider = Math.log10(store.zoom);
+            this.syncZoomSliderDOM();
+        });
+
+        // Touch interaction
+        this.canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                this.startDrag(touch.clientX, touch.clientY);
+            } else if (e.touches.length === 2) {
+                this.endDrag();
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                this.lastTouchDistance = this.getTouchDistance(touch1, touch2);
+                this.initialZoom = Alpine.store('app').zoom;
+            }
+            e.preventDefault();
+        });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1 && this.isDragging) {
+                const touch = e.touches[0];
+                this.updateDrag(touch.clientX, touch.clientY);
+            } else if (e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = this.getTouchDistance(touch1, touch2);
+
+                if (this.lastTouchDistance > 0) {
+                    const store = Alpine.store('app');
+                    const zoomFactor = this.lastTouchDistance / currentDistance;
+                    store.zoom = Math.max(0.01, Math.min(10, this.initialZoom * zoomFactor));
+                    store.zoomSlider = Math.log10(store.zoom);
+                    this.syncZoomSliderDOM();
+                }
+            }
+            e.preventDefault();
+        });
+
+        this.canvas.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                this.endDrag();
+                this.lastTouchDistance = 0;
+            } else if (e.touches.length === 1) {
+                this.lastTouchDistance = 0;
+                const touch = e.touches[0];
+                this.startDrag(touch.clientX, touch.clientY);
+            }
+        });
+
+        this.canvas.addEventListener('touchcancel', () => {
+            this.endDrag();
+            this.lastTouchDistance = 0;
+        });
+
+        this.canvas.style.cursor = 'grab';
+    }
+
+    startDrag(x, y) {
+        this.isDragging = true;
+        this.lastX = x;
+        this.lastY = y;
+        this.canvas.style.cursor = 'grabbing';
+    }
+
+    updateDrag(x, y) {
+        const deltaX = x - this.lastX;
+        const deltaY = y - this.lastY;
+
+        const zoom = Alpine.store('app').zoom;
+        const sensitivity = 0.5 * Math.sqrt(zoom);
+
+        let newLon = this.cameraLon + (deltaX * sensitivity);
+        let newLat = this.cameraLat + (deltaY * sensitivity);
+
+        newLat = Math.max(-90, Math.min(90, newLat));
+        newLon = ((newLon % 360) + 360) % 360;
+        if (newLon > 180) newLon -= 360;
+
+        this.cameraLat = newLat;
+        this.cameraLon = newLon;
+
+        this.lastX = x;
+        this.lastY = y;
+
+        this.render();
+    }
+
+    endDrag() {
+        this.isDragging = false;
+        this.canvas.style.cursor = 'grab';
+    }
+
+    getTouchDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    syncZoomSliderDOM() {
+        const store = Alpine.store('app');
+        document.getElementById('zoomSlider').value = store.zoomSlider;
+        document.getElementById('zoomValue').textContent = `${store.zoom.toFixed(2)}x`;
+    }
+
+    setupImageLoadListeners() {
+        document.addEventListener('app:imageLoaded', (e) => {
             const { file, imageUrl, sourceProjection } = e.detail;
             if (file) {
                 this.loadUserFile(file, sourceProjection);
@@ -36,51 +169,28 @@ export class ProjectionApp {
                 this.loadUserImage(imageUrl, sourceProjection);
             }
         });
-        
-        this.interactionManager.addEventListener('sourceProjectionChanged', (e) => {
-            if (this.renderer) {
-                this.renderer.setSourceProjection(this.interactionManager.sourceProjection);
-                this.render();
-            }
-        });
-        
-        this.interactionManager.addEventListener('lookAtChanged', (e) => {
-            this.render();
-        });
-        
-        this.interactionManager.addEventListener('zoomChanged', (e) => {
-            this.render();
-        });
 
-        this.interactionManager.addEventListener('aspectRatioChanged', (e) => {
-            this.render();
-        });
-        
-        this.interactionManager.addEventListener('fileError', (e) => {
-            this.notifications.showError(e.detail.message);
-        });
-
-        this.interactionManager.addEventListener('canvasResize', () => {
-            this.resizeCanvas();
-            this.render();
+        document.addEventListener('app:fileError', (e) => {
+            Alpine.store('app').showError(e.detail.message);
         });
     }
-    
+
     async init() {
         try {
             this.renderer = new ProjectionRenderer();
             await this.renderer.initialize(this.canvas);
+            this.setupAlpineEffects();
             this.resizeCanvas();
             this.render();
-            
+
             // Hide loading screen once initialization is complete
-            this.interactionManager.setLoadingState(false);
+            this.setLoadingState(false);
         } catch (error) {
             // Hide loading screen on error
-            this.interactionManager.setLoadingState(false);
-            
+            this.setLoadingState(false);
+
             let message = 'Failed to initialize WebGPU renderer: ';
-            
+
             if (error.message.includes('adapter')) {
                 message += 'Graphics adapter not found or incompatible.';
             } else if (error.message.includes('device')) {
@@ -94,111 +204,144 @@ export class ProjectionApp {
             } else {
                 message += error.message;
             }
-            
+
             message += '\n\nPlease ensure your device supports WebGPU and it is enabled in your browser settings.';
-            
-            this.notifications.showError(message, true); // Persistent error for WebGPU initialization failure
+
+            Alpine.store('app').showError(message, true);
         }
     }
-    
+
+    setupAlpineEffects() {
+        const store = Alpine.store('app');
+
+        // React to projection changes
+        Alpine.effect(() => {
+            const dst = store.destinationProjection;
+            const src = store.sourceProjection;
+            this.renderer.setDestinationProjection(dst);
+            this.renderer.setSourceProjection(src);
+            this.render();
+        });
+
+        // React to toggle changes
+        Alpine.effect(() => {
+            store.tissot;
+            store.graticule;
+            this.render();
+        });
+
+        // React to slider changes
+        Alpine.effect(() => {
+            store.zoom;
+            store.aspectRatio;
+            this.render();
+        });
+    }
+
     resizeCanvas() {
         const width = window.innerWidth;
         const height = window.innerHeight;
         const dpr = window.devicePixelRatio || 1;
-        
+
         // Scale backing store by device pixel ratio for sharp rendering
         this.canvas.width = Math.floor(width * dpr);
         this.canvas.height = Math.floor(height * dpr);
-        
+
         // Keep CSS size in logical (CSS) pixels to match the viewport
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
     }
-    
+
+    setLoadingState(isLoading) {
+        const store = Alpine.store('app');
+        store.isLoading = isLoading;
+        const btn = document.getElementById('loadImageButton');
+        btn.value = isLoading ? 'Loading...' : 'Load';
+        btn.disabled = isLoading;
+        const backdrop = document.getElementById('loadingBackdrop');
+        if (isLoading) {
+            backdrop.classList.add('open');
+        } else {
+            backdrop.classList.remove('open');
+        }
+    }
+
     async loadUserFile(file, sourceProjection) {
         try {
-            this.interactionManager.setLoadingState(true);
-            
-            // Convert file to blob and load
+            this.setLoadingState(true);
+
             await this.renderer.loadCustomTexture(file);
             this.renderer.setSourceProjection(sourceProjection);
             this.render();
-            this.notifications.showSuccess(`Loaded local file: ${file.name}`);
-            
+            Alpine.store('app').showSuccess(`Loaded local file: ${file.name}`);
+
         } catch (error) {
             console.error('File loading failed:', error);
-            this.notifications.showError(`Failed to load file: ${error.message}`);
-            // Reset UI on error
-            this.interactionManager.resetDragDropDisplay();
+            Alpine.store('app').showError(`Failed to load file: ${error.message}`);
+            const store = Alpine.store('app');
+            store.currentFile = null;
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) fileInput.value = '';
         } finally {
-            this.interactionManager.setLoadingState(false);
+            this.setLoadingState(false);
         }
     }
-    
+
     async loadUserImage(imageUrl, sourceProjection) {
         if (!imageUrl) {
-            // Reset to default image
             try {
                 await this.renderer.loadDefaultTexture(false);
-                this.renderer.setSourceProjection(0); // Default is equirectangular
+                this.renderer.setSourceProjection(0);
                 this.render();
-                this.notifications.showSuccess('Loaded default image');
+                Alpine.store('app').showSuccess('Loaded default image');
             } catch (error) {
-                this.notifications.showError(`Failed to load default image: ${error.message}`);
+                Alpine.store('app').showError(`Failed to load default image: ${error.message}`);
             }
             return;
         }
-        
-        // Input validation for security
+
         if (!SecurityManager.validateImageURL(imageUrl)) {
-            this.notifications.showError('Invalid URL. Please use HTTPS URLs only.');
+            Alpine.store('app').showError('Invalid URL. Please use HTTPS URLs only.');
             return;
         }
-        
+
         try {
-            this.interactionManager.setLoadingState(true);
-            
-            // Try direct loading first (works for same-origin or CORS-enabled images)
+            this.setLoadingState(true);
             await this.loadImageDirect(imageUrl, sourceProjection);
-            
         } catch (directError) {
             console.log('Direct loading failed, trying proxy:', directError.message);
-            
             try {
-                // Fallback to proxy service for CORS issues
                 await this.loadImageWithProxy(imageUrl, sourceProjection);
             } catch (proxyError) {
                 console.error('Both direct and proxy loading failed:', proxyError);
-                this.notifications.showError(`Failed to load image. Direct: ${directError.message}. Proxy: ${proxyError.message}. Try a different URL or use a CORS-enabled image.`);
+                Alpine.store('app').showError(`Failed to load image. Direct: ${directError.message}. Proxy: ${proxyError.message}. Try a different URL or use a CORS-enabled image.`);
             }
         } finally {
-            this.interactionManager.setLoadingState(false);
+            this.setLoadingState(false);
         }
     }
-    
+
     async loadImageDirect(imageUrl, sourceProjection) {
         console.log('Attempting direct load of:', imageUrl);
-        // Create an image element to handle the loading
         const img = new Image();
-        img.crossOrigin = 'anonymous'; // Enable CORS
-        
+        img.crossOrigin = 'anonymous';
+
         return new Promise((resolve, reject) => {
             img.onload = async () => {
                 try {
-                    // Create canvas to extract image data
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     canvas.width = img.width;
                     canvas.height = img.height;
-                    
+
                     ctx.drawImage(img, 0, 0);
-                    
+
                     canvas.toBlob(async (blob) => {
                         try {
                             await this.renderer.loadCustomTexture(blob);
                             this.renderer.setSourceProjection(sourceProjection);
                             this.render();
-                            this.notifications.showSuccess('Image loaded successfully!');
+                            Alpine.store('app').showSuccess('Image loaded successfully!');
                             resolve();
                         } catch (error) {
                             reject(new Error(`Failed to process image: ${error.message}`));
@@ -208,35 +351,32 @@ export class ProjectionApp {
                     reject(new Error(`Failed to draw image to canvas: ${error.message}`));
                 }
             };
-            
+
             img.onerror = () => {
                 reject(new Error('Failed to load image - check URL or CORS policy'));
             };
-            
-            // Set timeout for loading
+
             setTimeout(() => {
                 reject(new Error('Image loading timed out'));
             }, 30000);
-            
+
             img.src = imageUrl;
         });
     }
-    
+
     async loadImageWithProxy(imageUrl, sourceProjection) {
-        // Use AllOrigins as a fallback proxy
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(imageUrl)}`;
-        
+
         const response = await fetch(proxyUrl);
         if (!response.ok) {
             throw new Error(`Proxy fetch failed: ${response.status} ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         if (!data.contents) {
             throw new Error('No image data received from proxy');
         }
-        
-        // Convert base64 data to blob
+
         try {
             const binaryString = atob(data.contents);
             const bytes = new Uint8Array(binaryString.length);
@@ -244,27 +384,27 @@ export class ProjectionApp {
                 bytes[i] = binaryString.charCodeAt(i);
             }
             const blob = new Blob([bytes], { type: 'image/jpeg' });
-            
+
             await this.renderer.loadCustomTexture(blob);
             this.renderer.setSourceProjection(sourceProjection);
             this.render();
-            this.notifications.showSuccess('Image loaded via proxy successfully!');
+            Alpine.store('app').showSuccess('Image loaded via proxy successfully!');
         } catch (error) {
             throw new Error(`Failed to process proxy data: ${error.message}`);
         }
     }
-    
+
     render() {
         if (!this.renderer) return;
-        
-        const lookAt = this.interactionManager.currentLookAt;
-        const cameraLat = lookAt.lat * Math.PI / 180;
-        const cameraLon = lookAt.lon * Math.PI / 180;
-        const zoom = this.interactionManager.currentZoom;
-        const showTissot = this.interactionManager.tissotEnabled ? 1.0 : 0.0;
-        const showGraticule = this.interactionManager.graticuleEnabled ? 1.0 : 0.0;
-        const aspectRatioMultiplier = this.interactionManager.aspectRatioMultiplier;
-        
+
+        const cameraLat = this.cameraLat * Math.PI / 180;
+        const cameraLon = this.cameraLon * Math.PI / 180;
+        const store = Alpine.store('app');
+        const zoom = store.zoom;
+        const showTissot = store.tissot ? 1.0 : 0.0;
+        const showGraticule = store.graticule ? 1.0 : 0.0;
+        const aspectRatioMultiplier = store.aspectRatio;
+
         this.renderer.render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier);
     }
 }

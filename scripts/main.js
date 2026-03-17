@@ -1,9 +1,10 @@
 import { ProjectionApp } from './app.js';
 import { NotificationManager } from './notifications.js';
 
+const notifications = new NotificationManager();
+
 // Enhanced WebGPU support detection
 async function checkWebGPUSupport() {
-    const notifications = new NotificationManager(document.getElementById('notificationDiv'));
     
     // Check if WebGPU is available at all
     if (!navigator.gpu) {
@@ -57,6 +58,6 @@ checkWebGPUSupport().then(supported => {
             loadingBackdrop.classList.add('open');
         }
         
-        new ProjectionApp();
+        new ProjectionApp(notifications);
     }
 });

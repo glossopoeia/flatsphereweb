@@ -9,12 +9,13 @@
     <meta name="format-detection" content="telephone=no">
     <meta name="description" content="Interactive web tool for comparing different cartographic projections using WebGPU. Visualize how map projections transform the sphere with real-time rendering.">
     <meta name="keywords" content="cartography, map projections, WebGPU, geography, Mercator, orthographic, perspective, tissot, graticule">
-    <meta name="theme-color" content="#1a1a1a">
+    <meta name="color-scheme" content="light dark">
     <meta property="og:title" content="Flatsphere: Interactive Reprojections of the Sphere">
     <meta property="og:description" content="Interactive web tool for comparing different cartographic projections">
     <meta property="og:type" content="website">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://api.allorigins.win; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://api.allorigins.win; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.orange.min.css">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="icon" type="image/svg+xml" sizes="any" href="./flatsphere-logo-static.svg">
 
@@ -24,130 +25,71 @@
     <main class="app-container">
         <canvas id="projectionCanvas" aria-label="Interactive map projection visualization" role="img"></canvas>
         
-        <div class="bottom-controls" id="bottomControls">
-            <div class="bottom-control-group">
-                <button class="bottom-control-button projection-button" id="projectionButton" type="button" title="Select Shown Projection" aria-label="Select shown map projection">
-                    <div class="projection-preview" id="projectionPreview" aria-hidden="true">🗺️</div>
-                </button>
-                <div class="bottom-control-label" id="projectionLabel">Shown</div>
-            </div>
-            <div class="bottom-control-group">
-                <button class="bottom-control-button source-button" id="sourceButton" type="button" title="Select Source Projection" aria-label="Select source map projection">
-                    <div class="source-preview" id="sourcePreview" aria-hidden="true">🗺️</div>
-                </button>
-                <div class="bottom-control-label" id="sourceLabel">Source</div>
-            </div>
-            <div class="bottom-control-group">
-                <button class="bottom-control-button image-source-button" id="imageSourceButton" type="button" title="Custom Image Source" aria-label="Custom image source">
-                    <div class="image-source-icon" aria-hidden="true">🖼️</div>
-                </button>
-                <div class="bottom-control-label" id="imageSourceLabel">Image</div>
-            </div>
-            <div class="bottom-control-group">
-                <button class="bottom-control-button options-button" id="optionsButton" type="button" title="Display Options" aria-label="Display options">
-                    <div class="options-icon" aria-hidden="true">⚙️</div>
-                </button>
-                <div class="bottom-control-label" id="optionsLabel">Options</div>
-            </div>
-        </div>
-
-        <div class="unified-projection-panel" id="projectionPanel" data-panel-type="destination" role="dialog" aria-labelledby="projectionPanelTitle" aria-modal="true">
-            <div class="panel-header">
-                <h2 id="projectionPanelTitle">Select Shown Projection</h2>
-                <button class="panel-close" id="projectionPanelClose" type="button" aria-label="Close projection panel">×</button>
-            </div>
-            <div class="panel-content">
-                <div class="projection-grid" id="projectionGrid">
-                    <!-- Projection options will be populated by JavaScript -->
+        <aside id="sidebar" data-theme="dark">
+            <header>
+                <h2 class="sidebar-title">Flatsphere</h2>
+                <div class="sidebar-header-buttons">
+                    <button id="sidebarSideToggle" type="button" class="sidebar-side-toggle" aria-label="Move sidebar to other side">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                            <rect class="sidebar-side-indicator" x="1" y="1" width="5" height="14" rx="2" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button id="sidebarToggle" type="button" class="sidebar-toggle" aria-label="Toggle sidebar">
+                        <span class="sidebar-toggle-icon" aria-hidden="true"></span>
+                    </button>
                 </div>
-            </div>
-        </div>
+            </header>
+            <nav class="sidebar-content">
+                <details>
+                    <summary role="button" class="outline">Projections</summary>
+                    <label for="destinationProjection">
+                        Shown Projection
+                        <select id="destinationProjection"></select>
+                    </label>
+                    <label for="sourceProjection">
+                        Source Projection
+                        <select id="sourceProjection"></select>
+                    </label>
+                </details>
 
-        <div class="unified-projection-panel" id="sourcePanel" data-panel-type="source" role="dialog" aria-labelledby="sourcePanelTitle" aria-modal="true">
-            <div class="panel-header">
-                <h2 id="sourcePanelTitle">Select Source Projection</h2>
-                <button class="panel-close" id="sourcePanelClose" type="button" aria-label="Close source projection panel">×</button>
-            </div>
-            <div class="panel-content">
-                <div class="projection-grid" id="sourceGrid">
-                    <!-- Source projection options will be populated by JavaScript -->
-                </div>
-            </div>
-        </div>
+                <details>
+                    <summary role="button" class="outline">Custom Image</summary>
+                    <fieldset role="group">
+                        <input type="text" id="imageUrl" aria-label="Custom Image URL" aria-describedby="image-url-help" placeholder="Enter image URL"/>
+                        <input type="button" id="loadImageButton" value="Load"/>
+                    </fieldset>
+                    <small id="image-url-help">Use an image from somewhere else on the internet</small>
 
-        <div class="options-panel" id="optionsPanel" role="dialog" aria-labelledby="optionsPanelTitle" aria-modal="true">
-            <div class="panel-header">
-                <h2 id="optionsPanelTitle">Display Options</h2>
-                <button class="panel-close" id="optionsPanelClose" type="button" aria-label="Close options panel">×</button>
-            </div>
-            <div class="panel-content">
-                <div class="control-group full-width">
-                    <label for="tissotToggle">Tissot's Indicatrices</label>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="tissotToggle">
-                        <label for="tissotToggle" class="checkbox-label">Show</label>
-                    </div>
-                </div>
-                
-                <div class="control-group full-width">
-                    <label for="graticuleToggle">Graticule</label>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="graticuleToggle">
-                        <label for="graticuleToggle" class="checkbox-label">Show</label>
-                    </div>
-                </div>
+                    <input type="file" id="fileInput" accept="image/*"/>
+                    <small id="file-input-help">Or select an image file saved on your device</small>
+                </details>
 
-                <div class="control-group full-width">
-                    <label for="aspectRatioSlider">Aspect Ratio:</label>
-                    <div class="slider-group">
+                <details>
+                    <summary role="button" class="outline">Display Options</summary>
+                    <label>
+                        <input type="checkbox" role="switch" id="fullscreenToggle">
+                        Fullscreen
+                    </label>
+                    <label>
+                        <input type="checkbox" role="switch" id="tissotToggle">
+                        Show Tissot's Indicatrices
+                    </label>
+                    <label>
+                        <input type="checkbox" role="switch" id="graticuleToggle">
+                        Show Graticule
+                    </label>
+                    <label for="aspectRatioSlider">
+                        Aspect Ratio: <span id="aspectRatioValue">1.0x</span>
                         <input type="range" id="aspectRatioSlider" min="0.01" max="2.0" step="0.01" value="1.0">
-                        <span id="aspectRatioValue" class="slider-value">1.0x</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="image-source-panel" id="imageSourcePanel" role="dialog" aria-labelledby="imageSourcePanelTitle" aria-modal="true">
-            <div class="panel-header">
-                <h2 id="imageSourcePanelTitle">Custom Image Source</h2>
-                <button class="panel-close" id="imageSourcePanelClose" type="button" aria-label="Close image source panel">×</button>
-            </div>
-            <div class="panel-content">
-                <div class="control-group full-width">
-                    <label for="imageUrl">Image URL or Local File:</label>
-                    <input type="text" id="imageUrl" placeholder="Enter image URL or drag & drop a file below" aria-describedby="imageUrl-help">
-                    <small class="help-text" id="imageUrl-help">
-                        Try: https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/512px-Equirectangular_projection_SW.jpg
-                    </small>
-                </div>
-                
-                <div class="control-group full-width">
-                    <div class="drag-drop-area" id="dragDropArea" tabindex="0" role="button" aria-label="Drag and drop image file or click to browse">
-                        <div class="drag-drop-content">
-                            <div class="drag-drop-icon" aria-hidden="true">📁</div>
-                            <div class="drag-drop-text">
-                                <strong>Drop image here</strong>
-                                <span>or click to browse</span>
-                            </div>
-                        </div>
-                        <input type="file" id="fileInput" accept="image/*" aria-hidden="true">
-                    </div>
-                </div>
-                
-                <div class="control-group full-width">
-                    <button class="control-button full-width-button" id="loadImageButton" type="button" aria-describedby="load-help">Load Image</button>
-                    <div id="load-help" class="sr-only">Load the specified image or file</div>
-                </div>
-                
-                <div class="control-group full-width">
-                    <small class="zoom-instructions">
-                        💡 Use mouse wheel or pinch-to-zoom to adjust zoom level
-                    </small>
-                </div>
-            </div>
-        </div>
-
-        <div class="panel-backdrop" id="panelBackdrop"></div>
+                    </label>
+                    <label for="zoomSlider">
+                        Zoom: <span id="zoomValue">1.0x</span>
+                        <input type="range" id="zoomSlider" min="-2" max="1" step="0.01" value="0">
+                    </label>
+                </details>
+            </nav>
+        </aside>
         
         <div class="loading-backdrop" id="loadingBackdrop" role="alert" aria-live="polite" aria-busy="true">
             <div class="loading-content">
@@ -156,11 +98,15 @@
             </div>
         </div>
         
-        <button class="fullscreen-button" id="fullscreenButton" type="button" title="Toggle Fullscreen" aria-label="Toggle fullscreen mode">⛶</button>
-        
-        <div class="zoom-indicator" id="zoomIndicator" aria-live="polite" aria-label="Current zoom level">2.0x</div>
-        
-        <div id="notificationDiv" class="notification" aria-live="polite" aria-atomic="true" role="status"></div>
+        <dialog id="notificationDialog" role="dialog" aria-modal="true" aria-labelledby="notificationTitle" aria-describedby="notificationMessage">
+            <article>
+                <header>
+                    <button id="notificationClose" aria-label="Close" rel="prev"></button>
+                    <p><strong id="notificationTitle">Notice</strong></p>
+                </header>
+                <p id="notificationMessage"></p>
+            </article>
+        </dialog>
 
         <noscript>
             <p>This application requires JavaScript and WebGPU support to function.</p>

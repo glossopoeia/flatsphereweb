@@ -134,6 +134,9 @@ export class InteractionManager extends EventTarget {
             const currentValue = e.target.value.trim();
             if (this.currentFile && currentValue !== this.currentFile.name) {
                 this.currentFile = null;
+                if (this.fileInput) {
+                    this.fileInput.value = '';
+                }
             }
         });
 
@@ -356,6 +359,8 @@ export class InteractionManager extends EventTarget {
             if (/iPhone|iPad|iPod|Safari/.test(navigator.userAgent)) {
                 window.scrollTo(0, 1);
             }
+        } finally {
+            this.handleFullscreenChange();
         }
     }
 
@@ -439,5 +444,8 @@ export class InteractionManager extends EventTarget {
 
     resetDragDropDisplay() {
         this.currentFile = null;
+        if (this.fileInput) {
+            this.fileInput.value = '';
+        }
     }
 }

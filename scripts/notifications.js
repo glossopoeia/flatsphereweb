@@ -36,6 +36,9 @@ export class NotificationManager {
         this.titleEl.textContent = type === 'success' ? 'Success' : 'Error';
         this.messageEl.textContent = message;
 
+        if (this.dialog.open) {
+            this.dialog.close();
+        }
         this.dialog.showModal();
 
         if (!persistent) {

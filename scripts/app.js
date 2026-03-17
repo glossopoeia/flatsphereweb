@@ -4,14 +4,11 @@ import { NotificationManager } from './notifications.js';
 import { InteractionManager } from './interaction.js';
 
 export class ProjectionApp {
-    constructor() {
+    constructor(notifications = new NotificationManager()) {
         this.canvas = document.getElementById('projectionCanvas');
         
-        // Initialize interaction manager
         this.interactionManager = new InteractionManager(this.canvas);
-        
-        // Initialize notification manager
-        this.notifications = new NotificationManager();
+        this.notifications = notifications;
         
         this.setupInteractionEventListeners();
         this.init();

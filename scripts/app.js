@@ -20,7 +20,7 @@ export class ProjectionApp {
         this.initialZoom = 1.0;
 
         this.setupCanvasInteraction();
-        this.init();
+        this.ready = this.init();
     }
 
     setupCanvasInteraction() {
@@ -229,6 +229,7 @@ export class ProjectionApp {
     }
 
     async loadUserFile(file, sourceProjection) {
+        await this.ready;
         try {
             Alpine.store('app').isLoading = true;
 
@@ -250,6 +251,7 @@ export class ProjectionApp {
     }
 
     async loadUserImage(imageUrl, sourceProjection) {
+        await this.ready;
         if (!imageUrl) {
             try {
                 await this.renderer.loadDefaultTexture(false);
@@ -289,7 +291,12 @@ export class ProjectionApp {
         img.crossOrigin = 'anonymous';
 
         return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('Image loading timed out'));
+            }, 30000);
+
             img.onload = async () => {
+                clearTimeout(timer);
                 try {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
@@ -315,12 +322,9 @@ export class ProjectionApp {
             };
 
             img.onerror = () => {
+                clearTimeout(timer);
                 reject(new Error('Failed to load image - check URL or CORS policy'));
             };
-
-            setTimeout(() => {
-                reject(new Error('Image loading timed out'));
-            }, 30000);
 
             img.src = imageUrl;
         });

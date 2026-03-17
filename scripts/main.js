@@ -131,11 +131,11 @@ Alpine.data('app', () => ({
     },
 
     onDestinationChange() {
-        Alpine.store('app').destinationProjection = parseInt(this.$refs.dstProjection.value);
+        Alpine.store('app').destinationProjection = parseInt(this.$refs.dstProjection.value, 10);
     },
 
     onSourceChange() {
-        Alpine.store('app').sourceProjection = parseInt(this.$refs.srcProjection.value);
+        Alpine.store('app').sourceProjection = parseInt(this.$refs.srcProjection.value, 10);
     },
 
     onTissotChange() {

@@ -211,12 +211,12 @@ export class ProjectionRenderer {
         });
     }
     
-    render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0) {
+    render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0) {
         // Update uniforms
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         const aspect = (canvasWidth / canvasHeight) * aspectRatioMultiplier;
-        
+
         const uniformData = new Float32Array([
             cameraLat,
             cameraLon,
@@ -224,7 +224,7 @@ export class ProjectionRenderer {
             aspect,
             showTissot,
             showGraticule,
-            0, // padding for alignment
+            rotation,
             0, // padding for alignment
         ]);
         

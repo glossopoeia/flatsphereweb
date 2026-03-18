@@ -210,6 +210,7 @@ export class ProjectionApp {
         Alpine.effect(() => {
             store.zoom;
             store.aspectRatio;
+            store.rotation;
             this.render();
         });
     }
@@ -370,7 +371,8 @@ export class ProjectionApp {
         const showTissot = store.tissot ? 1.0 : 0.0;
         const showGraticule = store.graticule ? 1.0 : 0.0;
         const aspectRatioMultiplier = store.aspectRatio;
+        const rotation = store.rotation * Math.PI / 180;
 
-        this.renderer.render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier);
+        this.renderer.render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier, rotation);
     }
 }

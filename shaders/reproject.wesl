@@ -11,8 +11,8 @@ struct Uniforms {
     aspect: f32,
     show_tissot: f32,
     show_graticule: f32,
+    rotation: f32,
     padding1: f32,
-    padding2: f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -58,9 +58,9 @@ fn source_color_at(lat: f32, lon: f32) -> vec3f {
 }
 
 // Oblique transformation functions
-fn oblique_transform_from_sphere(lat: f32, lon: f32, pole_lat: f32, pole_lon: f32) -> vec2f {
+fn oblique_transform_from_sphere(lat: f32, lon: f32, pole_lat: f32, pole_lon: f32, rotation: f32) -> vec2f {
     let pole_rel_cos = cos(pole_lon - lon);
-    
+
     var new_lat: f32;
     if (abs(pole_lat - HALF_PI) < 1e-6) {
         new_lat = lat;
@@ -68,7 +68,7 @@ fn oblique_transform_from_sphere(lat: f32, lon: f32, pole_lat: f32, pole_lon: f3
         let pre_asin = sin(pole_lat) * sin(lat) + cos(pole_lat) * cos(lat) * pole_rel_cos;
         new_lat = asin(clamp(pre_asin, -1.0, 1.0));
     }
-    
+
     var new_lon: f32;
     if (abs(pole_lat - HALF_PI) < 1e-6) {
         new_lon = lon - pole_lon - PI;
@@ -79,12 +79,19 @@ fn oblique_transform_from_sphere(lat: f32, lon: f32, pole_lat: f32, pole_lon: f3
         let cos_lat = cos(lat);
         let sin_pole_lat = sin(pole_lat);
         let cos_pole_lat = cos(pole_lat);
-        
+
         let numer = cos_lat * sin(lon - pole_lon);
         let denom = cos_pole_lat * sin_lat - sin_pole_lat * cos_lat * pole_rel_cos;
         new_lon = -atan2(numer, denom);
     }
-    
+
+    // Apply rotation around the pole
+    new_lon = new_lon - rotation;
+
+    // Constrain longitude to [-PI, PI]
+    let wrapped = new_lon + PI;
+    new_lon = wrapped - floor(wrapped / (2.0 * PI)) * (2.0 * PI) - PI;
+
     return vec2f(new_lat, new_lon);
 }
 
@@ -105,7 +112,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let lon = lat_lon.y;
     
     // Apply oblique transformation
-    let oblique_result = oblique_transform_from_sphere(lat, lon, uniforms.camera_lat, uniforms.camera_lon);
+    let oblique_result = oblique_transform_from_sphere(lat, lon, uniforms.camera_lat, uniforms.camera_lon, uniforms.rotation);
     let final_lat = oblique_result.x;
     let final_lon = oblique_result.y;
     

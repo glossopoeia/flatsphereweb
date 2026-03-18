@@ -52,6 +52,10 @@
                         Source Projection
                         <select id="sourceProjection" x-ref="srcProjection" x-on:change="onSourceChange"></select>
                     </label>
+                    <label for="rotationSlider">
+                        Rotation: <span x-ref="rotationLabel" id="rotationValue">0°</span>
+                        <input type="range" id="rotationSlider" x-ref="rotationSlider" x-on:input="onRotationInput" min="-180" max="180" step="1" value="0">
+                    </label>
                 </details>
 
                 <details>
@@ -90,6 +94,10 @@
                     </label>
                 </details>
             </nav>
+            <footer class="sidebar-footer">
+                <small>&copy; <a href="https://graceful.earth" target="_blank" rel="noopener">Graceful Earth</a> 2026</small>
+                <small>Built with <a href="https://picocss.com" target="_blank" rel="noopener">Pico CSS</a>, <a href="https://alpinejs.dev" target="_blank" rel="noopener">Alpine JS</a>, and <a href="https://wesl-lang.dev" target="_blank" rel="noopener">WESL</a></small>
+            </footer>
         </aside>
         
         <div class="loading-backdrop" id="loadingBackdrop" role="alert" aria-live="polite" aria-busy="true">

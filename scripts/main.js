@@ -21,6 +21,7 @@ Alpine.store('app', {
     aspectRatio: 1.0,
     zoomSlider: 0,      // log10 value for the slider
     zoom: 1.0,          // actual zoom value (10^zoomSlider)
+    rotation: 0,        // rotation in degrees (-180 to 180)
 
     // Image loading
     imageUrl: '',
@@ -182,6 +183,12 @@ Alpine.data('app', () => ({
         store.zoomSlider = parseFloat(this.$refs.zoomSlider.value);
         store.zoom = Math.pow(10, store.zoomSlider);
         this.$refs.zoomLabel.textContent = `${store.zoom.toFixed(2)}x`;
+    },
+
+    onRotationInput() {
+        const store = Alpine.store('app');
+        store.rotation = parseFloat(this.$refs.rotationSlider.value);
+        this.$refs.rotationLabel.textContent = `${store.rotation.toFixed(0)}°`;
     },
 
     onLoadImage() {

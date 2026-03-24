@@ -28,7 +28,14 @@
         
         <aside id="sidebar" x-ref="sidebar" data-theme="dark">
             <header>
-                <h2 class="sidebar-title">Flatsphere</h2>
+                <div class="sidebar-title-group">
+                    <!-- Logo: remove this img and .sidebar-title-text wrapper to revert to text-only header -->
+                    <img src="flatsphere-logo-static.svg" alt="" aria-hidden="true" class="sidebar-logo">
+                    <div class="sidebar-title-text">
+                        <h2 class="sidebar-title">Flatsphere</h2>
+                        <small class="sidebar-subtitle">Interactive map projection explorer</small>
+                    </div>
+                </div>
                 <div class="sidebar-header-buttons">
                     <button type="button" class="sidebar-side-toggle" aria-label="Move sidebar to other side" x-on:click="onSidebarSideToggle">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -95,7 +102,7 @@
                 </details>
             </nav>
             <footer class="sidebar-footer">
-                <small>&copy; <a href="https://graceful.earth" target="_blank" rel="noopener">Graceful Earth</a> 2026</small>
+                <small>&copy; <a href="https://glossopoeia.com" target="_blank" rel="noopener">Glossopoeia Research, LLC</a> 2026</small>
                 <small>Built with <a href="https://picocss.com" target="_blank" rel="noopener">Pico CSS</a>, <a href="https://alpinejs.dev" target="_blank" rel="noopener">Alpine JS</a>, and <a href="https://wesl-lang.dev" target="_blank" rel="noopener">WESL</a></small>
             </footer>
         </aside>

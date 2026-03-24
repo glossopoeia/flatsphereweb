@@ -1,0 +1,74 @@
+/* Sidebar Pico CSS overrides for a more condensed layout */
+#sidebar {
+    font-size: var(--font-size-sm);
+}
+
+/* Sidebar logo - remove these styles if removing the logo */
+#sidebar .sidebar-logo {
+    width: 2.5em;
+    height: 2.5em;
+    flex-shrink: 0;
+    filter: invert(1);
+}
+
+#sidebar .sidebar-title-text {
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebar .sidebar-title {
+    font-size: 1.1em;
+    margin-bottom: 0;
+}
+
+#sidebar .sidebar-subtitle {
+    display: block;
+    font-size: 0.8em;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+#sidebar summary[role="button"] {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-base);
+    align-items: center;
+}
+
+#sidebar summary[role="button"]::after {
+    height: 1.5em;
+}
+
+#sidebar details {
+    margin-bottom: var(--spacing-xs);
+    padding-bottom: var(--spacing-sm);
+}
+
+#sidebar label {
+    margin-bottom: var(--spacing-xs);
+}
+
+#sidebar select,
+#sidebar input[type="text"],
+#sidebar input[type="file"],
+#sidebar input[type="button"] {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+
+#sidebar input[type="range"] {
+    margin-bottom: var(--spacing-xs);
+}
+
+#sidebar fieldset[role="group"] {
+    margin-bottom: var(--spacing-xs);
+}
+
+#sidebar fieldset[role="group"] + small {
+    margin-top: var(--spacing-xs);
+}
+
+#sidebar small {
+    font-size: 0.85em;
+    margin-bottom: var(--spacing-xs);
+    display: block;
+}

@@ -138,9 +138,15 @@ Alpine.data('app', () => ({
     },
 
     updateProjectionTooltip(id) {
-        const p = projections[id];
-        const text = p.properties.length > 0 ? p.properties.join(', ') : 'Compromise';
+        const p = projections.find(projection => projection.id === id);
+        if (!p) {
+            this.$refs.projectionInfo.removeAttribute('data-tooltip');
+            return;
+        }
+        const properties = Array.isArray(p.properties) ? p.properties : [];
+        const text = properties.length > 0 ? properties.join(', ') : 'Compromise';
         this.$refs.projectionInfo.setAttribute('data-tooltip', text);
+        this.$refs.projectionInfo.setAttribute('aria-label', `Projection properties: ${text}`);
     },
 
     onSourceChange() {

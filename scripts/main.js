@@ -121,6 +121,8 @@ Alpine.data('app', () => ({
                 dialog.close();
             }
         });
+
+        this.updateProjectionTooltip(store.destinationProjection);
     },
 
     onSidebarToggle() {
@@ -132,7 +134,21 @@ Alpine.data('app', () => ({
     },
 
     onDestinationChange() {
-        Alpine.store('app').destinationProjection = parseInt(this.$refs.dstProjection.value, 10);
+        const id = parseInt(this.$refs.dstProjection.value, 10);
+        Alpine.store('app').destinationProjection = id;
+        this.updateProjectionTooltip(id);
+    },
+
+    updateProjectionTooltip(id) {
+        const p = projections.find(projection => projection.id === id);
+        if (!p) {
+            this.$refs.projectionInfo.removeAttribute('data-tooltip');
+            return;
+        }
+        const properties = Array.isArray(p.properties) ? p.properties : [];
+        const text = properties.length > 0 ? properties.join(', ') : 'Compromise';
+        this.$refs.projectionInfo.setAttribute('data-tooltip', text);
+        this.$refs.projectionInfo.setAttribute('aria-label', `Projection properties: ${text}`);
     },
 
     onSourceChange() {

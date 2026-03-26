@@ -2,13 +2,13 @@
 
 An interactive, educational tool for visualizing how different cartographic projections distort areas of the projected sphere. Built with WebGPU for real-time rendering in the browser.
 
-Try it at: https://flatsphere.dev
+Try it at: [https://flatsphere.dev](https://flatsphere.dev)
 
 ## About
 
-Every flat map of the Earth introduces distortion. Flatsphere Web lets you explore that distortion hands-on by switching between projections, dragging the viewpoint, and toggling overlays like Tissot's indicatrices and graticule lines. Two rendering modes are available: a mathematical color scheme that assigns a unique color to every point on the sphere, and a world map texture for geographic context.
+Every flat map of the Earth introduces distortion. Flatsphere lets you explore that distortion hands-on by switching between projections, dragging the viewpoint, and building intuition with overlays like Tissot's indicatrices and graticule lines. The default visualization uses a world map texture for familiar geographic context, but you can load a local or remotely-hosted image, and even choose a source projection for it if it's not equirectangular by default.
 
-Projection math is based on the [flatsphere](https://github.com/robertkleffner/flatsphere) Go library.
+Projection math originally based on the [flatsphere](https://github.com/robertkleffner/flatsphere) Go library, in turn based on the excellent [Map Projections](https://github.com/jkunimune/Map-Projections) software suite by Justin Kunimune.
 
 ## Local Development
 
@@ -18,7 +18,7 @@ A local web server is required for WebGPU security policies.
 python3 -m http.server 8080
 ```
 
-Then open `http://localhost:8080` in a browser with WebGPU support (Chrome 113+, Edge 113+).
+Then open `http://localhost:8080` in a browser with WebGPU support (recent Chrome/Edge, recent Safari, etc).
 
 ## Versioning and Deployment
 

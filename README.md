@@ -29,7 +29,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The tag name is injected into the page footer at build time. Manual `workflow_dispatch` runs use `dev` as the version. Pushes to `main` without a tag do not trigger a deploy.
+The tag name is injected into the page footer at build time and is expected to use a simple, HTML‑safe format (e.g., semantic versions like `vX.Y.Z` using only ASCII letters, digits, dots, and hyphens). Manual `workflow_dispatch` runs use `dev` as the version. Pushes to `main` without a tag do not trigger a deploy.
 
 ## Dependencies
 

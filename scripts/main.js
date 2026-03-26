@@ -121,6 +121,8 @@ Alpine.data('app', () => ({
                 dialog.close();
             }
         });
+
+        this.updateProjectionTooltip(store.destinationProjection);
     },
 
     onSidebarToggle() {

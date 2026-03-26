@@ -132,7 +132,15 @@ Alpine.data('app', () => ({
     },
 
     onDestinationChange() {
-        Alpine.store('app').destinationProjection = parseInt(this.$refs.dstProjection.value, 10);
+        const id = parseInt(this.$refs.dstProjection.value, 10);
+        Alpine.store('app').destinationProjection = id;
+        this.updateProjectionTooltip(id);
+    },
+
+    updateProjectionTooltip(id) {
+        const p = projections[id];
+        const text = p.properties.length > 0 ? p.properties.join(', ') : 'Compromise';
+        this.$refs.projectionInfo.setAttribute('data-tooltip', text);
     },
 
     onSourceChange() {

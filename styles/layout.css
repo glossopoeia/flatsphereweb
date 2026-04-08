@@ -81,8 +81,11 @@
 }
 
 .app-footer-left,
-.app-footer-center,
 .app-footer-right {
+    flex: none;
+}
+
+.app-footer-center {
     flex: 1;
 }
 
@@ -93,6 +96,7 @@
 .app-footer-right {
     display: flex;
     justify-content: flex-end;
+    flex: none;
 }
 
 .app-footer-left small,
@@ -101,11 +105,13 @@
 }
 
 /* Tool toggle (footer) */
-.tool-toggle {
+fieldset.tool-toggle {
     display: flex;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     overflow: hidden;
+    margin: 0;
+    padding: 0;
 }
 
 .tool-toggle-btn {
@@ -113,8 +119,6 @@
     margin: 0;
     font-size: 0.75rem;
     line-height: 1;
-    background: none;
-    border: none;
     color: var(--text-secondary);
     cursor: pointer;
     white-space: nowrap;
@@ -126,8 +130,8 @@
 }
 
 .tool-toggle-btn.active {
-    background: var(--accent-primary);
-    color: #fff;
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
 }
 
 /* Canvas */

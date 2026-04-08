@@ -132,10 +132,16 @@
                 <small>&copy; <a href="https://glossopoeia.com" target="_blank" rel="noopener">Glossopoeia Research, LLC</a> 2026</small>
             </div>
             <div class="app-footer-right">
-                <div class="tool-toggle" role="radiogroup" aria-label="Active tool">
-                    <button type="button" class="tool-toggle-btn" x-on:click="onActiveToolChange('pan')" x-bind:class="{ active: $store.app.activeTool === 'pan' }" role="radio" x-bind:aria-checked="$store.app.activeTool === 'pan'">Pan/Zoom</button>
-                    <button type="button" class="tool-toggle-btn" x-on:click="onActiveToolChange('rotate')" x-bind:class="{ active: $store.app.activeTool === 'rotate' }" role="radio" x-bind:aria-checked="$store.app.activeTool === 'rotate'">Rotate</button>
-                </div>
+                <fieldset class="tool-toggle" aria-label="Active tool">
+                    <label class="tool-toggle-btn" x-bind:class="{ active: $store.app.activeTool === 'pan' }">
+                        <input type="radio" name="activeTool" value="pan" x-bind:checked="$store.app.activeTool === 'pan'" x-on:change="onActiveToolChange('pan')" hidden>
+                        Pan/Zoom
+                    </label>
+                    <label class="tool-toggle-btn" x-bind:class="{ active: $store.app.activeTool === 'rotate' }">
+                        <input type="radio" name="activeTool" value="rotate" x-bind:checked="$store.app.activeTool === 'rotate'" x-on:change="onActiveToolChange('rotate')" hidden>
+                        Rotate
+                    </label>
+                </fieldset>
             </div>
         </footer>
         

@@ -9,6 +9,16 @@
     margin-bottom: 0;
 }
 
+#app-footer fieldset {
+    margin-bottom: 0;
+    padding: 0;
+    border: none;
+}
+
+#app-footer label {
+    margin-bottom: 0;
+}
+
 /* Sidebar Pico CSS overrides for a more condensed layout */
 #sidebar {
     font-size: var(--font-size-sm);

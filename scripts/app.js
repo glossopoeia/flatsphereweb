@@ -216,8 +216,10 @@ export class ProjectionApp {
     }
 
     resizeCanvas() {
+        const headerHeight = document.getElementById('app-header')?.offsetHeight || 0;
+        const footerHeight = document.getElementById('app-footer')?.offsetHeight || 0;
         const width = window.innerWidth;
-        const height = window.innerHeight;
+        const height = window.innerHeight - headerHeight - footerHeight;
         const dpr = window.devicePixelRatio || 1;
 
         // Scale backing store by device pixel ratio for sharp rendering

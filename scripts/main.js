@@ -32,6 +32,9 @@ Alpine.store('app', {
     sidebarCollapsed: false,
     sidebarRight: false,
 
+    // Active tool
+    activeTool: 'rotate',
+
     // Notifications
     notification: {
         visible: false,
@@ -123,6 +126,14 @@ Alpine.data('app', () => ({
         });
 
         this.updateProjectionTooltip(store.destinationProjection);
+    },
+
+    onComingSoon() {
+        Alpine.store('app').showNotification('Feature Coming Soon', 'success', false, 3000);
+    },
+
+    onActiveToolChange(tool) {
+        Alpine.store('app').activeTool = tool;
     },
 
     onSidebarToggle() {

@@ -24,18 +24,40 @@
 </head>
 <body>
     <main class="app-container" x-data="app">
+        <header id="app-header" data-theme="dark">
+            <div class="app-header-left">
+                <img src="flatsphere-logo-static.svg" alt="" aria-hidden="true" class="app-header-logo">
+                <h1 class="app-header-title">Flatsphere</h1>
+            </div>
+            <div class="app-header-right">
+                <button type="button" class="app-header-btn" aria-label="Info" x-on:click="onComingSoon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                </button>
+                <button type="button" class="app-header-btn" aria-label="Help" x-on:click="onComingSoon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </button>
+                <button type="button" class="app-header-btn" aria-label="Account" x-on:click="onComingSoon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
         <canvas id="projectionCanvas" aria-label="Interactive map projection visualization" role="img"></canvas>
-        
+
         <aside id="sidebar" x-ref="sidebar" data-theme="dark">
             <header>
-                <div class="sidebar-title-group">
-                    <!-- Logo: remove this img and .sidebar-title-text wrapper to revert to text-only header -->
-                    <img src="flatsphere-logo-static.svg" alt="" aria-hidden="true" class="sidebar-logo">
-                    <div class="sidebar-title-text">
-                        <h2 class="sidebar-title">Flatsphere</h2>
-                        <small class="sidebar-subtitle">Interactive map projection explorer</small>
-                    </div>
-                </div>
+                <h2 class="sidebar-title">Settings</h2>
                 <div class="sidebar-header-buttons">
                     <button type="button" class="sidebar-side-toggle" aria-label="Move sidebar to other side" x-on:click="onSidebarSideToggle">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -50,14 +72,10 @@
             </header>
             <nav class="sidebar-content">
                 <details>
-                    <summary role="button" class="outline">Projections</summary>
+                    <summary role="button" class="secondary">Projections</summary>
                     <label for="destinationProjection">
                         Shown Projection <span x-ref="projectionInfo" id="projectionInfo" data-tooltip="" data-placement="right" role="img" aria-label="Projection properties" tabindex="0">&#9432;</span>
                         <select id="destinationProjection" x-ref="dstProjection" x-on:change="onDestinationChange"></select>
-                    </label>
-                    <label for="sourceProjection">
-                        Source Projection
-                        <select id="sourceProjection" x-ref="srcProjection" x-on:change="onSourceChange"></select>
                     </label>
                     <label for="rotationSlider">
                         Rotation: <span x-ref="rotationLabel" id="rotationValue">0°</span>
@@ -66,19 +84,22 @@
                 </details>
 
                 <details>
-                    <summary role="button" class="outline">Custom Image</summary>
+                    <summary role="button" class="secondary">Source Image</summary>
+                    <label>Upload Remote or Local Image</label>
                     <fieldset role="group">
-                        <input type="text" x-ref="imageUrl" id="imageUrl" aria-label="Custom Image URL" aria-describedby="image-url-help" placeholder="Enter image URL" x-on:input="onImageUrlInput" x-on:keyup="onImageUrlKeyup"/>
+                        <input type="text" x-ref="imageUrl" id="imageUrl" aria-label="Custom Image URL" aria-describedby="image-url-help" placeholder="Remote Image URL" x-on:input="onImageUrlInput" x-on:keyup="onImageUrlKeyup"/>
                         <input type="button" x-ref="loadImageButton" id="loadImageButton" x-on:click="onLoadImage"/>
                     </fieldset>
-                    <small id="image-url-help">Use an image from somewhere else on the internet</small>
-
-                    <input type="file" x-ref="fileInput" id="fileInput" accept="image/*" x-on:change="onFileInputChange"/>
-                    <small id="file-input-help">Or select an image file saved on your device</small>
+                    <label for="fileInput" role="button" class="upload-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload Local Image</label>
+                    <input type="file" x-ref="fileInput" id="fileInput" accept="image/*" x-on:change="onFileInputChange" hidden/>
+                    <label for="sourceProjection">
+                        Source Projection
+                        <select id="sourceProjection" x-ref="srcProjection" x-on:change="onSourceChange"></select>
+                    </label>
                 </details>
 
                 <details>
-                    <summary role="button" class="outline">Display Options</summary>
+                    <summary role="button" class="secondary">Display Options</summary>
                     <label>
                         <input type="checkbox" role="switch" id="fullscreenToggle" x-ref="fullscreenToggle" x-on:change="onFullscreenToggle">
                         Fullscreen
@@ -101,12 +122,28 @@
                     </label>
                 </details>
             </nav>
-            <footer class="sidebar-footer">
-                <small>&copy; <a href="https://glossopoeia.com" target="_blank" rel="noopener">Glossopoeia Research, LLC</a> 2026</small>
-                <small>Built with <a href="https://picocss.com" target="_blank" rel="noopener">Pico CSS</a>, <a href="https://alpinejs.dev" target="_blank" rel="noopener">Alpine JS</a>, and <a href="https://wesl-lang.dev" target="_blank" rel="noopener">WESL</a></small>
-                <small class="version-label">Version __VERSION__</small>
-            </footer>
         </aside>
+
+        <footer id="app-footer" data-theme="dark">
+            <div class="app-footer-left">
+                <small class="version-label">Version __VERSION__</small>
+            </div>
+            <div class="app-footer-center">
+                <small>&copy; <a href="https://glossopoeia.com" target="_blank" rel="noopener">Glossopoeia Research, LLC</a> 2026</small>
+            </div>
+            <div class="app-footer-right">
+                <fieldset class="tool-toggle" aria-label="Active tool">
+                    <label class="tool-toggle-btn" x-bind:class="{ active: $store.app.activeTool === 'pan' }">
+                        <input type="radio" name="activeTool" value="pan" x-bind:checked="$store.app.activeTool === 'pan'" x-on:change="onActiveToolChange('pan')" hidden>
+                        Pan/Zoom
+                    </label>
+                    <label class="tool-toggle-btn" x-bind:class="{ active: $store.app.activeTool === 'rotate' }">
+                        <input type="radio" name="activeTool" value="rotate" x-bind:checked="$store.app.activeTool === 'rotate'" x-on:change="onActiveToolChange('rotate')" hidden>
+                        Rotate
+                    </label>
+                </fieldset>
+            </div>
+        </footer>
         
         <div class="loading-backdrop" id="loadingBackdrop" role="alert" aria-live="polite" aria-busy="true">
             <div class="loading-content">

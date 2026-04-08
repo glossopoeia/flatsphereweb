@@ -14,8 +14,12 @@
         width: 48px;
     }
 
-    #sidebar .sidebar-subtitle {
+    .app-footer-left {
         display: none;
+    }
+
+    .app-footer-center {
+        text-align: left;
     }
 }
 
@@ -37,6 +41,14 @@
 :-webkit-full-screen #sidebar.right {
     left: auto;
     right: max(0px, env(safe-area-inset-right));
+}
+
+:fullscreen #app-header,
+:-webkit-full-screen #app-header,
+:fullscreen #app-footer,
+:-webkit-full-screen #app-footer {
+    padding-left: max(var(--spacing-lg), env(safe-area-inset-left));
+    padding-right: max(var(--spacing-lg), env(safe-area-inset-right));
 }
 
 /* Reduced motion preferences */

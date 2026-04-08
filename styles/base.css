@@ -29,9 +29,12 @@
     --radius-lg: 12px;
     --radius-full: 50%;
     
-    /* App bar heights */
+    /* App bar heights (base, without safe area) */
     --header-height: 48px;
     --footer-height: 36px;
+    /* Total heights including safe area insets */
+    --header-total: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+    --footer-total: calc(var(--footer-height) + env(safe-area-inset-bottom, 0px));
 
     /* Transitions */
     --transition-fast: 0.2s ease;

@@ -4,14 +4,16 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: var(--header-height);
+    height: var(--header-total);
+    padding-top: env(safe-area-inset-top, 0px);
     z-index: 160;
     background: var(--bg-secondary);
     backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 var(--spacing-lg);
+    padding-left: max(var(--spacing-lg), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--spacing-lg), env(safe-area-inset-right, 0px));
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -68,14 +70,16 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: var(--footer-height);
+    height: var(--footer-total);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     z-index: 160;
     background: var(--bg-secondary);
     backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 var(--spacing-lg);
+    padding-left: max(var(--spacing-lg), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--spacing-lg), env(safe-area-inset-right, 0px));
     border-top: 1px solid var(--border-color);
     font-size: var(--font-size-sm);
 }
@@ -137,10 +141,10 @@ fieldset.tool-toggle {
 /* Canvas */
 #projectionCanvas {
     position: absolute;
-    top: var(--header-height);
+    top: var(--header-total);
     left: 0;
     width: 100vw;
-    height: calc(100vh - var(--header-height) - var(--footer-height));
+    height: calc(100vh - var(--header-total) - var(--footer-total));
     background-color: #000;
     touch-action: none;
     display: block;
@@ -149,9 +153,9 @@ fieldset.tool-toggle {
 /* Sidebar */
 #sidebar {
     position: absolute;
-    top: var(--header-height);
+    top: var(--header-total);
     left: 0;
-    bottom: var(--footer-height);
+    bottom: var(--footer-total);
     width: 400px;
     z-index: 150;
     background: var(--bg-secondary);

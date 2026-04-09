@@ -12,7 +12,11 @@ struct Uniforms {
     show_tissot: f32,
     show_graticule: f32,
     rotation: f32,
-    padding1: f32,
+    pan_x: f32,
+    pan_y: f32,
+    _pad1: f32,
+    _pad2: f32,
+    _pad3: f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -104,7 +108,10 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     coord = coord * planar_scale;
     // Apply zoom factor before inverse projection to narrow the view
     coord = coord * uniforms.zoom;
-    
+
+    // Apply pan offset in projection space
+    coord = coord + vec2f(uniforms.pan_x, uniforms.pan_y);
+
     // Perform inverse projection to get lat/lon
     let lat_lon = inverse(coord.x, coord.y);
     

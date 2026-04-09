@@ -52,6 +52,7 @@
 
 #sidebar select,
 #sidebar input[type="text"],
+#sidebar input[type="number"],
 #sidebar input[type="file"],
 #sidebar input[type="button"] {
     padding: var(--spacing-xs) var(--spacing-sm);

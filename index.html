@@ -77,6 +77,14 @@
                         Shown Projection <span x-ref="projectionInfo" id="projectionInfo" data-tooltip="" data-placement="right" role="img" aria-label="Projection properties" tabindex="0">&#9432;</span>
                         <select id="destinationProjection" x-ref="dstProjection" x-on:change="onDestinationChange"></select>
                     </label>
+                    <label for="obliqueLatSlider">
+                        Oblique Lat: <span x-ref="obliqueLatLabel" id="obliqueLatValue">90°</span>
+                        <input type="range" id="obliqueLatSlider" x-ref="obliqueLatSlider" x-on:input="onObliqueLatInput" min="-90" max="90" step="1" value="90">
+                    </label>
+                    <label for="obliqueLonSlider">
+                        Oblique Lon: <span x-ref="obliqueLonLabel" id="obliqueLonValue">0°</span>
+                        <input type="range" id="obliqueLonSlider" x-ref="obliqueLonSlider" x-on:input="onObliqueLonInput" min="-180" max="180" step="1" value="0">
+                    </label>
                     <label for="rotationSlider">
                         Rotation: <span x-ref="rotationLabel" id="rotationValue">0°</span>
                         <input type="range" id="rotationSlider" x-ref="rotationSlider" x-on:input="onRotationInput" min="-180" max="180" step="1" value="0">
@@ -119,6 +127,14 @@
                     <label for="zoomSlider">
                         Zoom: <span x-ref="zoomLabel">1.0x</span>
                         <input type="range" id="zoomSlider" x-ref="zoomSlider" x-on:input="onZoomSliderInput" min="-2" max="1" step="0.01" value="0">
+                    </label>
+                    <label for="panXInput">
+                        Pan X
+                        <input type="number" id="panXInput" x-ref="panXInput" x-on:input="onPanXInput" step="0.01" value="0">
+                    </label>
+                    <label for="panYInput">
+                        Pan Y
+                        <input type="number" id="panYInput" x-ref="panYInput" x-on:input="onPanYInput" step="0.01" value="0">
                     </label>
                 </details>
             </nav>

@@ -6,10 +6,6 @@ export class ProjectionApp {
     constructor() {
         this.canvas = document.getElementById('projectionCanvas');
 
-        // Camera state
-        this.cameraLat = 90;
-        this.cameraLon = 0;
-
         // Drag state
         this.isDragging = false;
         this.lastX = 0;
@@ -52,9 +48,20 @@ export class ProjectionApp {
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             const store = Alpine.store('app');
-            const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
-            store.zoom = Math.max(0.01, Math.min(10, store.zoom * zoomFactor));
-            store.zoomSlider = Math.log10(store.zoom);
+
+            if (store.activeTool === 'pan') {
+                // Pan/Zoom mode: scroll controls zoom
+                const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+                store.zoom = Math.max(0.01, Math.min(10, store.zoom * zoomFactor));
+                store.zoomSlider = Math.log10(store.zoom);
+            } else {
+                // Rotate mode: scroll drives the rotation slider (with wrap-around)
+                const delta = e.deltaY > 0 ? 1 : -1;
+                let newRotation = store.rotation + delta;
+                if (newRotation > 180) newRotation -= 360;
+                if (newRotation < -180) newRotation += 360;
+                store.rotation = newRotation;
+            }
         });
 
         // Touch interaction
@@ -83,9 +90,20 @@ export class ProjectionApp {
 
                 if (this.lastTouchDistance > 0) {
                     const store = Alpine.store('app');
-                    const zoomFactor = this.lastTouchDistance / currentDistance;
-                    store.zoom = Math.max(0.01, Math.min(10, this.initialZoom * zoomFactor));
-                    store.zoomSlider = Math.log10(store.zoom);
+
+                    if (store.activeTool === 'pan') {
+                        // Pan/Zoom mode: pinch controls zoom
+                        const zoomFactor = this.lastTouchDistance / currentDistance;
+                        store.zoom = Math.max(0.01, Math.min(10, this.initialZoom * zoomFactor));
+                        store.zoomSlider = Math.log10(store.zoom);
+                    } else {
+                        // Rotate mode: pinch drives rotation (with wrap-around)
+                        const rotationDelta = (currentDistance - this.lastTouchDistance) * 0.2;
+                        let newRotation = store.rotation + rotationDelta;
+                        newRotation = ((newRotation + 180) % 360 + 360) % 360 - 180;
+                        store.rotation = newRotation;
+                        this.lastTouchDistance = currentDistance;
+                    }
                 }
             }
             e.preventDefault();
@@ -120,19 +138,30 @@ export class ProjectionApp {
     updateDrag(x, y) {
         const deltaX = x - this.lastX;
         const deltaY = y - this.lastY;
+        const store = Alpine.store('app');
 
-        const zoom = Alpine.store('app').zoom;
-        const sensitivity = 0.5 * Math.sqrt(zoom);
+        if (store.activeTool === 'rotate') {
+            // Rotate mode: drag changes oblique view (camera lat/lon)
+            const sensitivity = 0.5 * Math.sqrt(store.zoom);
 
-        let newLon = this.cameraLon + (deltaX * sensitivity);
-        let newLat = this.cameraLat + (deltaY * sensitivity);
+            let newLon = store.obliqueLon + (deltaX * sensitivity);
+            let newLat = store.obliqueLat + (deltaY * sensitivity);
 
-        newLat = Math.max(-90, Math.min(90, newLat));
-        newLon = ((newLon % 360) + 360) % 360;
-        if (newLon > 180) newLon -= 360;
+            newLat = Math.max(-90, Math.min(90, newLat));
+            newLon = ((newLon % 360) + 360) % 360;
+            if (newLon > 180) newLon -= 360;
 
-        this.cameraLat = newLat;
-        this.cameraLon = newLon;
+            store.obliqueLat = newLat;
+            store.obliqueLon = newLon;
+        } else {
+            // Pan mode: drag pans the projection plane
+            // X axis must account for aspect ratio since the shader scales x by aspect
+            const canvasWidth = this.canvas.clientWidth;
+            const canvasHeight = this.canvas.clientHeight;
+            const aspect = (canvasWidth / canvasHeight) * store.aspectRatio;
+            store.panX -= (deltaX / canvasWidth) * 2.0 * store.zoom * aspect;
+            store.panY += (deltaY / canvasHeight) * 2.0 * store.zoom;
+        }
 
         this.lastX = x;
         this.lastY = y;
@@ -190,12 +219,21 @@ export class ProjectionApp {
     setupAlpineEffects() {
         const store = Alpine.store('app');
 
-        // React to projection changes
+        // React to projection changes (and reset pan offsets)
+        let lastDst = store.destinationProjection;
+        let lastSrc = store.sourceProjection;
         Alpine.effect(() => {
             const dst = store.destinationProjection;
             const src = store.sourceProjection;
             this.renderer.setDestinationProjection(dst);
             this.renderer.setSourceProjection(src);
+            // Reset pan only when projection actually changes
+            if (dst !== lastDst || src !== lastSrc) {
+                lastDst = dst;
+                lastSrc = src;
+                store.panX = 0.0;
+                store.panY = 0.0;
+            }
             this.render();
         });
 
@@ -211,6 +249,20 @@ export class ProjectionApp {
             store.zoom;
             store.aspectRatio;
             store.rotation;
+            this.render();
+        });
+
+        // React to pan changes
+        Alpine.effect(() => {
+            store.panX;
+            store.panY;
+            this.render();
+        });
+
+        // React to oblique view changes (from sliders)
+        Alpine.effect(() => {
+            store.obliqueLat;
+            store.obliqueLon;
             this.render();
         });
     }
@@ -366,15 +418,17 @@ export class ProjectionApp {
     render() {
         if (!this.renderer) return;
 
-        const cameraLat = this.cameraLat * Math.PI / 180;
-        const cameraLon = this.cameraLon * Math.PI / 180;
         const store = Alpine.store('app');
+        const cameraLat = store.obliqueLat * Math.PI / 180;
+        const cameraLon = store.obliqueLon * Math.PI / 180;
         const zoom = store.zoom;
         const showTissot = store.tissot ? 1.0 : 0.0;
         const showGraticule = store.graticule ? 1.0 : 0.0;
         const aspectRatioMultiplier = store.aspectRatio;
         const rotation = store.rotation * Math.PI / 180;
+        const panX = store.panX;
+        const panY = store.panY;
 
-        this.renderer.render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier, rotation);
+        this.renderer.render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier, rotation, panX, panY);
     }
 }

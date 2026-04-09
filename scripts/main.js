@@ -23,6 +23,10 @@ Alpine.store('app', {
     zoom: 1.0,          // actual zoom value (10^zoomSlider)
     rotation: 0,        // rotation in degrees (-180 to 180)
 
+    // Oblique view (camera) state in degrees
+    obliqueLat: 90,     // -90 to 90
+    obliqueLon: 0,      // -180 to 180
+
     // Image loading
     imageUrl: '',
     currentFile: null,
@@ -34,6 +38,10 @@ Alpine.store('app', {
 
     // Active tool
     activeTool: 'rotate',
+
+    // Pan offset (projection-space coordinates)
+    panX: 0.0,
+    panY: 0.0,
 
     // Notifications
     notification: {
@@ -110,6 +118,30 @@ Alpine.data('app', () => ({
         Alpine.effect(() => {
             this.$refs.zoomSlider.value = store.zoomSlider;
             this.$refs.zoomLabel.textContent = `${store.zoom.toFixed(2)}x`;
+        });
+
+        // Sync rotation slider and label when rotation changes (e.g. scroll/pinch in Rotate mode)
+        Alpine.effect(() => {
+            this.$refs.rotationSlider.value = store.rotation;
+            this.$refs.rotationLabel.textContent = `${store.rotation.toFixed(0)}°`;
+        });
+
+        // Sync oblique lat/lon sliders when changed by drag interaction
+        Alpine.effect(() => {
+            this.$refs.obliqueLatSlider.value = store.obliqueLat;
+            this.$refs.obliqueLatLabel.textContent = `${store.obliqueLat.toFixed(0)}°`;
+        });
+        Alpine.effect(() => {
+            this.$refs.obliqueLonSlider.value = store.obliqueLon;
+            this.$refs.obliqueLonLabel.textContent = `${store.obliqueLon.toFixed(0)}°`;
+        });
+
+        // Sync pan inputs when changed by drag interaction
+        Alpine.effect(() => {
+            this.$refs.panXInput.value = store.panX.toFixed(2);
+        });
+        Alpine.effect(() => {
+            this.$refs.panYInput.value = store.panY.toFixed(2);
         });
 
         // Sync notification dialog with store state
@@ -216,6 +248,32 @@ Alpine.data('app', () => ({
         const store = Alpine.store('app');
         store.rotation = parseFloat(this.$refs.rotationSlider.value);
         this.$refs.rotationLabel.textContent = `${store.rotation.toFixed(0)}°`;
+    },
+
+    onObliqueLatInput() {
+        const store = Alpine.store('app');
+        store.obliqueLat = parseFloat(this.$refs.obliqueLatSlider.value);
+        this.$refs.obliqueLatLabel.textContent = `${store.obliqueLat.toFixed(0)}°`;
+    },
+
+    onObliqueLonInput() {
+        const store = Alpine.store('app');
+        store.obliqueLon = parseFloat(this.$refs.obliqueLonSlider.value);
+        this.$refs.obliqueLonLabel.textContent = `${store.obliqueLon.toFixed(0)}°`;
+    },
+
+    onPanXInput() {
+        const val = parseFloat(this.$refs.panXInput.value);
+        if (!isNaN(val)) {
+            Alpine.store('app').panX = val;
+        }
+    },
+
+    onPanYInput() {
+        const val = parseFloat(this.$refs.panYInput.value);
+        if (!isNaN(val)) {
+            Alpine.store('app').panY = val;
+        }
     },
 
     onLoadImage() {

@@ -69,7 +69,7 @@ export class ProjectionRenderer {
         
         // Create uniform buffer
         this.uniformBuffer = this.device.createBuffer({
-            size: 32, // 8 floats * 4 bytes each
+            size: 48, // 12 floats * 4 bytes each (16-byte aligned)
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         
@@ -211,7 +211,7 @@ export class ProjectionRenderer {
         });
     }
     
-    render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0) {
+    render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0) {
         // Update uniforms
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
@@ -225,7 +225,9 @@ export class ProjectionRenderer {
             showTissot,
             showGraticule,
             rotation,
-            0, // padding for alignment
+            panX,
+            panY,
+            0, 0, 0, // padding for 16-byte alignment
         ]);
         
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);

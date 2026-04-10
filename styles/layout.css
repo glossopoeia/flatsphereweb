@@ -91,16 +91,12 @@
 
 .app-footer-center {
     flex: 1;
-}
-
-.app-footer-center {
     text-align: center;
 }
 
 .app-footer-right {
     display: flex;
     justify-content: flex-end;
-    flex: none;
 }
 
 .app-footer-left small,
@@ -180,7 +176,7 @@ fieldset.tool-toggle {
 .sidebar-header-buttons {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs, 4px);
+    gap: var(--spacing-xs);
     flex-shrink: 0;
 }
 

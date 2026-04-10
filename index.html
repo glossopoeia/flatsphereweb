@@ -23,6 +23,9 @@
 
 </head>
 <body>
+    <noscript>
+        <p>This application requires JavaScript and WebGPU support to function.</p>
+    </noscript>
     <main class="app-container" x-data="app">
         <header id="app-header" data-theme="dark">
             <div class="app-header-left">
@@ -95,7 +98,7 @@
                     <summary role="button" class="secondary">Source Image</summary>
                     <label>Upload Remote or Local Image</label>
                     <fieldset role="group">
-                        <input type="text" x-ref="imageUrl" id="imageUrl" aria-label="Custom Image URL" aria-describedby="image-url-help" placeholder="Remote Image URL" x-on:input="onImageUrlInput" x-on:keyup="onImageUrlKeyup"/>
+                        <input type="text" x-ref="imageUrl" id="imageUrl" aria-label="Custom Image URL" placeholder="Remote Image URL" x-on:input="onImageUrlInput" x-on:keyup="onImageUrlKeyup"/>
                         <input type="button" x-ref="loadImageButton" id="loadImageButton" x-on:click="onLoadImage"/>
                     </fieldset>
                     <label for="fileInput" role="button" class="upload-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload Local Image</label>
@@ -178,9 +181,6 @@
             </article>
         </dialog>
 
-        <noscript>
-            <p>This application requires JavaScript and WebGPU support to function.</p>
-        </noscript>
     </main>
 
     <script type="module" src="scripts/main.js"></script>

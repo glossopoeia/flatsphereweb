@@ -120,18 +120,12 @@ Alpine.data('app', () => ({
             this.$refs.zoomLabel.textContent = `${store.zoom.toFixed(2)}x`;
         });
 
-        // Sync rotation slider and label when rotation changes (e.g. scroll/pinch in Rotate mode)
+        // Sync projection sliders when changed by canvas interaction
         Alpine.effect(() => {
             this.$refs.rotationSlider.value = store.rotation;
             this.$refs.rotationLabel.textContent = `${store.rotation.toFixed(0)}°`;
-        });
-
-        // Sync oblique lat/lon sliders when changed by drag interaction
-        Alpine.effect(() => {
             this.$refs.obliqueLatSlider.value = store.obliqueLat;
             this.$refs.obliqueLatLabel.textContent = `${store.obliqueLat.toFixed(0)}°`;
-        });
-        Alpine.effect(() => {
             this.$refs.obliqueLonSlider.value = store.obliqueLon;
             this.$refs.obliqueLonLabel.textContent = `${store.obliqueLon.toFixed(0)}°`;
         });
@@ -139,8 +133,6 @@ Alpine.data('app', () => ({
         // Sync pan inputs when changed by drag interaction
         Alpine.effect(() => {
             this.$refs.panXInput.value = store.panX.toFixed(2);
-        });
-        Alpine.effect(() => {
             this.$refs.panYInput.value = store.panY.toFixed(2);
         });
 

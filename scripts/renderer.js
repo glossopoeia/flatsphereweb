@@ -140,19 +140,21 @@ export class ProjectionRenderer {
         const response = await fetch('./world_map.jpg');
         const blob = await response.blob();
         await this.loadTextureFromBlob(blob);
+        this.isDefaultTexture = true;
         if (!initialLoad) {
-            this.updateBindGroup(); // only do this if we've already created the pipeline
+            this.updateBindGroup();
         }
     }
 
     async loadCustomTexture(blob) {
         await this.loadTextureFromBlob(blob);
+        this.isDefaultTexture = false;
         this.updateBindGroup();
     }
 
     async loadTextureFromBlob(blob) {
-        // Dispose of previous texture to prevent memory leaks
-        if (this.worldTexture && this.worldTexture !== this.defaultTexture) {
+        // Dispose of previous custom texture to prevent memory leaks
+        if (this.worldTexture && !this.isDefaultTexture) {
             this.worldTexture.destroy();
         }
         

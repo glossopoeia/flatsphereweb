@@ -13,9 +13,6 @@
     --border-color: #555;
     --text-primary: #fff;
     --text-secondary: #ccc;
-    --text-muted: #aaa;
-    --accent-primary: #64a6ff;
-    --accent-hover: rgba(100, 150, 255, 0.8);
     /* Spacing */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
@@ -25,9 +22,6 @@
     
     /* Border radius */
     --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-full: 50%;
     
     /* App bar heights (base, without safe area) */
     --header-height: 48px;
@@ -44,7 +38,6 @@
     --font-size-sm: 0.8em;
     --font-size-base: 0.9em;
     --font-size-lg: 1em;
-    --font-size-xl: 1.1em;
 }
 
 html, body {

@@ -20,30 +20,33 @@ export class ProjectionApp {
     }
 
     setupCanvasInteraction() {
+        this.abortController = new AbortController();
+        const signal = this.abortController.signal;
+
         window.addEventListener('resize', () => {
             this.resizeCanvas();
             this.render();
-        });
+        }, { signal });
 
         // Mouse interaction
         this.canvas.addEventListener('mousedown', (e) => {
             this.startDrag(e.clientX, e.clientY);
             e.preventDefault();
-        });
+        }, { signal });
 
         this.canvas.addEventListener('mousemove', (e) => {
             if (!this.isDragging) return;
             this.updateDrag(e.clientX, e.clientY);
             e.preventDefault();
-        });
+        }, { signal });
 
         this.canvas.addEventListener('mouseup', () => {
             this.endDrag();
-        });
+        }, { signal });
 
         this.canvas.addEventListener('mouseleave', () => {
             this.endDrag();
-        });
+        }, { signal });
 
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
@@ -62,7 +65,7 @@ export class ProjectionApp {
                 if (newRotation < -180) newRotation += 360;
                 store.rotation = newRotation;
             }
-        });
+        }, { signal });
 
         // Touch interaction
         this.canvas.addEventListener('touchstart', (e) => {
@@ -77,7 +80,7 @@ export class ProjectionApp {
                 this.initialZoom = Alpine.store('app').zoom;
             }
             e.preventDefault();
-        });
+        }, { signal });
 
         this.canvas.addEventListener('touchmove', (e) => {
             if (e.touches.length === 1 && this.isDragging) {
@@ -107,7 +110,7 @@ export class ProjectionApp {
                 }
             }
             e.preventDefault();
-        });
+        }, { signal });
 
         this.canvas.addEventListener('touchend', (e) => {
             if (e.touches.length === 0) {
@@ -118,12 +121,12 @@ export class ProjectionApp {
                 const touch = e.touches[0];
                 this.startDrag(touch.clientX, touch.clientY);
             }
-        });
+        }, { signal });
 
         this.canvas.addEventListener('touchcancel', () => {
             this.endDrag();
             this.lastTouchDistance = 0;
-        });
+        }, { signal });
 
         this.canvas.style.cursor = 'grab';
     }
@@ -219,7 +222,7 @@ export class ProjectionApp {
     setupAlpineEffects() {
         const store = Alpine.store('app');
 
-        // React to projection changes (and reset pan offsets)
+        // React to projection changes and reset pan offsets
         let lastDst = store.destinationProjection;
         let lastSrc = store.sourceProjection;
         Alpine.effect(() => {
@@ -227,42 +230,25 @@ export class ProjectionApp {
             const src = store.sourceProjection;
             this.renderer.setDestinationProjection(dst);
             this.renderer.setSourceProjection(src);
-            // Reset pan only when projection actually changes
             if (dst !== lastDst || src !== lastSrc) {
                 lastDst = dst;
                 lastSrc = src;
-                store.panX = 0.0;
-                store.panY = 0.0;
+                // Reset pan outside this effect to avoid tracking panX/panY as dependencies
+                queueMicrotask(() => {
+                    store.panX = 0.0;
+                    store.panY = 0.0;
+                });
             }
             this.render();
         });
 
-        // React to toggle changes
+        // React to display toggle, slider, pan, and oblique view changes
         Alpine.effect(() => {
-            store.tissot;
-            store.graticule;
-            this.render();
-        });
-
-        // React to slider changes
-        Alpine.effect(() => {
-            store.zoom;
-            store.aspectRatio;
-            store.rotation;
-            this.render();
-        });
-
-        // React to pan changes
-        Alpine.effect(() => {
-            store.panX;
-            store.panY;
-            this.render();
-        });
-
-        // React to oblique view changes (from sliders)
-        Alpine.effect(() => {
-            store.obliqueLat;
-            store.obliqueLon;
+            // Read all reactive properties that should trigger a re-render
+            void (store.tissot, store.graticule);
+            void (store.zoom, store.aspectRatio, store.rotation);
+            void (store.panX, store.panY);
+            void (store.obliqueLat, store.obliqueLon);
             this.render();
         });
     }

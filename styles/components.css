@@ -57,14 +57,10 @@
 #sidebar input[type="button"] {
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: var(--font-size-sm);
-    margin-bottom: 0;
 }
 
-#sidebar input[type="range"] {
-    margin-bottom: 0;
-}
-
-#sidebar input[type="checkbox"] {
+#sidebar select,
+#sidebar input {
     margin-bottom: 0;
 }
 
@@ -76,10 +72,6 @@
     font-size: 0.85em;
     margin-bottom: var(--spacing-sm);
     display: block;
-}
-
-#sidebar label[role="button"] {
-    margin-bottom: var(--spacing-sm);
 }
 
 .upload-btn {

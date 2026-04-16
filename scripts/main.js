@@ -43,6 +43,19 @@ Alpine.store('app', {
     panX: 0.0,
     panY: 0.0,
 
+    // Projection info dialog
+    projectionInfo: {
+        visible: false,
+    },
+
+    showProjectionInfo() {
+        this.projectionInfo.visible = true;
+    },
+
+    hideProjectionInfo() {
+        this.projectionInfo.visible = false;
+    },
+
     // Notifications
     notification: {
         visible: false,
@@ -149,11 +162,60 @@ Alpine.data('app', () => ({
             }
         });
 
-        this.updateProjectionTooltip(store.destinationProjection);
+        // Sync projection info dialog with store state
+        Alpine.effect(() => {
+            const info = store.projectionInfo;
+            const dialog = this.$refs.projectionInfoDialog;
+            if (info.visible && !dialog.open) {
+                this.renderProjectionInfoContent();
+                dialog.showModal();
+            } else if (!info.visible && dialog.open) {
+                dialog.close();
+            }
+        });
+
     },
 
     onComingSoon() {
         Alpine.store('app').showNotification('Feature Coming Soon', 'success', false, 3000);
+    },
+
+    onProjectionInfo() {
+        Alpine.store('app').showProjectionInfo();
+    },
+
+    onProjectionInfoClose() {
+        Alpine.store('app').hideProjectionInfo();
+    },
+
+    onProjectionInfoBackdropClick(event) {
+        if (event.target === this.$refs.projectionInfoDialog) {
+            Alpine.store('app').hideProjectionInfo();
+        }
+    },
+
+    renderProjectionInfoContent() {
+        const store = Alpine.store('app');
+        const p = projections.find(proj => proj.id === store.destinationProjection);
+        if (!p) return;
+
+        this.$refs.projInfoTitle.textContent = `${p.emoji} ${p.name}`;
+        this.$refs.projInfoCreators.textContent = p.creators.join(', ');
+        this.$refs.projInfoOriginated.textContent = p.originated;
+        this.$refs.projInfoSummary.textContent = p.summary;
+
+        const allProps = ['Conformal', 'Equal-Area', 'Azimuthal', 'Equidistant', 'Gnomonic'];
+        const container = this.$refs.projInfoProperties;
+        container.innerHTML = allProps.map(prop => {
+            const active = p.properties.includes(prop);
+            const cls = active ? 'prop-pill prop-active' : 'prop-pill prop-inactive';
+            return `<span class="${cls}">${prop}</span>`;
+        }).join('');
+
+        const resList = this.$refs.projInfoResources;
+        resList.innerHTML = p.resources.map(r =>
+            `<li><a href="${r.url}" target="_blank" rel="noopener">${r.title}</a></li>`
+        ).join('');
     },
 
     onActiveToolChange(tool) {
@@ -171,19 +233,6 @@ Alpine.data('app', () => ({
     onDestinationChange() {
         const id = parseInt(this.$refs.dstProjection.value, 10);
         Alpine.store('app').destinationProjection = id;
-        this.updateProjectionTooltip(id);
-    },
-
-    updateProjectionTooltip(id) {
-        const p = projections.find(projection => projection.id === id);
-        if (!p) {
-            this.$refs.projectionInfo.removeAttribute('data-tooltip');
-            return;
-        }
-        const properties = Array.isArray(p.properties) ? p.properties : [];
-        const text = properties.length > 0 ? properties.join(', ') : 'Compromise';
-        this.$refs.projectionInfo.setAttribute('data-tooltip', text);
-        this.$refs.projectionInfo.setAttribute('aria-label', `Projection properties: ${text}`);
     },
 
     onSourceChange() {

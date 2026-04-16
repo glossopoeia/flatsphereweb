@@ -33,7 +33,7 @@
                 <h1 class="app-header-title">Flatsphere</h1>
             </div>
             <div class="app-header-right">
-                <button type="button" class="app-header-btn" aria-label="Info" x-on:click="onComingSoon">
+                <button type="button" class="app-header-btn" aria-label="Open projection information" aria-haspopup="dialog" x-on:click="onProjectionInfo">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="12" cy="12" r="10"/>
                         <line x1="12" y1="16" x2="12" y2="12"/>
@@ -77,7 +77,7 @@
                 <details>
                     <summary role="button" class="secondary">Projections</summary>
                     <label for="destinationProjection">
-                        Shown Projection <span x-ref="projectionInfo" id="projectionInfo" data-tooltip="" data-placement="right" role="img" aria-label="Projection properties" tabindex="0">&#9432;</span>
+                        Shown Projection
                         <select id="destinationProjection" x-ref="dstProjection" x-on:change="onDestinationChange"></select>
                     </label>
                     <label for="obliqueLatSlider">
@@ -178,6 +178,37 @@
                     <p><strong x-ref="notificationTitle" id="notificationTitle">Notice</strong></p>
                 </header>
                 <p x-ref="notificationMessage" id="notificationMessage"></p>
+            </article>
+        </dialog>
+
+        <dialog x-ref="projectionInfoDialog" id="projectionInfoDialog" role="dialog" aria-modal="true" aria-labelledby="projInfoTitle" x-on:click="onProjectionInfoBackdropClick" x-on:cancel="onProjectionInfoClose">
+            <article>
+                <header>
+                    <button aria-label="Close" rel="prev" x-on:click="onProjectionInfoClose"></button>
+                    <p><strong x-ref="projInfoTitle" id="projInfoTitle"></strong></p>
+                </header>
+                <div class="proj-info-meta">
+                    <div class="proj-info-meta-item">
+                        <h4>Creator(s)</h4>
+                        <span x-ref="projInfoCreators" id="projInfoCreators"></span>
+                    </div>
+                    <div class="proj-info-meta-item">
+                        <h4>Originated</h4>
+                        <span x-ref="projInfoOriginated" id="projInfoOriginated"></span>
+                    </div>
+                </div>
+                <section class="proj-info-section">
+                    <h4>Summary</h4>
+                    <p x-ref="projInfoSummary" id="projInfoSummary"></p>
+                </section>
+                <section class="proj-info-section">
+                    <h4>Properties</h4>
+                    <div x-ref="projInfoProperties" class="proj-info-pills"></div>
+                </section>
+                <section class="proj-info-section">
+                    <h4>Additional Resources</h4>
+                    <ul x-ref="projInfoResources" class="proj-info-resources"></ul>
+                </section>
             </article>
         </dialog>
 

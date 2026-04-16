@@ -110,6 +110,11 @@ Alpine.data('app', () => ({
         this.$refs.dstProjection.innerHTML = optionsHtml;
         this.$refs.srcProjection.innerHTML = optionsHtml;
 
+        // Start with sidebar collapsed on mobile portrait
+        if (window.matchMedia('(max-width: 768px)').matches) {
+            this.$refs.sidebar.classList.add('collapsed');
+        }
+
         // Sync fullscreen state when changed externally (e.g. Escape key)
         document.addEventListener('fullscreenchange', () => this.syncFullscreenState());
 

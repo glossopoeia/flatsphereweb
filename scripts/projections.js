@@ -140,4 +140,18 @@ export const projections = [
             { title: 'Wolfram MathWorld: Mollweide Projection', url: 'https://mathworld.wolfram.com/MollweideProjection.html' },
         ],
     },
+    {
+        id: 10,
+        shader: 'central',
+        name: 'Central Cylindrical',
+        emoji: '\ud83c\udf0e',
+        properties: [],
+        creators: ['Unknown'],
+        originated: 'Ancient',
+        summary: 'A simple compromise projection that maps meridians to vertical lines and parallels to curves. While rarely used for cartographic purposes due to having worse distortion and less ideal properties than Mercator, it has found applications in the display and generation of panoramic images and visualization of images on very large screens.',
+        resources: [
+            { title: 'Wikipedia: Central Cylindrical Projection', url: 'https://en.wikipedia.org/wiki/Central_cylindrical_projection' },
+            { title: 'Panotools Wiki: Cylindrical Projection', url: 'https://wiki.panotools.org/index.php?title=Cylindrical_Projection&oldid=16177' },
+        ],
+    },
 ];

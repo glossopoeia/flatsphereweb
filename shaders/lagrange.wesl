@@ -6,13 +6,6 @@ fn project(lat: f32, lon: f32) -> vec2f {
     let p = (1.0 + sin(lat)) / (1.0 - sin(lat));
     let v = pow(p, 0.25);
     let c = (v + 1.0 / v) / 2.0 + cos(lon / 2.0);
-    /*if isinf(c) {
-        if sign(lat) {
-            return vec2f(0.0, -1.0);
-        } else {
-            return vec2f(0.0, 1.0);
-        }
-    }*/
     let x = sin(lon / 2.0) / c;
     let y = (v - 1.0 / v) / (2.0 * c);
     return vec2f(x, y);

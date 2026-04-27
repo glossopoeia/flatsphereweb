@@ -154,4 +154,18 @@ export const projections = [
             { title: 'Panotools Wiki: Cylindrical Projection', url: 'https://wiki.panotools.org/index.php?title=Cylindrical_Projection&oldid=16177' },
         ],
     },
+    {
+        id: 11,
+        shader: 'lagrange',
+        name: 'Lagrange',
+        emoji: '\ud83d\udd2e',
+        properties: ['Conformal'],
+        creators: ['Joseph-Louis Lagrange'],
+        originated: '1779',
+        summary: 'A rarely used projection that maps the sphere to a square. While it is conformal, it has significant distortion at the edges. It has been used in some artistic and thematic maps where the square format is desired.',
+        resources: [
+            { title: 'Wikipedia: Lagrange Projection', url: 'https://en.wikipedia.org/wiki/Lagrange_projection' },
+            { title: 'The Lagrange Conformal Projection', url: 'http://www.quadibloc.com/maps/mcf0701.htm' },
+        ],
+    }
 ];

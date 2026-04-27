@@ -140,4 +140,32 @@ export const projections = [
             { title: 'Wolfram MathWorld: Mollweide Projection', url: 'https://mathworld.wolfram.com/MollweideProjection.html' },
         ],
     },
+    {
+        id: 10,
+        shader: 'central',
+        name: 'Central Cylindrical',
+        emoji: '\ud83c\udf0e',
+        properties: [],
+        creators: ['Unknown'],
+        originated: 'Ancient',
+        summary: 'A simple compromise projection that maps meridians to vertical lines and parallels to curves. While rarely used for cartographic purposes due to having worse distortion and less ideal properties than Mercator, it has found applications in the display and generation of panoramic images and visualization of images on very large screens.',
+        resources: [
+            { title: 'Wikipedia: Central Cylindrical Projection', url: 'https://en.wikipedia.org/wiki/Central_cylindrical_projection' },
+            { title: 'Panotools Wiki: Cylindrical Projection', url: 'https://wiki.panotools.org/index.php?title=Cylindrical_Projection&oldid=16177' },
+        ],
+    },
+    {
+        id: 11,
+        shader: 'lagrange',
+        name: 'Lagrange',
+        emoji: '\ud83d\udd2e',
+        properties: ['Conformal'],
+        creators: ['Joseph-Louis Lagrange'],
+        originated: '1779',
+        summary: 'A rarely used projection that maps the sphere to a square. While it is conformal, it has significant distortion at the edges. It has been used in some artistic and thematic maps where the square format is desired.',
+        resources: [
+            { title: 'Wikipedia: Lagrange Projection', url: 'https://en.wikipedia.org/wiki/Lagrange_projection' },
+            { title: 'The Lagrange Conformal Projection', url: 'http://www.quadibloc.com/maps/mcf0701.htm' },
+        ],
+    }
 ];

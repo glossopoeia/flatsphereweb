@@ -3,6 +3,7 @@ import package::dstproj::{inverse, planar_scale};
 import package::srcproj::{project, to_texture};
 import package::tissot::{is_tissot_indicatrix, apply_tissot_indicatrices};
 import package::graticule::{apply_graticule, is_graticule_line};
+import package::oblique::{oblique_transform_from_sphere};
 
 struct Uniforms {
     camera_lat: f32,
@@ -59,44 +60,6 @@ fn source_color_at(lat: f32, lon: f32) -> vec3f {
     
     let color = textureSample(world_texture, world_sampler, tex_coords);
     return color.rgb;
-}
-
-// Oblique transformation functions
-fn oblique_transform_from_sphere(lat: f32, lon: f32, pole_lat: f32, pole_lon: f32, rotation: f32) -> vec2f {
-    let pole_rel_cos = cos(pole_lon - lon);
-
-    var new_lat: f32;
-    if (abs(pole_lat - HALF_PI) < 1e-6) {
-        new_lat = lat;
-    } else {
-        let pre_asin = sin(pole_lat) * sin(lat) + cos(pole_lat) * cos(lat) * pole_rel_cos;
-        new_lat = asin(clamp(pre_asin, -1.0, 1.0));
-    }
-
-    var new_lon: f32;
-    if (abs(pole_lat - HALF_PI) < 1e-6) {
-        new_lon = lon - pole_lon - PI;
-    } else if (abs(pole_lat + HALF_PI) < 1e-6) {
-        new_lon = pole_lon - lon;
-    } else {
-        let sin_lat = sin(lat);
-        let cos_lat = cos(lat);
-        let sin_pole_lat = sin(pole_lat);
-        let cos_pole_lat = cos(pole_lat);
-
-        let numer = cos_lat * sin(lon - pole_lon);
-        let denom = cos_pole_lat * sin_lat - sin_pole_lat * cos_lat * pole_rel_cos;
-        new_lon = -atan2(numer, denom);
-    }
-
-    // Apply rotation around the pole
-    new_lon = new_lon - rotation;
-
-    // Constrain longitude to [-PI, PI]
-    let wrapped = new_lon + PI;
-    new_lon = wrapped - floor(wrapped / (2.0 * PI)) * (2.0 * PI) - PI;
-
-    return vec2f(new_lat, new_lon);
 }
 
 @fragment

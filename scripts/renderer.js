@@ -30,6 +30,7 @@ export class ProjectionRenderer {
         const commonSource = await fetch("./shaders/common.wesl").then(v => v.text());
         const tissotSource = await fetch("./shaders/tissot.wesl").then(v => v.text());
         const graticuleSource = await fetch("./shaders/graticule.wesl").then(v => v.text());
+        const obliqueSource = await fetch("./shaders/oblique.wesl").then(v => v.text());
         const reprojectSource = await fetch("./shaders/reproject.wesl").then(v => v.text());
 
         const projectionPromises = projections
@@ -48,6 +49,7 @@ export class ProjectionRenderer {
                         "common.wesl": commonSource,
                         "tissot.wesl": tissotSource,
                         "graticule.wesl": graticuleSource,
+                        "oblique.wesl": obliqueSource,
                     },
                 });
             });

@@ -167,5 +167,19 @@ export const projections = [
             { title: 'Wikipedia: Lagrange Projection', url: 'https://en.wikipedia.org/wiki/Lagrange_projection' },
             { title: 'The Lagrange Conformal Projection', url: 'http://www.quadibloc.com/maps/mcf0701.htm' },
         ],
+    },
+    {
+        id: 12,
+        shader: 'aitoff',
+        name: 'Aitoff',
+        emoji: '\ud83c\udf0f',
+        properties: [],
+        creators: ['David Aitoff'],
+        originated: '1889',
+        summary: 'A compromise projection that maps the sphere to an ellipse. While it is neither conformal nor equal-area, the scale is correct along the equator and at the central meridian. It is often used for world maps where a balance between shape and area distortion is desired.',
+        resources: [
+            { title: 'Wikipedia: Aitoff Projection', url: 'https://en.wikipedia.org/wiki/Aitoff_projection' },
+            { title: 'Wolfram MathWorld: Aitoff Projection', url: 'https://mathworld.wolfram.com/AitoffProjection.html' },
+        ],
     }
 ];

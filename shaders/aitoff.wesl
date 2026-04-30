@@ -19,9 +19,9 @@ fn inverse(x: f32, y: f32) -> vec2f {
         return vec2f(-181.0, 0.0);
     }
     let halfX = x / 2.0;
-    let x2 = halfX / 2.0;
-    let y2 = y / 2.0;
-    let a = sqrt(1 - x2 * x2 - y2 * y2);
+    let x_over_4 = halfX / 2.0;
+    let y_over_2 = y / 2.0;
+    let a = sqrt(1 - x_over_4 * x_over_4 - y_over_2 * y_over_2);
     let lat = asin(y * a);
     let lon = 2 * atan2(halfX * a, 2.0 * a * a - 1.0);
     return vec2f(lat, lon);

@@ -10,12 +10,14 @@ fn project(lat: f32, lon: f32) -> vec2f {
 }
 
 fn inverse(x: f32, y: f32) -> vec2f {
-    // keep out artifacts around the edges
-    if (x * x + 4.0 * y * y > PI * PI) {
+    // keep out artifacts around the edges by rejecting inputs that would
+    // make the inverse projection's sqrt go negative.
+    let z2 = 1.0 - x*x/8.0 - y*y/2.0;
+    if (z2 < 0.0) {
         return vec2f(-181.0, 0.0);
     }
 
-    let z = sqrt(1.0 - x*x/8.0 - y*y/2.0);
+    let z = sqrt(z2);
     var shift = 0.0;
     let hypot = sqrt(x*x/4.0 + y*y);
     if (hypot > 1.0) {

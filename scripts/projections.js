@@ -179,7 +179,35 @@ export const projections = [
         summary: 'A compromise projection that maps the sphere to an ellipse. While it is neither conformal nor equal-area, the scale is correct along the equator and at the central meridian. It is often used for world maps where a balance between shape and area distortion is desired.',
         resources: [
             { title: 'Wikipedia: Aitoff Projection', url: 'https://en.wikipedia.org/wiki/Aitoff_projection' },
-            { title: 'Wolfram MathWorld: Aitoff Projection', url: 'https://mathworld.wolfram.com/AitoffProjection.html' },
+            { title: 'IRSA: Aitoff Projection', url: 'https://irsa.ipac.caltech.edu/IRASdocs/surveys/coordproj.html' },
+        ],
+    },
+    {
+        id: 13,
+        shader: 'hammer',
+        name: 'Hammer (Hammer-Aitoff)',
+        emoji: '\ud83c\udf0e',
+        properties: ['Equal-Area'],
+        creators: ['Eugen Hammer'],
+        originated: '1892',
+        summary: 'An equal-area version of the Aitoff projection that maps the sphere to an ellipse. It preserves area while still providing a visually appealing balance of shape distortion, making it a popular choice for thematic world maps.',
+        resources: [
+            { title: 'Wikipedia: Hammer Projection', url: 'https://en.wikipedia.org/wiki/Hammer_projection' },
+            { title: 'Wolfram MathWorld: Hammer-Aitoff Equal-Area Projection', url: 'https://mathworld.wolfram.com/Hammer-AitoffEqual-AreaProjection.html' },
+        ],
+    },
+    {
+        id: 14,
+        shader: 'trapezoidal',
+        name: 'Trapezoidal',
+        emoji: '\ud83d\udd3b',
+        properties: [],
+        creators: ['Nicolaus Germanus'],
+        originated: '~1426',
+        summary: 'One of the earliest Renaissance map projections, where parallels are equally spaced horizontal lines and meridians are straight lines that bend at the equator. Historically used for regional maps where the trapezoidal shape arises naturally between two standard parallels. Extended here to a global form with flat polar edges and triangular tips on either side of the equator, which exaggerates polar distortion in exchange for a more recognizably trapezoidal silhouette.',
+        resources: [
+            { title: 'Map Projections: A Working Manual (USGS)', url: 'https://pubs.usgs.gov/pp/1395/report.pdf' },
+            { title: 'Renaissance Cartography and the Donis Projection', url: 'https://en.wikipedia.org/wiki/Nicolaus_Germanus' },
         ],
     }
 ];

@@ -12,18 +12,21 @@ fn project(lat: f32, lon: f32) -> vec2f {
 }
 
 fn inverse(x: f32, y: f32) -> vec2f {
-    // Aitoff's image is the ellipse x^2 + 4y^2 <= PI^2. Outside it, the closed-form
-    // approximation below either yields |lon| > PI (caught by reproject) or NaN
-    // (which silently bypasses the bounds check), so we reject explicitly here.
+    // keep out artifacts around the edges
     if (x * x + 4.0 * y * y > PI * PI) {
         return vec2f(-181.0, 0.0);
     }
-    let halfX = x / 2.0;
-    let x_over_4 = halfX / 2.0;
-    let y_over_2 = y / 2.0;
-    let a = sqrt(1 - x_over_4 * x_over_4 - y_over_2 * y_over_2);
-    let lat = asin(y * a);
-    let lon = 2 * atan2(halfX * a, 2.0 * a * a - 1.0);
+    // Aitoff is the equatorial azimuthal-equidistant of (lat, lon/2) with x doubled,
+    // so (x/2, y) is azimuthal-equidistant coordinates and α = sqrt((x/2)² + y²) recovers
+    // the angular distance directly — no iteration needed.
+    let half_x = x / 2.0;
+    let alpha = sqrt(half_x * half_x + y * y);
+    if (alpha < 1e-6) {
+        return vec2f(y, x);
+    }
+    let sin_alpha = sin(alpha);
+    let lat = asin(clamp(y * sin_alpha / alpha, -1.0, 1.0));
+    let lon = 2.0 * atan2(half_x * sin_alpha, alpha * cos(alpha));
     return vec2f(lat, lon);
 }
 

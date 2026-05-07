@@ -237,8 +237,6 @@ export class ProjectionApp {
         Alpine.effect(() => {
             const dst = store.destinationProjection;
             const src = store.sourceProjection;
-            this.renderer.setDestinationProjection(dst);
-            this.renderer.setSourceProjection(src);
             if (dst !== lastDst || src !== lastSrc) {
                 lastDst = dst;
                 lastSrc = src;
@@ -278,13 +276,12 @@ export class ProjectionApp {
         this.canvas.style.height = `${height}px`;
     }
 
-    async loadUserFile(file, sourceProjection) {
+    async loadUserFile(file) {
         await this.ready;
         try {
             Alpine.store('app').isLoading = true;
 
             await this.renderer.loadCustomTexture(file);
-            this.renderer.setSourceProjection(sourceProjection);
             this.render();
             Alpine.store('app').showSuccess(`Loaded local file: ${file.name}`);
 
@@ -300,12 +297,13 @@ export class ProjectionApp {
         }
     }
 
-    async loadUserImage(imageUrl, sourceProjection) {
+    async loadUserImage(imageUrl) {
         await this.ready;
         if (!imageUrl) {
             try {
                 await this.renderer.loadDefaultTexture(false);
-                this.renderer.setSourceProjection(0);
+                // Default world map is plate-carrée; sync the store so the UI matches what we render
+                Alpine.store('app').sourceProjection = 0;
                 this.render();
                 Alpine.store('app').showSuccess('Loaded default image');
             } catch (error) {
@@ -321,11 +319,11 @@ export class ProjectionApp {
 
         try {
             Alpine.store('app').isLoading = true;
-            await this.loadImageDirect(imageUrl, sourceProjection);
+            await this.loadImageDirect(imageUrl);
         } catch (directError) {
             console.log('Direct loading failed, trying proxy:', directError.message);
             try {
-                await this.loadImageWithProxy(imageUrl, sourceProjection);
+                await this.loadImageWithProxy(imageUrl);
             } catch (proxyError) {
                 console.error('Both direct and proxy loading failed:', proxyError);
                 Alpine.store('app').showError(`Failed to load image. Direct: ${directError.message}. Proxy: ${proxyError.message}. Try a different URL or use a CORS-enabled image.`);
@@ -335,7 +333,7 @@ export class ProjectionApp {
         }
     }
 
-    async loadImageDirect(imageUrl, sourceProjection) {
+    async loadImageDirect(imageUrl) {
         console.log('Attempting direct load of:', imageUrl);
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -358,7 +356,6 @@ export class ProjectionApp {
                     canvas.toBlob(async (blob) => {
                         try {
                             await this.renderer.loadCustomTexture(blob);
-                            this.renderer.setSourceProjection(sourceProjection);
                             this.render();
                             Alpine.store('app').showSuccess('Image loaded successfully!');
                             resolve();
@@ -380,7 +377,7 @@ export class ProjectionApp {
         });
     }
 
-    async loadImageWithProxy(imageUrl, sourceProjection) {
+    async loadImageWithProxy(imageUrl) {
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(imageUrl)}`;
 
         const response = await fetch(proxyUrl);
@@ -402,7 +399,6 @@ export class ProjectionApp {
             const blob = new Blob([bytes], { type: 'image/jpeg' });
 
             await this.renderer.loadCustomTexture(blob);
-            this.renderer.setSourceProjection(sourceProjection);
             this.render();
             Alpine.store('app').showSuccess('Image loaded via proxy successfully!');
         } catch (error) {
@@ -414,6 +410,8 @@ export class ProjectionApp {
         if (!this.renderer) return;
 
         const store = Alpine.store('app');
+        const dst = store.destinationProjection;
+        const src = store.sourceProjection;
         const cameraLat = store.obliqueLat * Math.PI / 180;
         const cameraLon = store.obliqueLon * Math.PI / 180;
         const zoom = store.zoom;
@@ -424,6 +422,6 @@ export class ProjectionApp {
         const panX = store.panX;
         const panY = store.panY;
 
-        this.renderer.render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier, rotation, panX, panY);
+        this.renderer.render(dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier, rotation, panX, panY);
     }
 }

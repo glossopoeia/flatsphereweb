@@ -12,8 +12,6 @@ export class ProjectionRenderer {
         this.canvas = null;
         this.worldTexture = null;
         this.sampler = null;
-        this.destinationProjection = 0; // Default: equirectangular
-        this.sourceProjection = 0; // Default: equirectangular
 
         this.shaderSources = null;
         this.pipelineCache = new Map();
@@ -210,14 +208,6 @@ export class ProjectionRenderer {
         bitmap.close(); // Clean up bitmap
     }
 
-    setDestinationProjection(projectionType) {
-        this.destinationProjection = projectionType;
-    }
-
-    setSourceProjection(projectionType) {
-        this.sourceProjection = projectionType;
-    }
-
     updateBindGroup() {
         // Update the bind group with the new texture
         this.bindGroup = this.device.createBindGroup({
@@ -239,12 +229,10 @@ export class ProjectionRenderer {
         });
     }
     
-    render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0) {
+    render(dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0) {
         // Initialize hasn't finished yet (e.g. resize event fired during async startup); no-op cleanly
         if (!this.shaderSources || !this.bindGroupLayout) return;
 
-        const dst = this.destinationProjection;
-        const src = this.sourceProjection;
         const entry = this.pipelineCache.get(`${dst},${src}`);
 
         if (entry?.kind !== 'pipeline') {

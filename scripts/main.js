@@ -352,19 +352,18 @@ Alpine.data('app', () => ({
             const store = Alpine.store('app');
             store.currentFile = file;
             this.$refs.imageUrl.value = file.name;
-            store.app.loadUserFile(file, store.sourceProjection);
+            store.app.loadUserFile(file);
         }
     },
 
     dispatchImageLoad() {
         const store = Alpine.store('app');
         const imageUrl = this.$refs.imageUrl.value.trim();
-        const sourceProjection = store.sourceProjection;
 
         if (store.currentFile && imageUrl === store.currentFile.name) {
-            store.app.loadUserFile(store.currentFile, sourceProjection);
+            store.app.loadUserFile(store.currentFile);
         } else {
-            store.app.loadUserImage(imageUrl, sourceProjection);
+            store.app.loadUserImage(imageUrl);
         }
     },
 

@@ -57,15 +57,11 @@ export class ProjectionApp {
             if (store.activeTool === 'pan') {
                 // Pan/Zoom mode: scroll controls zoom
                 const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
-                store.zoom = Math.max(0.01, Math.min(10, store.zoom * zoomFactor));
-                store.zoomSlider = Math.log10(store.zoom);
+                store.setZoom(store.zoom * zoomFactor);
             } else {
-                // Rotate mode: scroll drives the rotation slider (with wrap-around)
+                // Rotate mode: scroll drives the rotation slider
                 const delta = e.deltaY > 0 ? 1 : -1;
-                let newRotation = store.rotation + delta;
-                if (newRotation > 180) newRotation -= 360;
-                if (newRotation < -180) newRotation += 360;
-                store.rotation = newRotation;
+                store.setRotation(store.rotation + delta);
             }
         }, { signal });
 
@@ -99,14 +95,11 @@ export class ProjectionApp {
                     if (store.activeTool === 'pan') {
                         // Pan/Zoom mode: pinch controls zoom
                         const zoomFactor = this.lastTouchDistance / currentDistance;
-                        store.zoom = Math.max(0.01, Math.min(10, this.initialZoom * zoomFactor));
-                        store.zoomSlider = Math.log10(store.zoom);
+                        store.setZoom(this.initialZoom * zoomFactor);
                     } else {
-                        // Rotate mode: pinch drives rotation (with wrap-around)
+                        // Rotate mode: pinch drives rotation
                         const rotationDelta = (currentDistance - this.lastTouchDistance) * 0.2;
-                        let newRotation = store.rotation + rotationDelta;
-                        newRotation = ((newRotation + 180) % 360 + 360) % 360 - 180;
-                        store.rotation = newRotation;
+                        store.setRotation(store.rotation + rotationDelta);
                         this.lastTouchDistance = currentDistance;
                     }
                 }
@@ -148,16 +141,8 @@ export class ProjectionApp {
         if (store.activeTool === 'rotate') {
             // Rotate mode: drag changes oblique view (camera lat/lon)
             const sensitivity = 0.5 * Math.sqrt(store.zoom);
-
-            let newLon = store.obliqueLon + (deltaX * sensitivity);
-            let newLat = store.obliqueLat + (deltaY * sensitivity);
-
-            newLat = Math.max(-90, Math.min(90, newLat));
-            newLon = ((newLon % 360) + 360) % 360;
-            if (newLon > 180) newLon -= 360;
-
-            store.obliqueLat = newLat;
-            store.obliqueLon = newLon;
+            store.setObliqueLat(store.obliqueLat + deltaY * sensitivity);
+            store.setObliqueLon(store.obliqueLon + deltaX * sensitivity);
         } else {
             // Pan mode: drag pans the projection plane
             // X axis must account for aspect ratio since the shader scales x by aspect

@@ -100,6 +100,34 @@ Alpine.store('app', {
     showError(message, persistent = false) {
         this.showNotification(message, 'error', persistent);
     },
+
+    // Single mutators for clamped/wrapped state. All input sources (sliders, wheel, touch, drag)
+    // go through these so the clamp/wrap rules live in one place and zoom ↔ zoomSlider stays in sync.
+    setZoom(zoom) {
+        this.zoom = Math.max(0.01, Math.min(10, zoom));
+        this.zoomSlider = Math.log10(this.zoom);
+    },
+
+    setZoomFromSlider(sliderValue) {
+        this.zoomSlider = sliderValue;
+        this.zoom = Math.pow(10, sliderValue);
+    },
+
+    setRotation(deg) {
+        let v = ((deg % 360) + 360) % 360;
+        if (v > 180) v -= 360;
+        this.rotation = v;
+    },
+
+    setObliqueLat(deg) {
+        this.obliqueLat = Math.max(-90, Math.min(90, deg));
+    },
+
+    setObliqueLon(deg) {
+        let v = ((deg % 360) + 360) % 360;
+        if (v > 180) v -= 360;
+        this.obliqueLon = v;
+    },
 });
 
 // Register the main app component (CSP build requires named components)
@@ -284,21 +312,19 @@ Alpine.data('app', () => ({
     },
 
     onZoomSliderInput() {
-        const store = Alpine.store('app');
-        store.zoomSlider = parseFloat(this.$refs.zoomSlider.value);
-        store.zoom = Math.pow(10, store.zoomSlider);
+        Alpine.store('app').setZoomFromSlider(parseFloat(this.$refs.zoomSlider.value));
     },
 
     onRotationInput() {
-        Alpine.store('app').rotation = parseFloat(this.$refs.rotationSlider.value);
+        Alpine.store('app').setRotation(parseFloat(this.$refs.rotationSlider.value));
     },
 
     onObliqueLatInput() {
-        Alpine.store('app').obliqueLat = parseFloat(this.$refs.obliqueLatSlider.value);
+        Alpine.store('app').setObliqueLat(parseFloat(this.$refs.obliqueLatSlider.value));
     },
 
     onObliqueLonInput() {
-        Alpine.store('app').obliqueLon = parseFloat(this.$refs.obliqueLonSlider.value);
+        Alpine.store('app').setObliqueLon(parseFloat(this.$refs.obliqueLonSlider.value));
     },
 
     onPanXInput() {

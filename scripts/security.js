@@ -51,12 +51,6 @@ export class SecurityManager {
       return false;
     }
 
-    // Check filename for potentially dangerous patterns
-    const filename = file.name.toLowerCase();
-    if (filename.includes('..') || filename.includes('<script') || filename.includes('javascript:')) {
-      return false;
-    }
-
     return true;
   }
 }

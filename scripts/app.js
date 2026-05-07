@@ -2,6 +2,7 @@ import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm
 import { SecurityManager } from './security.js'
 import { ProjectionRenderer } from './renderer.js';
 import { projections } from './projections.js';
+import { loadImageFromUrl } from './image-loader.js';
 
 export class ProjectionApp {
     constructor() {
@@ -300,109 +301,36 @@ export class ProjectionApp {
     async loadUserImage(imageUrl) {
         await this.ready;
         if (!imageUrl) {
-            try {
-                await this.renderer.loadDefaultTexture(false);
-                // Default world map is plate-carrée; sync the store so the UI matches what we render
-                Alpine.store('app').sourceProjection = 0;
-                this.render();
-                Alpine.store('app').showSuccess('Loaded default image');
-            } catch (error) {
-                Alpine.store('app').showError(`Failed to load default image: ${error.message}`);
-            }
-            return;
+            return this.loadDefaultImage();
         }
-
         if (!SecurityManager.validateImageURL(imageUrl)) {
             Alpine.store('app').showError('Invalid URL. Please use HTTPS URLs only.');
             return;
         }
-
+        const store = Alpine.store('app');
         try {
-            Alpine.store('app').isLoading = true;
-            await this.loadImageDirect(imageUrl);
-        } catch (directError) {
-            console.log('Direct loading failed, trying proxy:', directError.message);
-            try {
-                await this.loadImageWithProxy(imageUrl);
-            } catch (proxyError) {
-                console.error('Both direct and proxy loading failed:', proxyError);
-                Alpine.store('app').showError(`Failed to load image. Direct: ${directError.message}. Proxy: ${proxyError.message}. Try a different URL or use a CORS-enabled image.`);
-            }
-        } finally {
-            Alpine.store('app').isLoading = false;
-        }
-    }
-
-    async loadImageDirect(imageUrl) {
-        console.log('Attempting direct load of:', imageUrl);
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-
-        return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new Error('Image loading timed out'));
-            }, 30000);
-
-            img.onload = async () => {
-                clearTimeout(timer);
-                try {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-
-                    ctx.drawImage(img, 0, 0);
-
-                    canvas.toBlob(async (blob) => {
-                        try {
-                            await this.renderer.loadCustomTexture(blob);
-                            this.render();
-                            Alpine.store('app').showSuccess('Image loaded successfully!');
-                            resolve();
-                        } catch (error) {
-                            reject(new Error(`Failed to process image: ${error.message}`));
-                        }
-                    }, 'image/png');
-                } catch (error) {
-                    reject(new Error(`Failed to draw image to canvas: ${error.message}`));
-                }
-            };
-
-            img.onerror = () => {
-                clearTimeout(timer);
-                reject(new Error('Failed to load image - check URL or CORS policy'));
-            };
-
-            img.src = imageUrl;
-        });
-    }
-
-    async loadImageWithProxy(imageUrl) {
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(imageUrl)}`;
-
-        const response = await fetch(proxyUrl);
-        if (!response.ok) {
-            throw new Error(`Proxy fetch failed: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        if (!data.contents) {
-            throw new Error('No image data received from proxy');
-        }
-
-        try {
-            const binaryString = atob(data.contents);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            const blob = new Blob([bytes], { type: 'image/jpeg' });
-
+            store.isLoading = true;
+            const blob = await loadImageFromUrl(imageUrl);
             await this.renderer.loadCustomTexture(blob);
             this.render();
-            Alpine.store('app').showSuccess('Image loaded via proxy successfully!');
+            store.showSuccess('Image loaded successfully!');
         } catch (error) {
-            throw new Error(`Failed to process proxy data: ${error.message}`);
+            store.showError(`Failed to load image: ${error.message}. Try a different URL or use a CORS-enabled image.`);
+        } finally {
+            store.isLoading = false;
+        }
+    }
+
+    async loadDefaultImage() {
+        const store = Alpine.store('app');
+        try {
+            await this.renderer.loadDefaultTexture(false);
+            // Default world map is plate-carrée; sync the store so the UI matches what we render
+            store.sourceProjection = 0;
+            this.render();
+            store.showSuccess('Loaded default image');
+        } catch (error) {
+            store.showError(`Failed to load default image: ${error.message}`);
         }
     }
 

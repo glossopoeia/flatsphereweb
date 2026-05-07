@@ -5,11 +5,14 @@
 
 const PROXY_RAW = 'https://api.allorigins.win/raw';
 const REQUEST_TIMEOUT_MS = 30_000;
+const MAX_IMAGE_PIXELS = 4096 * 4096; // matches renderer's bitmap size limit
 
 export async function loadImageFromUrl(url) {
     try {
         return await loadDirect(url);
     } catch (directError) {
+        // Some failures aren't worth retrying via proxy (e.g. image is too big regardless of transport)
+        if (directError.skipProxyFallback) throw directError;
         try {
             return await loadViaProxy(url);
         } catch (proxyError) {
@@ -27,16 +30,28 @@ async function loadDirect(url) {
         rejectAfter(REQUEST_TIMEOUT_MS, 'Image load timed out'),
     ]);
 
+    // Fail fast before allocating a potentially huge canvas backing store
+    if (img.naturalWidth * img.naturalHeight > MAX_IMAGE_PIXELS) {
+        const err = new Error(`Image too large. Maximum 4096x4096 pixels (got ${img.naturalWidth}x${img.naturalHeight}).`);
+        err.skipProxyFallback = true;
+        throw err;
+    }
+
     const canvas = document.createElement('canvas');
     canvas.width = img.naturalWidth;
     canvas.height = img.naturalHeight;
     canvas.getContext('2d').drawImage(img, 0, 0);
 
     return await new Promise((resolve, reject) => {
-        canvas.toBlob(
-            blob => blob ? resolve(blob) : reject(new Error('Canvas toBlob returned null')),
-            'image/png'
-        );
+        try {
+            canvas.toBlob(
+                blob => blob ? resolve(blob) : reject(new Error('Canvas toBlob returned null')),
+                'image/png'
+            );
+        } catch (err) {
+            // toBlob throws synchronously on a CORS-tainted canvas in some browsers
+            reject(err);
+        }
     });
 }
 

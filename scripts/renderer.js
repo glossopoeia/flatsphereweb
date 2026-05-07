@@ -1,6 +1,8 @@
 import { link } from "https://cdn.jsdelivr.net/npm/wesl/+esm";
 import { projections } from "./projections.js";
 
+const MAX_IMAGE_PIXELS = 4096 * 4096; // keep in sync with image-loader.js
+
 export class ProjectionRenderer {
     constructor() {
         this.device = null;
@@ -177,35 +179,39 @@ export class ProjectionRenderer {
     }
 
     async loadTextureFromBlob(blob) {
-        // Dispose of previous custom texture to prevent memory leaks
-        if (this.worldTexture && !this.isDefaultTexture) {
-            this.worldTexture.destroy();
+        // Decode via <img> so dimensions can be validated before any GPU resources are allocated;
+        // matches the pattern used in image-loader.js. HTMLImageElement is a valid source for
+        // copyExternalImageToTexture, so we can skip the intermediate ImageBitmap.
+        const blobUrl = URL.createObjectURL(blob);
+        try {
+            const img = new Image();
+            img.src = blobUrl;
+            await img.decode();
+
+            if (img.naturalWidth * img.naturalHeight > MAX_IMAGE_PIXELS) {
+                throw new Error(`Image too large. Maximum 4096x4096 pixels (got ${img.naturalWidth}x${img.naturalHeight}).`);
+            }
+
+            // Validation passed; safe to dispose old custom texture (do this only after we know
+            // we can replace it, otherwise a failed load would leave the bindGroup with a dangling view)
+            if (this.worldTexture && !this.isDefaultTexture) {
+                this.worldTexture.destroy();
+            }
+
+            this.worldTexture = this.device.createTexture({
+                size: [img.naturalWidth, img.naturalHeight, 1],
+                format: 'rgba8unorm',
+                usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+            });
+
+            this.device.queue.copyExternalImageToTexture(
+                { source: img, flipY: false },
+                { texture: this.worldTexture },
+                [img.naturalWidth, img.naturalHeight]
+            );
+        } finally {
+            URL.revokeObjectURL(blobUrl);
         }
-        
-        const bitmap = await createImageBitmap(blob);
-        
-        // Validate image size for performance and memory safety
-        const maxSize = 4096 * 4096; // 16MP limit
-        if (bitmap.width * bitmap.height > maxSize) {
-            bitmap.close(); // Clean up bitmap
-            throw new Error('Image too large. Maximum size: 4096x4096 pixels.');
-        }
-        
-        // Create texture
-        this.worldTexture = this.device.createTexture({
-            size: [bitmap.width, bitmap.height, 1],
-            format: 'rgba8unorm',
-            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
-        });
-        
-        // Copy image data to texture
-        this.device.queue.copyExternalImageToTexture(
-            { source: bitmap, flipY: false },
-            { texture: this.worldTexture },
-            [bitmap.width, bitmap.height]
-        );
-        
-        bitmap.close(); // Clean up bitmap
     }
 
     updateBindGroup() {

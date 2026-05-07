@@ -1,6 +1,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm.js';
 import { SecurityManager } from './security.js'
 import { ProjectionRenderer } from './renderer.js';
+import { projections } from './projections.js';
 
 export class ProjectionApp {
     constructor() {
@@ -186,13 +187,21 @@ export class ProjectionApp {
     async init() {
         try {
             this.renderer = new ProjectionRenderer();
+            this.renderer.onPipelineReady = () => this.render();
+            this.renderer.onPipelineError = (err, dst, src) => {
+                console.error('Pipeline compile failed for', { dst, src }, err);
+                const name = projections.find(p => p.id === dst)?.name ?? `projection #${dst}`;
+                Alpine.store('app').showError(`Could not compile ${name}: ${err.message}`, true);
+            };
             await this.renderer.initialize(this.canvas);
-            this.setupAlpineEffects();
+            const store = Alpine.store('app');
             this.resizeCanvas();
+            await this.renderer.ensurePipeline(store.destinationProjection, store.sourceProjection);
+            this.setupAlpineEffects();
             this.render();
 
             // Hide loading screen once initialization is complete
-            Alpine.store('app').isLoading = false;
+            store.isLoading = false;
         } catch (error) {
             // Hide loading screen on error
             Alpine.store('app').isLoading = false;

@@ -18,6 +18,7 @@ export class ProjectionRenderer {
         this.shaderSources = null;
         this.pipelineCache = new Map();
         this.onPipelineReady = null;
+        this.onPipelineError = null;
     }
     
     async initialize(canvas) {
@@ -32,7 +33,13 @@ export class ProjectionRenderer {
         this.device = await adapter.requestDevice();
 
         // Fetch shader sources in parallel; defer pipeline compilation until projections are first used
-        const fetchText = (path) => fetch(path).then(r => r.text());
+        const fetchText = async (path) => {
+            const r = await fetch(path);
+            if (!r.ok) {
+                throw new Error(`Failed to fetch shader '${path}': ${r.status} ${r.statusText}`);
+            }
+            return r.text();
+        };
         const [commonSource, tissotSource, graticuleSource, obliqueSource, reprojectSource, ...projectionSources] =
             await Promise.all([
                 fetchText("./shaders/common.wesl"),
@@ -101,6 +108,7 @@ export class ProjectionRenderer {
     async ensurePipeline(dst, src) {
         const key = `${dst},${src}`;
         const cached = this.pipelineCache.get(key);
+        if (cached instanceof Error) throw cached;
         if (cached) return cached;
         const promise = this._createPipeline(dst, src);
         this.pipelineCache.set(key, promise);
@@ -109,7 +117,7 @@ export class ProjectionRenderer {
             this.pipelineCache.set(key, pipeline);
             return pipeline;
         } catch (err) {
-            this.pipelineCache.delete(key);
+            this.pipelineCache.set(key, err);
             throw err;
         }
     }
@@ -229,9 +237,18 @@ export class ProjectionRenderer {
     }
     
     render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0) {
+        // Initialize hasn't finished yet (e.g. resize event fired during async startup); no-op cleanly
+        if (!this.shaderSources || !this.bindGroupLayout) return;
+
         const dst = this.destinationProjection;
         const src = this.sourceProjection;
         const cached = this.pipelineCache.get(`${dst},${src}`);
+
+        if (cached instanceof Error) {
+            // Compile previously failed for this pair; don't retry on every render
+            return;
+        }
+
         const pipeline = (cached && !(cached instanceof Promise)) ? cached : null;
 
         if (!pipeline) {
@@ -239,7 +256,7 @@ export class ProjectionRenderer {
             if (!cached) {
                 this.ensurePipeline(dst, src)
                     .then(() => { if (this.onPipelineReady) this.onPipelineReady(); })
-                    .catch(err => console.error('Pipeline compile failed:', err));
+                    .catch(err => { if (this.onPipelineError) this.onPipelineError(err, dst, src); });
             }
             return;
         }

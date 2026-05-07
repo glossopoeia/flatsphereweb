@@ -186,13 +186,16 @@ export class ProjectionApp {
     async init() {
         try {
             this.renderer = new ProjectionRenderer();
+            this.renderer.onPipelineReady = () => this.render();
             await this.renderer.initialize(this.canvas);
-            this.setupAlpineEffects();
+            const store = Alpine.store('app');
             this.resizeCanvas();
+            await this.renderer.ensurePipeline(store.destinationProjection, store.sourceProjection);
+            this.setupAlpineEffects();
             this.render();
 
             // Hide loading screen once initialization is complete
-            Alpine.store('app').isLoading = false;
+            store.isLoading = false;
         } catch (error) {
             // Hide loading screen on error
             Alpine.store('app').isLoading = false;

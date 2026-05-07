@@ -5,14 +5,19 @@ export class ProjectionRenderer {
     constructor() {
         this.device = null;
         this.context = null;
-        this.pipelines = null; // A 2D map of pipelines, indexed by [dstProj][srcProj]
+        this.canvasFormat = null;
         this.uniformBuffer = null;
         this.bindGroup = null;
+        this.bindGroupLayout = null;
         this.canvas = null;
         this.worldTexture = null;
         this.sampler = null;
         this.destinationProjection = 0; // Default: equirectangular
         this.sourceProjection = 0; // Default: equirectangular
+
+        this.shaderSources = null;
+        this.pipelineCache = new Map();
+        this.onPipelineReady = null;
     }
     
     async initialize(canvas) {
@@ -26,47 +31,32 @@ export class ProjectionRenderer {
         
         this.device = await adapter.requestDevice();
 
-        // Get projection shaders
-        const commonSource = await fetch("./shaders/common.wesl").then(v => v.text());
-        const tissotSource = await fetch("./shaders/tissot.wesl").then(v => v.text());
-        const graticuleSource = await fetch("./shaders/graticule.wesl").then(v => v.text());
-        const obliqueSource = await fetch("./shaders/oblique.wesl").then(v => v.text());
-        const reprojectSource = await fetch("./shaders/reproject.wesl").then(v => v.text());
+        // Fetch shader sources in parallel; defer pipeline compilation until projections are first used
+        const fetchText = (path) => fetch(path).then(r => r.text());
+        const [commonSource, tissotSource, graticuleSource, obliqueSource, reprojectSource, ...projectionSources] =
+            await Promise.all([
+                fetchText("./shaders/common.wesl"),
+                fetchText("./shaders/tissot.wesl"),
+                fetchText("./shaders/graticule.wesl"),
+                fetchText("./shaders/oblique.wesl"),
+                fetchText("./shaders/reproject.wesl"),
+                ...projections.map(p => fetchText(`./shaders/${p.shader}.wesl`)),
+            ]);
+        this.shaderSources = {
+            common: commonSource,
+            tissot: tissotSource,
+            graticule: graticuleSource,
+            oblique: obliqueSource,
+            reproject: reprojectSource,
+            projections: projectionSources,
+        };
 
-        const projectionPromises = projections
-            .map(projObj => projObj.shader)
-            .map(projShader => fetch(`./shaders/${projShader}.wesl`).then(v => v.text()));
-        const projectionSources = await Promise.all(projectionPromises);
-
-        const shaderPromises = projectionSources.map(async (dstProjSource) => {
-            const withSrcPromise = projectionSources.map(async (srcProjSource) => {
-                return await link({
-                    rootModuleName: "./reproject.wesl",
-                    weslSrc: {
-                        "reproject.wesl": reprojectSource,
-                        "dstproj.wesl": dstProjSource,
-                        "srcproj.wesl": srcProjSource,
-                        "common.wesl": commonSource,
-                        "tissot.wesl": tissotSource,
-                        "graticule.wesl": graticuleSource,
-                        "oblique.wesl": obliqueSource,
-                    },
-                });
-            });
-            return await Promise.all(withSrcPromise);
-        });
-        const shaderCodes = await Promise.all(shaderPromises);
-        const shaderModules = shaderCodes.map(nested => {
-            return nested.map(code => code.createShaderModule(this.device, {}));
-        });
-        
-        // Get canvas context
         this.context = canvas.getContext('webgpu');
-        const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
-        
+        this.canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+
         this.context.configure({
             device: this.device,
-            format: canvasFormat,
+            format: this.canvasFormat,
         });
         
         // Create uniform buffer
@@ -86,8 +76,7 @@ export class ProjectionRenderer {
             addressModeV: 'clamp-to-edge',
         });
 
-        // One shared bind group layout
-        const bindGroupLayout = this.device.createBindGroupLayout({
+        this.bindGroupLayout = this.device.createBindGroupLayout({
             entries: [
                 {
                     binding: 0,
@@ -106,29 +95,53 @@ export class ProjectionRenderer {
                 }
             ]
         });
-        this.bindGroupLayout = bindGroupLayout;
-        this.updateBindGroup(); // One shared bind group
-        
-        // Create one pipeline per projection
-        this.pipelines = shaderModules.map(nested => {
-            return nested.map(mod => this.createPipeline(canvasFormat, mod));
-        });
+        this.updateBindGroup();
     }
-    
-    createPipeline(canvasFormat, textureShaderModule) { 
-        return this.device.createRenderPipeline({
+
+    async ensurePipeline(dst, src) {
+        const key = `${dst},${src}`;
+        const cached = this.pipelineCache.get(key);
+        if (cached) return cached;
+        const promise = this._createPipeline(dst, src);
+        this.pipelineCache.set(key, promise);
+        try {
+            const pipeline = await promise;
+            this.pipelineCache.set(key, pipeline);
+            return pipeline;
+        } catch (err) {
+            this.pipelineCache.delete(key);
+            throw err;
+        }
+    }
+
+    async _createPipeline(dst, src) {
+        const s = this.shaderSources;
+        const linked = await link({
+            rootModuleName: "./reproject.wesl",
+            weslSrc: {
+                "reproject.wesl": s.reproject,
+                "dstproj.wesl": s.projections[dst],
+                "srcproj.wesl": s.projections[src],
+                "common.wesl": s.common,
+                "tissot.wesl": s.tissot,
+                "graticule.wesl": s.graticule,
+                "oblique.wesl": s.oblique,
+            },
+        });
+        const module = linked.createShaderModule(this.device, {});
+        return this.device.createRenderPipelineAsync({
             layout: this.device.createPipelineLayout({
                 bindGroupLayouts: [this.bindGroupLayout]
             }),
             vertex: {
-                module: textureShaderModule,
+                module,
                 entryPoint: 'vs_main',
             },
             fragment: {
-                module: textureShaderModule,
+                module,
                 entryPoint: 'fs_main',
                 targets: [{
-                    format: canvasFormat,
+                    format: this.canvasFormat,
                 }],
             },
             primitive: {
@@ -216,7 +229,21 @@ export class ProjectionRenderer {
     }
     
     render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0) {
-        // Update uniforms
+        const dst = this.destinationProjection;
+        const src = this.sourceProjection;
+        const cached = this.pipelineCache.get(`${dst},${src}`);
+        const pipeline = (cached && !(cached instanceof Promise)) ? cached : null;
+
+        if (!pipeline) {
+            // Pipeline not yet compiled; kick off compile if needed and hold the previous frame
+            if (!cached) {
+                this.ensurePipeline(dst, src)
+                    .then(() => { if (this.onPipelineReady) this.onPipelineReady(); })
+                    .catch(err => console.error('Pipeline compile failed:', err));
+            }
+            return;
+        }
+
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         const aspect = (canvasWidth / canvasHeight) * aspectRatioMultiplier;
@@ -249,7 +276,7 @@ export class ProjectionRenderer {
             }]
         });
         
-        renderPass.setPipeline(this.pipelines[this.destinationProjection][this.sourceProjection]);
+        renderPass.setPipeline(pipeline);
         renderPass.setBindGroup(0, this.bindGroup);
         renderPass.draw(4); // Draw a quad (triangle strip with 4 vertices)
         renderPass.end();

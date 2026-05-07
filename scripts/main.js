@@ -132,10 +132,12 @@ Alpine.data('app', () => ({
             }
         });
 
-        // Sync zoom slider and label when zoom changes (e.g. canvas wheel/pinch)
+        // Sync zoom and aspect ratio sliders/labels (zoom can change via canvas wheel/pinch too)
         Alpine.effect(() => {
             this.$refs.zoomSlider.value = store.zoomSlider;
             this.$refs.zoomLabel.textContent = `${store.zoom.toFixed(2)}x`;
+            this.$refs.aspectRatioSlider.value = store.aspectRatio;
+            this.$refs.aspectRatioLabel.textContent = `${store.aspectRatio.toFixed(2)}x`;
         });
 
         // Sync projection sliders when changed by canvas interaction
@@ -278,34 +280,25 @@ Alpine.data('app', () => ({
     },
 
     onAspectRatioInput() {
-        const store = Alpine.store('app');
-        store.aspectRatio = parseFloat(this.$refs.aspectRatioSlider.value);
-        this.$refs.aspectRatioLabel.textContent = `${store.aspectRatio.toFixed(2)}x`;
+        Alpine.store('app').aspectRatio = parseFloat(this.$refs.aspectRatioSlider.value);
     },
 
     onZoomSliderInput() {
         const store = Alpine.store('app');
         store.zoomSlider = parseFloat(this.$refs.zoomSlider.value);
         store.zoom = Math.pow(10, store.zoomSlider);
-        this.$refs.zoomLabel.textContent = `${store.zoom.toFixed(2)}x`;
     },
 
     onRotationInput() {
-        const store = Alpine.store('app');
-        store.rotation = parseFloat(this.$refs.rotationSlider.value);
-        this.$refs.rotationLabel.textContent = `${store.rotation.toFixed(0)}°`;
+        Alpine.store('app').rotation = parseFloat(this.$refs.rotationSlider.value);
     },
 
     onObliqueLatInput() {
-        const store = Alpine.store('app');
-        store.obliqueLat = parseFloat(this.$refs.obliqueLatSlider.value);
-        this.$refs.obliqueLatLabel.textContent = `${store.obliqueLat.toFixed(0)}°`;
+        Alpine.store('app').obliqueLat = parseFloat(this.$refs.obliqueLatSlider.value);
     },
 
     onObliqueLonInput() {
-        const store = Alpine.store('app');
-        store.obliqueLon = parseFloat(this.$refs.obliqueLonSlider.value);
-        this.$refs.obliqueLonLabel.textContent = `${store.obliqueLon.toFixed(0)}°`;
+        Alpine.store('app').obliqueLon = parseFloat(this.$refs.obliqueLonSlider.value);
     },
 
     onPanXInput() {

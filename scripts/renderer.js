@@ -105,19 +105,22 @@ export class ProjectionRenderer {
         this.updateBindGroup();
     }
 
+    // Cache entries are tagged: { kind: 'pipeline' | 'promise' | 'error', value }
     async ensurePipeline(dst, src) {
         const key = `${dst},${src}`;
-        const cached = this.pipelineCache.get(key);
-        if (cached instanceof Error) throw cached;
-        if (cached) return cached;
+        const entry = this.pipelineCache.get(key);
+        if (entry) {
+            if (entry.kind === 'error') throw entry.value;
+            return entry.value; // pipeline or in-flight promise; both awaitable
+        }
         const promise = this._createPipeline(dst, src);
-        this.pipelineCache.set(key, promise);
+        this.pipelineCache.set(key, { kind: 'promise', value: promise });
         try {
             const pipeline = await promise;
-            this.pipelineCache.set(key, pipeline);
+            this.pipelineCache.set(key, { kind: 'pipeline', value: pipeline });
             return pipeline;
         } catch (err) {
-            this.pipelineCache.set(key, err);
+            this.pipelineCache.set(key, { kind: 'error', value: err });
             throw err;
         }
     }
@@ -242,24 +245,20 @@ export class ProjectionRenderer {
 
         const dst = this.destinationProjection;
         const src = this.sourceProjection;
-        const cached = this.pipelineCache.get(`${dst},${src}`);
+        const entry = this.pipelineCache.get(`${dst},${src}`);
 
-        if (cached instanceof Error) {
-            // Compile previously failed for this pair; don't retry on every render
-            return;
-        }
-
-        const pipeline = (cached && !(cached instanceof Promise)) ? cached : null;
-
-        if (!pipeline) {
-            // Pipeline not yet compiled; kick off compile if needed and hold the previous frame
-            if (!cached) {
+        if (entry?.kind !== 'pipeline') {
+            // Not ready: missing entry, in-flight compile, or previously failed
+            if (!entry) {
                 this.ensurePipeline(dst, src)
                     .then(() => { if (this.onPipelineReady) this.onPipelineReady(); })
                     .catch(err => { if (this.onPipelineError) this.onPipelineError(err, dst, src); });
             }
+            // For 'promise' or 'error' entries, hold the previous frame and don't retry
             return;
         }
+
+        const pipeline = entry.value;
 
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;

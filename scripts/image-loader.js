@@ -25,10 +25,16 @@ async function loadDirect(url) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = url;
-    await Promise.race([
-        img.decode(),
-        rejectAfter(REQUEST_TIMEOUT_MS, 'Image load timed out'),
-    ]);
+
+    let timer;
+    const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Image load timed out')), REQUEST_TIMEOUT_MS);
+    });
+    try {
+        await Promise.race([img.decode(), timeout]);
+    } finally {
+        clearTimeout(timer);
+    }
 
     // Fail fast before allocating a potentially huge canvas backing store
     if (img.naturalWidth * img.naturalHeight > MAX_IMAGE_PIXELS) {
@@ -70,6 +76,3 @@ async function loadViaProxy(url) {
     }
 }
 
-function rejectAfter(ms, message) {
-    return new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms));
-}

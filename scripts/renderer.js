@@ -1,6 +1,8 @@
 import { link } from "https://cdn.jsdelivr.net/npm/wesl/+esm";
 import { projections } from "./projections.js";
 
+const MAX_IMAGE_PIXELS = 4096 * 4096; // keep in sync with image-loader.js
+
 export class ProjectionRenderer {
     constructor() {
         this.device = null;
@@ -12,8 +14,6 @@ export class ProjectionRenderer {
         this.canvas = null;
         this.worldTexture = null;
         this.sampler = null;
-        this.destinationProjection = 0; // Default: equirectangular
-        this.sourceProjection = 0; // Default: equirectangular
 
         this.shaderSources = null;
         this.pipelineCache = new Map();
@@ -179,43 +179,39 @@ export class ProjectionRenderer {
     }
 
     async loadTextureFromBlob(blob) {
-        // Dispose of previous custom texture to prevent memory leaks
-        if (this.worldTexture && !this.isDefaultTexture) {
-            this.worldTexture.destroy();
-        }
-        
-        const bitmap = await createImageBitmap(blob);
-        
-        // Validate image size for performance and memory safety
-        const maxSize = 4096 * 4096; // 16MP limit
-        if (bitmap.width * bitmap.height > maxSize) {
-            bitmap.close(); // Clean up bitmap
-            throw new Error('Image too large. Maximum size: 4096x4096 pixels.');
-        }
-        
-        // Create texture
-        this.worldTexture = this.device.createTexture({
-            size: [bitmap.width, bitmap.height, 1],
-            format: 'rgba8unorm',
-            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
-        });
-        
-        // Copy image data to texture
-        this.device.queue.copyExternalImageToTexture(
-            { source: bitmap, flipY: false },
-            { texture: this.worldTexture },
-            [bitmap.width, bitmap.height]
-        );
-        
-        bitmap.close(); // Clean up bitmap
-    }
+        // Decode via <img> so dimensions can be validated before any GPU resources are allocated;
+        // matches the pattern used in image-loader.js. HTMLImageElement is a valid source for
+        // copyExternalImageToTexture, so we can skip the intermediate ImageBitmap.
+        const blobUrl = URL.createObjectURL(blob);
+        try {
+            const img = new Image();
+            img.src = blobUrl;
+            await img.decode();
 
-    setDestinationProjection(projectionType) {
-        this.destinationProjection = projectionType;
-    }
+            if (img.naturalWidth * img.naturalHeight > MAX_IMAGE_PIXELS) {
+                throw new Error(`Image too large. Maximum 4096x4096 pixels (got ${img.naturalWidth}x${img.naturalHeight}).`);
+            }
 
-    setSourceProjection(projectionType) {
-        this.sourceProjection = projectionType;
+            // Validation passed; safe to dispose old custom texture (do this only after we know
+            // we can replace it, otherwise a failed load would leave the bindGroup with a dangling view)
+            if (this.worldTexture && !this.isDefaultTexture) {
+                this.worldTexture.destroy();
+            }
+
+            this.worldTexture = this.device.createTexture({
+                size: [img.naturalWidth, img.naturalHeight, 1],
+                format: 'rgba8unorm',
+                usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+            });
+
+            this.device.queue.copyExternalImageToTexture(
+                { source: img, flipY: false },
+                { texture: this.worldTexture },
+                [img.naturalWidth, img.naturalHeight]
+            );
+        } finally {
+            URL.revokeObjectURL(blobUrl);
+        }
     }
 
     updateBindGroup() {
@@ -239,12 +235,10 @@ export class ProjectionRenderer {
         });
     }
     
-    render(cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0) {
+    render(dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0) {
         // Initialize hasn't finished yet (e.g. resize event fired during async startup); no-op cleanly
         if (!this.shaderSources || !this.bindGroupLayout) return;
 
-        const dst = this.destinationProjection;
-        const src = this.sourceProjection;
         const entry = this.pipelineCache.get(`${dst},${src}`);
 
         if (entry?.kind !== 'pipeline') {

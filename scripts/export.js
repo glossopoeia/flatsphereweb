@@ -6,6 +6,9 @@ import piexif from 'https://cdn.jsdelivr.net/npm/piexifjs@1/+esm';
 const METADATA_KEY = 'flatsphere';
 const METADATA_SCHEMA_VERSION = 1;
 
+// VP8X flags byte bits (see libwebp's webp/format_constants.h).
+const WEBP_XMP_FLAG = 0x04;
+
 // Build a JSON-serializable payload describing the current projection state.
 // This is the format embedded in PNG/JPEG/WebP metadata, designed to round-trip back into the app.
 export function serializeProjectionState(store, projections) {
@@ -36,10 +39,18 @@ export function serializeProjectionState(store, projections) {
 }
 
 // Insert a tEXt chunk carrying the payload into a PNG blob, just before IEND.
+// PNG tEXt is Latin-1, so we ASCII-escape any non-ASCII chars to JSON \uXXXX literals.
+// JSON.parse turns those escapes back into the original code points on read, so the
+// data still round-trips. (Surrogate pairs survive because each half is escaped separately.)
+// The regex range below is U+0080..U+FFFF — every character outside ASCII.
 export async function embedPngMetadata(blob, payload) {
+    const asciiJson = JSON.stringify(payload).replace(
+        /[-￿]/g,
+        c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'),
+    );
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const chunks = extract(bytes);
-    const textChunk = text.encode(METADATA_KEY, JSON.stringify(payload));
+    const textChunk = text.encode(METADATA_KEY, asciiJson);
     // chunks[length-1] is IEND; insert tEXt before it
     chunks.splice(chunks.length - 1, 0, textChunk);
     return new Blob([encode(chunks)], { type: 'image/png' });
@@ -115,7 +126,9 @@ export async function embedWebpMetadata(blob, payload) {
         throw new Error('Not a valid WebP file');
     }
 
-    // Parse all chunks after the RIFF/WEBP header
+    // Parse all chunks after the RIFF/WEBP header. Use subarray (views into the original
+    // buffer) rather than slice, so we don't pay a full copy per chunk on the readback path.
+    // Anything we mutate later must be copied explicitly.
     const chunks = [];
     let offset = 12;
     while (offset + 8 <= bytes.length) {
@@ -124,23 +137,25 @@ export async function embedWebpMetadata(blob, payload) {
         const dataStart = offset + 8;
         const dataEnd = dataStart + size;
         const padSize = size & 1;
-        chunks.push({ fourCC, data: bytes.slice(dataStart, dataEnd), padSize });
+        chunks.push({ fourCC, data: bytes.subarray(dataStart, dataEnd), padSize });
         offset = dataEnd + padSize;
     }
 
     // Ensure VP8X chunk exists (required when XMP/EXIF/anim/icc/alpha flags are used).
     // We need the canvas dimensions; for non-VP8X WebPs the simplest reliable source is decoding.
-    const XMP_FLAG = 0x04;
     let vp8xIdx = chunks.findIndex(c => c.fourCC === 'VP8X');
     if (vp8xIdx === -1) {
         const { width, height } = await getImageDimensions(blob);
         const vp8xData = new Uint8Array(10);
-        vp8xData[0] = XMP_FLAG;
+        vp8xData[0] = WEBP_XMP_FLAG;
         writeU24LE(vp8xData, 4, width - 1);
         writeU24LE(vp8xData, 7, height - 1);
         chunks.unshift({ fourCC: 'VP8X', data: vp8xData, padSize: 0 });
     } else {
-        chunks[vp8xIdx].data[0] |= XMP_FLAG;
+        // Existing VP8X is a subarray view of the input buffer; clone before mutating
+        // so we don't mutate the caller's bytes.
+        chunks[vp8xIdx].data = new Uint8Array(chunks[vp8xIdx].data);
+        chunks[vp8xIdx].data[0] |= WEBP_XMP_FLAG;
     }
 
     // Append the XMP chunk
@@ -191,7 +206,9 @@ export function triggerDownload(blob, filename) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Defer revoke: a.click() returns synchronously but some browsers don't latch the URL
+    // into the download pipeline until the next task, so immediate revoke can race.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 // Parse #rrggbb into [r, g, b] floats in [0, 1]. Returns black on parse failure.

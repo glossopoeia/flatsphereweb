@@ -3,6 +3,16 @@ import { projections } from "./projections.js";
 
 const MAX_IMAGE_PIXELS = 4096 * 4096; // keep in sync with image-loader.js
 
+// Shader uniform layout: 12 scalars + vec4f (background_color). See reproject.wesl Uniforms.
+const UNIFORM_FLOAT_COUNT = 16;
+const UNIFORM_BUFFER_SIZE = UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT;
+
+// WebGPU spec: copyTextureToBuffer requires bytesPerRow to be a multiple of 256.
+const COPY_BYTES_PER_ROW_ALIGNMENT = 256;
+
+// Export texture format is rgba8unorm; 4 bytes per pixel.
+const BYTES_PER_PIXEL = 4;
+
 export class ProjectionRenderer {
     constructor() {
         this.device = null;
@@ -68,7 +78,7 @@ export class ProjectionRenderer {
         
         // Create uniform buffer
         this.uniformBuffer = this.device.createBuffer({
-            size: 64, // 16 floats * 4 bytes each (16-byte aligned)
+            size: UNIFORM_BUFFER_SIZE,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         
@@ -235,7 +245,30 @@ export class ProjectionRenderer {
         });
     }
     
-    render(dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0, graticuleWidth = 1.0, backgroundColor = [0, 0, 0, 1]) {
+    // Pack render parameters into the uniform-buffer Float32Array layout. Callers compute the
+    // aspect ratio for their target (canvas vs export texture); everything else is the same shape.
+    // Keep this in sync with the Uniforms struct in reproject.wesl.
+    _packUniforms({ cameraLat, cameraLon, zoom, aspect, showTissot, showGraticule, rotation,
+                    panX, panY, graticuleWidth, backgroundColor }) {
+        return new Float32Array([
+            cameraLat,
+            cameraLon,
+            zoom,
+            aspect,
+            showTissot,
+            showGraticule,
+            rotation,
+            panX,
+            panY,
+            graticuleWidth,
+            0, 0, // padding before vec4f at offset 48
+            backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3],
+        ]);
+    }
+
+    render({ dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule,
+             aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0,
+             graticuleWidth = 1.0, backgroundColor = [0, 0, 0, 1] }) {
         // Initialize hasn't finished yet (e.g. resize event fired during async startup); no-op cleanly
         if (!this.shaderSources || !this.bindGroupLayout) return;
 
@@ -254,24 +287,12 @@ export class ProjectionRenderer {
 
         const pipeline = entry.value;
 
-        const canvasWidth = this.canvas.width;
-        const canvasHeight = this.canvas.height;
-        const aspect = (canvasWidth / canvasHeight) * aspectRatioMultiplier;
-
-        const uniformData = new Float32Array([
-            cameraLat,
-            cameraLon,
-            zoom,
-            aspect,
-            showTissot,
-            showGraticule,
-            rotation,
-            panX,
-            panY,
-            graticuleWidth,
-            0, 0, // padding before vec4f at offset 48
-            backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3],
-        ]);
+        const aspect = (this.canvas.width / this.canvas.height) * aspectRatioMultiplier;
+        const uniformData = this._packUniforms({
+            cameraLat, cameraLon, zoom, aspect,
+            showTissot, showGraticule, rotation,
+            panX, panY, graticuleWidth, backgroundColor,
+        });
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
 
@@ -316,26 +337,15 @@ export class ProjectionRenderer {
         });
 
         const aspect = (width / height) * aspectRatioMultiplier;
-        const uniformData = new Float32Array([
-            cameraLat,
-            cameraLon,
-            zoom,
-            aspect,
-            showTissot,
-            showGraticule,
-            rotation,
-            panX,
-            panY,
-            graticuleWidth,
-            0, 0,
-            backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3],
-        ]);
+        const uniformData = this._packUniforms({
+            cameraLat, cameraLon, zoom, aspect,
+            showTissot, showGraticule, rotation,
+            panX, panY, graticuleWidth, backgroundColor,
+        });
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
 
-        // copyTextureToBuffer requires bytesPerRow to be a multiple of 256
-        const bytesPerPixel = 4;
-        const bytesPerRowUnpadded = width * bytesPerPixel;
-        const bytesPerRow = Math.ceil(bytesPerRowUnpadded / 256) * 256;
+        const bytesPerRowUnpadded = width * BYTES_PER_PIXEL;
+        const bytesPerRow = Math.ceil(bytesPerRowUnpadded / COPY_BYTES_PER_ROW_ALIGNMENT) * COPY_BYTES_PER_ROW_ALIGNMENT;
         const readbackBuffer = this.device.createBuffer({
             size: bytesPerRow * height,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,

@@ -325,20 +325,20 @@ export class ProjectionApp {
         if (!this.renderer) return;
 
         const store = Alpine.store('app');
-        const dst = store.destinationProjection;
-        const src = store.sourceProjection;
-        const cameraLat = store.obliqueLat * Math.PI / 180;
-        const cameraLon = store.obliqueLon * Math.PI / 180;
-        const zoom = store.zoom;
-        const showTissot = store.tissot ? 1.0 : 0.0;
-        const showGraticule = store.graticule ? 1.0 : 0.0;
-        const aspectRatioMultiplier = store.aspectRatio;
-        const rotation = store.rotation * Math.PI / 180;
-        const panX = store.panX;
-        const panY = store.panY;
-        const graticuleWidth = store.graticuleWidth;
-
-        this.renderer.render(dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier, rotation, panX, panY, graticuleWidth);
+        this.renderer.render({
+            dst: store.destinationProjection,
+            src: store.sourceProjection,
+            cameraLat: store.obliqueLat * Math.PI / 180,
+            cameraLon: store.obliqueLon * Math.PI / 180,
+            zoom: store.zoom,
+            showTissot: store.tissot ? 1.0 : 0.0,
+            showGraticule: store.graticule ? 1.0 : 0.0,
+            aspectRatioMultiplier: store.aspectRatio,
+            rotation: store.rotation * Math.PI / 180,
+            panX: store.panX,
+            panY: store.panY,
+            graticuleWidth: store.graticuleWidth,
+        });
     }
 
     async exportImage() {

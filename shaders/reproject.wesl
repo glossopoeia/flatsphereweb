@@ -15,9 +15,10 @@ struct Uniforms {
     rotation: f32,
     pan_x: f32,
     pan_y: f32,
+    graticule_width: f32,
     _pad1: f32,
     _pad2: f32,
-    _pad3: f32,
+    background_color: vec4f,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -87,14 +88,14 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let final_lon = oblique_result.y;
     
     // Calculate graticule BEFORE any conditional branches (for uniform control flow)
-    let graticule_intensity = is_graticule_line(final_lat, final_lon);
+    let graticule_intensity = is_graticule_line(final_lat, final_lon, uniforms.graticule_width);
     
     // Sample world map texture
     let color = source_color_at(final_lat, final_lon);
 
     // Check if the point is valid (within sphere bounds)
     if (abs(lat) > HALF_PI || abs(lon) > PI) {
-        return vec4f(0.0, 0.0, 0.0, 1.0); // Black background
+        return uniforms.background_color;
     }
     
     // Add Tissot's indicatrices if enabled

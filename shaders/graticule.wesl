@@ -1,20 +1,20 @@
 import package::common::{PI};
 
 // Graticule functions
-fn is_graticule_line(lat: f32, lon: f32) -> f32 {
+fn is_graticule_line(lat: f32, lon: f32, width_mult: f32) -> f32 {
     // Grid spacing for graticules (every 15 degrees)
     let grid_spacing = PI / 12.0; // 15 degrees
 
     // Use screen-space derivatives to get consistent pixel-width lines
-    // dFdx/dFdy give us the rate of change per pixel in screen space 
-    let dlat_dx = dpdx(lat);                                          
-    let dlat_dy = dpdy(lat);                                          
-    let dlon_dx = dpdx(lon);                                          
-    let dlon_dy = dpdy(lon);                                          
-                                                                      
-    // Calculate the screen-space line width (approximately 1 pixel)  
-    let lat_pixel_width = sqrt(dlat_dx * dlat_dx + dlat_dy * dlat_dy);
-    let lon_pixel_width = sqrt(dlon_dx * dlon_dx + dlon_dy * dlon_dy);
+    // dFdx/dFdy give us the rate of change per pixel in screen space
+    let dlat_dx = dpdx(lat);
+    let dlat_dy = dpdy(lat);
+    let dlon_dx = dpdx(lon);
+    let dlon_dy = dpdy(lon);
+
+    // Calculate the screen-space line width (~1 pixel, scaled by user multiplier)
+    let lat_pixel_width = sqrt(dlat_dx * dlat_dx + dlat_dy * dlat_dy) * width_mult;
+    let lon_pixel_width = sqrt(dlon_dx * dlon_dx + dlon_dy * dlon_dy) * width_mult;
     
     // Check for meridians (lines of constant longitude) with anti-aliasing
     let meridian_lon = round(lon / grid_spacing) * grid_spacing;

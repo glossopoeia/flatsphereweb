@@ -3,6 +3,8 @@ import { SecurityManager } from './security.js'
 import { ProjectionRenderer } from './renderer.js';
 import { projections } from './projections.js';
 import { loadImageFromUrl } from './image-loader.js';
+import { triggerDownload, hexToRgbNormalized, generateAutoBasename, withImageExtension,
+         serializeProjectionState, embedPngMetadata, embedJpegMetadata, embedWebpMetadata } from './export.js';
 
 export class ProjectionApp {
     constructor() {
@@ -238,7 +240,7 @@ export class ProjectionApp {
         // React to display toggle, slider, pan, and oblique view changes
         Alpine.effect(() => {
             // Read all reactive properties that should trigger a re-render
-            void (store.tissot, store.graticule);
+            void (store.tissot, store.graticule, store.graticuleWidth);
             void (store.zoom, store.aspectRatio, store.rotation);
             void (store.panX, store.panY);
             void (store.obliqueLat, store.obliqueLon);
@@ -334,7 +336,58 @@ export class ProjectionApp {
         const rotation = store.rotation * Math.PI / 180;
         const panX = store.panX;
         const panY = store.panY;
+        const graticuleWidth = store.graticuleWidth;
 
-        this.renderer.render(dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier, rotation, panX, panY);
+        this.renderer.render(dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier, rotation, panX, panY, graticuleWidth);
+    }
+
+    async exportImage() {
+        await this.ready;
+        const store = Alpine.store('app');
+        if (store.exportInProgress) return;
+        store.exportInProgress = true;
+        const [bgR, bgG, bgB] = hexToRgbNormalized(store.exportBackgroundColor);
+        const bgA = store.exportTransparent ? 0.0 : 1.0;
+        try {
+            let blob = await this.renderer.exportToBlob({
+                dst: store.destinationProjection,
+                src: store.sourceProjection,
+                width: store.exportWidth,
+                height: store.exportHeight,
+                cameraLat: store.obliqueLat * Math.PI / 180,
+                cameraLon: store.obliqueLon * Math.PI / 180,
+                zoom: store.zoom,
+                showTissot: store.tissot ? 1.0 : 0.0,
+                showGraticule: store.graticule ? 1.0 : 0.0,
+                aspectRatioMultiplier: store.aspectRatio,
+                rotation: store.rotation * Math.PI / 180,
+                panX: store.panX,
+                panY: store.panY,
+                graticuleWidth: store.graticuleWidth,
+                backgroundColor: [bgR, bgG, bgB, bgA],
+                format: store.exportFormat,
+                quality: store.exportQuality / 100,
+            });
+            const payload = serializeProjectionState(store, projections);
+            if (store.exportFormat === 'png') {
+                blob = await embedPngMetadata(blob, payload);
+            } else if (store.exportFormat === 'jpeg') {
+                blob = await embedJpegMetadata(blob, payload);
+            } else if (store.exportFormat === 'webp') {
+                blob = await embedWebpMetadata(blob, payload);
+            }
+            const ext = store.exportFormat === 'jpeg' ? 'jpg' : store.exportFormat;
+            const basename = store.exportFilename.trim() || generateAutoBasename(store, projections);
+            const filename = withImageExtension(basename, ext);
+            triggerDownload(blob, filename);
+            store.showSuccess(`Exported ${filename}`);
+        } catch (error) {
+            console.error('Export failed:', error);
+            store.showError(`Export failed: ${error.message}`);
+        } finally {
+            store.exportInProgress = false;
+            // Restore viewport uniforms (export overwrote them)
+            this.render();
+        }
     }
 }

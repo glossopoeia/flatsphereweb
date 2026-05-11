@@ -13,7 +13,7 @@
     <meta property="og:title" content="Flatsphere: Interactive Reprojections of the Sphere">
     <meta property="og:description" content="Interactive web tool for comparing different cartographic projections">
     <meta property="og:type" content="website">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://api.allorigins.win; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://api.allorigins.win https://cdn.jsdelivr.net; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.orange.min.css">
     <link rel="stylesheet" href="styles/main.css">
@@ -123,6 +123,10 @@
                         <input type="checkbox" role="switch" id="graticuleToggle" x-ref="graticuleToggle" x-on:change="onGraticuleChange">
                         Show Graticule
                     </label>
+                    <label for="graticuleWidthSlider">
+                        Graticule Line Width: <span x-ref="graticuleWidthLabel" id="graticuleWidthValue">1.0x</span>
+                        <input type="range" id="graticuleWidthSlider" x-ref="graticuleWidthSlider" x-on:input="onGraticuleWidthInput" min="0.5" max="5" step="0.1" value="1.0">
+                    </label>
                     <label for="aspectRatioSlider">
                         Aspect Ratio: <span x-ref="aspectRatioLabel" id="aspectRatioValue">1.0x</span>
                         <input type="range" id="aspectRatioSlider" x-ref="aspectRatioSlider" x-on:input="onAspectRatioInput" min="0.01" max="2.0" step="0.01" value="1.0">
@@ -139,6 +143,54 @@
                         Pan Y
                         <input type="number" id="panYInput" x-ref="panYInput" x-on:input="onPanYInput" step="0.01" value="0">
                     </label>
+                </details>
+
+                <details>
+                    <summary role="button" class="secondary">Export</summary>
+                    <label for="exportFormat">
+                        Format
+                        <select id="exportFormat" x-ref="exportFormat" x-on:change="onExportFormatChange">
+                            <option value="png">PNG</option>
+                            <option value="jpeg">JPEG</option>
+                            <option value="webp">WebP</option>
+                        </select>
+                    </label>
+                    <label for="exportPreset">
+                        Size Preset
+                        <select id="exportPreset" x-ref="exportPreset" x-on:change="onExportPresetChange">
+                            <option value="custom">Custom</option>
+                            <option value="1920x1080">1080p (1920×1080)</option>
+                            <option value="3840x2160">4K (3840×2160)</option>
+                            <option value="3508x2480">A4 Landscape @ 300dpi (3508×2480)</option>
+                            <option value="2480x3508">A4 Portrait @ 300dpi (2480×3508)</option>
+                            <option value="3300x2550">Letter Landscape @ 300dpi (3300×2550)</option>
+                            <option value="2550x3300">Letter Portrait @ 300dpi (2550×3300)</option>
+                            <option value="2048x2048">Square 2048</option>
+                            <option value="4096x4096">Square 4096</option>
+                        </select>
+                    </label>
+                    <fieldset role="group">
+                        <input type="number" id="exportWidth" x-ref="exportWidth" x-on:input="onExportWidthInput" aria-label="Export width" min="1" step="1" value="1920">
+                        <input type="number" id="exportHeight" x-ref="exportHeight" x-on:input="onExportHeightInput" aria-label="Export height" min="1" step="1" value="1080">
+                    </fieldset>
+                    <input type="button" class="secondary" x-on:click="onExportMatchViewport" value="Match Viewport">
+                    <label>
+                        <input type="checkbox" role="switch" id="exportTransparent" x-ref="exportTransparent" x-on:change="onExportTransparentChange">
+                        Transparent Background
+                    </label>
+                    <label for="exportBgColor" x-ref="exportBgColorLabel">
+                        Background Color
+                        <input type="color" id="exportBgColor" x-ref="exportBgColor" x-on:input="onExportBgColorInput" value="#000000">
+                    </label>
+                    <label for="exportQuality">
+                        Quality: <span x-ref="exportQualityLabel" id="exportQualityValue">92</span>
+                        <input type="range" id="exportQuality" x-ref="exportQuality" x-on:input="onExportQualityInput" min="1" max="100" step="1" value="92">
+                    </label>
+                    <label for="exportFilename">
+                        Filename
+                        <input type="text" id="exportFilename" x-ref="exportFilename" x-on:input="onExportFilenameInput" x-on:keyup="onExportFilenameKeyup" placeholder="auto-generated">
+                    </label>
+                    <input type="button" x-ref="exportButton" x-on:click="onExportClick" value="Export">
                 </details>
             </nav>
         </aside>

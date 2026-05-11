@@ -1,6 +1,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm.js';
 import { SecurityManager } from './security.js';
 import { projections } from './projections.js';
+import { generateAutoBasename } from './export.js';
 
 // Alpine x-data component factory. Wires DOM event handlers and Alpine effects that bridge
 // the store to the sidebar UI. Registered in main.js via Alpine.data('app', createAppComponent).
@@ -50,6 +51,33 @@ export function createAppComponent() {
                 this.$refs.obliqueLatLabel.textContent = `${store.obliqueLat.toFixed(0)}°`;
                 this.$refs.obliqueLonSlider.value = store.obliqueLon;
                 this.$refs.obliqueLonLabel.textContent = `${store.obliqueLon.toFixed(0)}°`;
+            });
+
+            // Sync graticule line width slider/label and enabled state
+            Alpine.effect(() => {
+                this.$refs.graticuleWidthSlider.value = store.graticuleWidth;
+                this.$refs.graticuleWidthLabel.textContent = `${store.graticuleWidth.toFixed(1)}x`;
+                this.$refs.graticuleWidthSlider.disabled = !store.graticule;
+            });
+
+            // Sync export controls
+            Alpine.effect(() => {
+                this.$refs.exportFormat.value = store.exportFormat;
+                this.$refs.exportPreset.value = store.exportPreset;
+                this.$refs.exportWidth.value = store.exportWidth;
+                this.$refs.exportHeight.value = store.exportHeight;
+                this.$refs.exportTransparent.checked = store.exportTransparent;
+                this.$refs.exportTransparent.disabled = store.exportFormat === 'jpeg';
+                this.$refs.exportBgColor.value = store.exportBackgroundColor;
+                this.$refs.exportBgColorLabel.hidden = store.exportTransparent;
+                this.$refs.exportQuality.value = store.exportQuality;
+                this.$refs.exportQualityLabel.textContent = `${store.exportQuality}`;
+                this.$refs.exportQuality.disabled = store.exportFormat === 'png';
+                this.$refs.exportFilename.value = store.exportFilename;
+                const ext = store.exportFormat === 'jpeg' ? 'jpg' : store.exportFormat;
+                this.$refs.exportFilename.placeholder = `${generateAutoBasename(store, projections)}.${ext}`;
+                this.$refs.exportButton.disabled = store.exportInProgress;
+                this.$refs.exportButton.value = store.exportInProgress ? 'Exporting…' : 'Export';
             });
 
             // Sync pan inputs when changed by drag interaction
@@ -156,6 +184,10 @@ export function createAppComponent() {
             Alpine.store('app').graticule = this.$refs.graticuleToggle.checked;
         },
 
+        onGraticuleWidthInput() {
+            Alpine.store('app').graticuleWidth = parseFloat(this.$refs.graticuleWidthSlider.value);
+        },
+
         onFullscreenToggle() {
             this.toggleFullscreen();
         },
@@ -258,6 +290,76 @@ export function createAppComponent() {
             } else {
                 store.app.loadUserImage(imageUrl);
             }
+        },
+
+        onExportFormatChange() {
+            const store = Alpine.store('app');
+            store.exportFormat = this.$refs.exportFormat.value;
+            // JPEG has no alpha; clear the transparent flag so settings reflect what the file can carry
+            if (store.exportFormat === 'jpeg') {
+                store.exportTransparent = false;
+            }
+        },
+
+        onExportPresetChange() {
+            const store = Alpine.store('app');
+            const value = this.$refs.exportPreset.value;
+            store.exportPreset = value;
+            if (value !== 'custom') {
+                const [w, h] = value.split('x').map(n => parseInt(n, 10));
+                store.exportWidth = w;
+                store.exportHeight = h;
+            }
+        },
+
+        onExportWidthInput() {
+            const val = parseInt(this.$refs.exportWidth.value, 10);
+            if (!isNaN(val) && val > 0) {
+                Alpine.store('app').exportWidth = val;
+                Alpine.store('app').exportPreset = 'custom';
+            }
+        },
+
+        onExportHeightInput() {
+            const val = parseInt(this.$refs.exportHeight.value, 10);
+            if (!isNaN(val) && val > 0) {
+                Alpine.store('app').exportHeight = val;
+                Alpine.store('app').exportPreset = 'custom';
+            }
+        },
+
+        onExportMatchViewport() {
+            const canvas = document.getElementById('projectionCanvas');
+            const store = Alpine.store('app');
+            store.exportWidth = canvas.width;
+            store.exportHeight = canvas.height;
+            store.exportPreset = 'custom';
+        },
+
+        onExportTransparentChange() {
+            Alpine.store('app').exportTransparent = this.$refs.exportTransparent.checked;
+        },
+
+        onExportBgColorInput() {
+            Alpine.store('app').exportBackgroundColor = this.$refs.exportBgColor.value;
+        },
+
+        onExportQualityInput() {
+            Alpine.store('app').exportQuality = parseInt(this.$refs.exportQuality.value, 10);
+        },
+
+        onExportFilenameInput() {
+            Alpine.store('app').exportFilename = this.$refs.exportFilename.value;
+        },
+
+        onExportFilenameKeyup(event) {
+            if (event.key === 'Enter') {
+                this.onExportClick();
+            }
+        },
+
+        onExportClick() {
+            Alpine.store('app').app.exportImage();
         },
 
         onNotificationClose() {

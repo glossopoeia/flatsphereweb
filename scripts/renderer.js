@@ -345,9 +345,25 @@ export class ProjectionRenderer {
     async exportToBlob({ dst, src, width, height, cameraLat, cameraLon, zoom,
                          showTissot, showGraticule, aspectRatioMultiplier, rotation,
                          panX, panY, graticuleWidth, backgroundColor, format, quality }) {
+        // Validate everything up front before touching the GPU. Two limits matter: the texture
+        // axis limit (maxTextureDimension2D) and the readback buffer size (maxBufferSize).
+        // A single-axis check is not enough — e.g. 16384×16384 may pass the axis check but
+        // require a ~1 GiB readback buffer that exceeds maxBufferSize on most devices.
         const maxDim = this.device.limits.maxTextureDimension2D;
         if (width < 1 || height < 1 || width > maxDim || height > maxDim) {
             throw new Error(`Export dimensions must be between 1 and ${maxDim} on each axis (got ${width}×${height}).`);
+        }
+
+        const bytesPerRowUnpadded = width * BYTES_PER_PIXEL;
+        const bytesPerRow = Math.ceil(bytesPerRowUnpadded / COPY_BYTES_PER_ROW_ALIGNMENT) * COPY_BYTES_PER_ROW_ALIGNMENT;
+        const readbackSize = bytesPerRow * height;
+        const maxBufferSize = this.device.limits.maxBufferSize;
+        if (readbackSize > maxBufferSize) {
+            const mib = n => (n / (1024 * 1024)).toFixed(1);
+            throw new Error(
+                `Export at ${width}×${height} needs a ${mib(readbackSize)} MiB readback buffer, ` +
+                `but this GPU's maximum is ${mib(maxBufferSize)} MiB. Try smaller dimensions.`,
+            );
         }
 
         const exportFormat = 'rgba8unorm';
@@ -367,10 +383,8 @@ export class ProjectionRenderer {
         });
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
 
-        const bytesPerRowUnpadded = width * BYTES_PER_PIXEL;
-        const bytesPerRow = Math.ceil(bytesPerRowUnpadded / COPY_BYTES_PER_ROW_ALIGNMENT) * COPY_BYTES_PER_ROW_ALIGNMENT;
         const readbackBuffer = this.device.createBuffer({
-            size: bytesPerRow * height,
+            size: readbackSize,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
         });
 

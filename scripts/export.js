@@ -32,7 +32,10 @@ const WEBP_XMP_FLAG = 0x04;
  * Where embedded:
  *   PNG  → tEXt chunk, keyword 'flatsphere'. JSON is ASCII-escaped (\uXXXX) since tEXt is Latin-1;
  *          JSON.parse restores the original code points on read.
- *   JPEG → EXIF tags: ImageDescription holds raw JSON, Software holds 'flatsphere/<version>'.
+ *   JPEG → EXIF tags: ImageDescription holds the raw JSON payload. Software holds
+ *          'flatsphere/<schemaVersion>' (e.g. 'flatsphere/1') as a cheap tool+schema
+ *          signal — round-trip code can check this without parsing ImageDescription.
+ *          Note: this is the metadata schema version, not the app build version.
  *   WebP → XMP chunk in the RIFF container; payload sits under namespace
  *          'https://flatsphere.dev/ns/1#' as element <flatsphere:state>.
  */
@@ -70,7 +73,7 @@ export function serializeProjectionState(store, projections) {
 // The regex range below is U+0080..U+FFFF — every character outside ASCII.
 export async function embedPngMetadata(blob, payload) {
     const asciiJson = JSON.stringify(payload).replace(
-        /[-￿]/g,
+        /[\u0080-\uFFFF]/g,
         c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'),
     );
     const bytes = new Uint8Array(await blob.arrayBuffer());

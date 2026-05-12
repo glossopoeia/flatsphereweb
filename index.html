@@ -147,6 +147,9 @@
 
                 <details>
                     <summary role="button" class="secondary">Export</summary>
+                    <div class="export-preview-wrap">
+                        <canvas id="exportPreviewCanvas" x-ref="exportPreviewCanvas" aria-label="Export preview" width="320" height="180"></canvas>
+                    </div>
                     <label for="exportFormat">
                         Format
                         <select id="exportFormat" x-ref="exportFormat" x-on:change="onExportFormatChange">

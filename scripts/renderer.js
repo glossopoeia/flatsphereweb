@@ -266,9 +266,32 @@ export class ProjectionRenderer {
         ]);
     }
 
-    render({ dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule,
-             aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0,
-             graticuleWidth = 1.0, backgroundColor = [0, 0, 0, 1] }) {
+    // Configure a second canvas as the export-preview swapchain. Uses 'premultiplied' alpha
+    // so that the shader's background_color with alpha < 1 produces real transparency on the
+    // canvas — letting the wrapper's checkerboard show through when Transparent is on.
+    initPreviewContext(previewCanvas) {
+        this.previewCanvas = previewCanvas;
+        this.previewContext = previewCanvas.getContext('webgpu');
+        this.previewContext.configure({
+            device: this.device,
+            format: this.canvasFormat,
+            alphaMode: 'premultiplied',
+        });
+    }
+
+    render(params) {
+        this._renderToCanvas(this.context, this.canvas, params);
+    }
+
+    renderPreview(params) {
+        if (!this.previewContext || !this.previewCanvas) return;
+        this._renderToCanvas(this.previewContext, this.previewCanvas, params);
+    }
+
+    _renderToCanvas(context, canvas, { dst, src, cameraLat, cameraLon, zoom,
+                                       showTissot, showGraticule, aspectRatioMultiplier = 1.0,
+                                       rotation = 0.0, panX = 0.0, panY = 0.0,
+                                       graticuleWidth = 1.0, backgroundColor = [0, 0, 0, 1] }) {
         // Initialize hasn't finished yet (e.g. resize event fired during async startup); no-op cleanly
         if (!this.shaderSources || !this.bindGroupLayout) return;
 
@@ -287,7 +310,7 @@ export class ProjectionRenderer {
 
         const pipeline = entry.value;
 
-        const aspect = (this.canvas.width / this.canvas.height) * aspectRatioMultiplier;
+        const aspect = (canvas.width / canvas.height) * aspectRatioMultiplier;
         const uniformData = this._packUniforms({
             cameraLat, cameraLon, zoom, aspect,
             showTissot, showGraticule, rotation,
@@ -298,8 +321,8 @@ export class ProjectionRenderer {
 
         // Create command encoder and render pass
         const commandEncoder = this.device.createCommandEncoder();
-        const textureView = this.context.getCurrentTexture().createView();
-        
+        const textureView = context.getCurrentTexture().createView();
+
         const renderPass = commandEncoder.beginRenderPass({
             colorAttachments: [{
                 view: textureView,
@@ -308,12 +331,12 @@ export class ProjectionRenderer {
                 storeOp: 'store',
             }]
         });
-        
+
         renderPass.setPipeline(pipeline);
         renderPass.setBindGroup(0, this.bindGroup);
         renderPass.draw(4); // Draw a quad (triangle strip with 4 vertices)
         renderPass.end();
-        
+
         this.device.queue.submit([commandEncoder.finish()]);
     }
 

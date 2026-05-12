@@ -31,6 +31,8 @@ export class ProjectionApp {
         window.addEventListener('resize', () => {
             this.resizeCanvas();
             this.render();
+            this.resizePreviewCanvas();
+            this.renderPreview();
         }, { signal });
 
         // Mouse interaction
@@ -176,18 +178,32 @@ export class ProjectionApp {
     async init() {
         try {
             this.renderer = new ProjectionRenderer();
-            this.renderer.onPipelineReady = () => this.render();
+            this.renderer.onPipelineReady = () => { this.render(); this.renderPreview(); };
             this.renderer.onPipelineError = (err, dst, src) => {
                 console.error('Pipeline compile failed for', { dst, src }, err);
                 const name = projections.find(p => p.id === dst)?.name ?? `projection #${dst}`;
                 Alpine.store('app').showError(`Could not compile ${name}: ${err.message}`, true);
             };
             await this.renderer.initialize(this.canvas);
+            this.previewCanvas = document.getElementById('exportPreviewCanvas');
+            if (this.previewCanvas) {
+                this.renderer.initPreviewContext(this.previewCanvas);
+                // When the Export <details> toggles open, recompute the preview backing using
+                // the now-actual displayed width — clientWidth was 0 while it was closed.
+                const exportDetails = this.previewCanvas.closest('details');
+                exportDetails?.addEventListener('toggle', () => {
+                    if (exportDetails.open) {
+                        this.resizePreviewCanvas();
+                        this.renderPreview();
+                    }
+                });
+            }
             const store = Alpine.store('app');
             this.resizeCanvas();
             await this.renderer.ensurePipeline(store.destinationProjection, store.sourceProjection);
             this.setupAlpineEffects();
             this.render();
+            this.renderPreview();
 
             // Hide loading screen once initialization is complete
             store.isLoading = false;
@@ -236,6 +252,7 @@ export class ProjectionApp {
                 });
             }
             this.render();
+            this.renderPreview();
         });
 
         // React to display toggle, slider, pan, and oblique view changes
@@ -246,6 +263,17 @@ export class ProjectionApp {
             void (store.panX, store.panY);
             void (store.obliqueLat, store.obliqueLon);
             this.render();
+            this.renderPreview();
+        });
+
+        // React to export-only state changes: the preview's aspect ratio follows the export's
+        // W:H, and the background color/alpha changes off-projection regions of the preview.
+        // The main viewport isn't affected by any of these.
+        Alpine.effect(() => {
+            void (store.exportWidth, store.exportHeight);
+            void (store.exportTransparent, store.exportBackgroundColor);
+            this.resizePreviewCanvas();
+            this.renderPreview();
         });
     }
 
@@ -263,6 +291,23 @@ export class ProjectionApp {
         // Keep CSS size in logical (CSS) pixels to match the viewport
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
+    }
+
+    // Resize the preview canvas's backing store so its aspect matches the export's W:H.
+    // CSS keeps display width: 100% and height: auto, so changing the backing aspect
+    // automatically reflows the displayed height. Backing width is scaled by DPR for
+    // sharpness on HiDPI displays; clientWidth=0 (closed <details>) falls back to a default.
+    resizePreviewCanvas() {
+        if (!this.previewCanvas) return;
+        const store = Alpine.store('app');
+        const w = store.exportWidth;
+        const h = store.exportHeight;
+        if (!w || !h) return;
+        const dpr = window.devicePixelRatio || 1;
+        const displayWidth = this.previewCanvas.clientWidth || 320;
+        const backingWidth = Math.max(1, Math.round(displayWidth * dpr));
+        this.previewCanvas.width = backingWidth;
+        this.previewCanvas.height = Math.max(1, Math.round(backingWidth * (h / w)));
     }
 
     async loadUserFile(file) {
@@ -339,6 +384,29 @@ export class ProjectionApp {
             panX: store.panX,
             panY: store.panY,
             graticuleWidth: store.graticuleWidth,
+        });
+    }
+
+    renderPreview() {
+        if (!this.renderer || !this.previewCanvas) return;
+
+        const store = Alpine.store('app');
+        const [bgR, bgG, bgB] = hexToRgbNormalized(store.exportBackgroundColor);
+        const bgA = store.exportTransparent ? 0.0 : 1.0;
+        this.renderer.renderPreview({
+            dst: store.destinationProjection,
+            src: store.sourceProjection,
+            cameraLat: store.obliqueLat * Math.PI / 180,
+            cameraLon: store.obliqueLon * Math.PI / 180,
+            zoom: store.zoom,
+            showTissot: store.tissot ? 1.0 : 0.0,
+            showGraticule: store.graticule ? 1.0 : 0.0,
+            aspectRatioMultiplier: store.aspectRatio,
+            rotation: store.rotation * Math.PI / 180,
+            panX: store.panX,
+            panY: store.panY,
+            graticuleWidth: store.graticuleWidth,
+            backgroundColor: [bgR, bgG, bgB, bgA],
         });
     }
 

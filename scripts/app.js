@@ -3,6 +3,9 @@ import { SecurityManager } from './security.js'
 import { ProjectionRenderer } from './renderer.js';
 import { projections } from './projections.js';
 import { loadImageFromUrl } from './image-loader.js';
+import { triggerDownload, hexToRgbNormalized, generateAutoBasename, withImageExtension,
+         sanitizeFilename, serializeProjectionState,
+         embedPngMetadata, embedJpegMetadata, embedWebpMetadata } from './export.js';
 
 export class ProjectionApp {
     constructor() {
@@ -28,6 +31,8 @@ export class ProjectionApp {
         window.addEventListener('resize', () => {
             this.resizeCanvas();
             this.render();
+            this.resizePreviewCanvas();
+            this.renderPreview();
         }, { signal });
 
         // Mouse interaction
@@ -173,18 +178,32 @@ export class ProjectionApp {
     async init() {
         try {
             this.renderer = new ProjectionRenderer();
-            this.renderer.onPipelineReady = () => this.render();
+            this.renderer.onPipelineReady = () => { this.render(); this.renderPreview(); };
             this.renderer.onPipelineError = (err, dst, src) => {
                 console.error('Pipeline compile failed for', { dst, src }, err);
                 const name = projections.find(p => p.id === dst)?.name ?? `projection #${dst}`;
                 Alpine.store('app').showError(`Could not compile ${name}: ${err.message}`, true);
             };
             await this.renderer.initialize(this.canvas);
+            this.previewCanvas = document.getElementById('exportPreviewCanvas');
+            if (this.previewCanvas) {
+                this.renderer.initPreviewContext(this.previewCanvas);
+                // When the Export <details> toggles open, recompute the preview backing using
+                // the now-actual displayed width — clientWidth was 0 while it was closed.
+                const exportDetails = this.previewCanvas.closest('details');
+                exportDetails?.addEventListener('toggle', () => {
+                    if (exportDetails.open) {
+                        this.resizePreviewCanvas();
+                        this.renderPreview();
+                    }
+                });
+            }
             const store = Alpine.store('app');
             this.resizeCanvas();
             await this.renderer.ensurePipeline(store.destinationProjection, store.sourceProjection);
             this.setupAlpineEffects();
             this.render();
+            this.renderPreview();
 
             // Hide loading screen once initialization is complete
             store.isLoading = false;
@@ -233,16 +252,28 @@ export class ProjectionApp {
                 });
             }
             this.render();
+            this.renderPreview();
         });
 
         // React to display toggle, slider, pan, and oblique view changes
         Alpine.effect(() => {
             // Read all reactive properties that should trigger a re-render
-            void (store.tissot, store.graticule);
+            void (store.tissot, store.graticule, store.graticuleWidth);
             void (store.zoom, store.aspectRatio, store.rotation);
             void (store.panX, store.panY);
             void (store.obliqueLat, store.obliqueLon);
             this.render();
+            this.renderPreview();
+        });
+
+        // React to export-only state changes: the preview's aspect ratio follows the export's
+        // W:H, and the background color/alpha changes off-projection regions of the preview.
+        // The main viewport isn't affected by any of these.
+        Alpine.effect(() => {
+            void (store.exportWidth, store.exportHeight);
+            void (store.exportTransparent, store.exportBackgroundColor);
+            this.resizePreviewCanvas();
+            this.renderPreview();
         });
     }
 
@@ -260,6 +291,23 @@ export class ProjectionApp {
         // Keep CSS size in logical (CSS) pixels to match the viewport
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
+    }
+
+    // Resize the preview canvas's backing store so its aspect matches the export's W:H.
+    // CSS keeps display width: 100% and height: auto, so changing the backing aspect
+    // automatically reflows the displayed height. Backing width is scaled by DPR for
+    // sharpness on HiDPI displays; clientWidth=0 (closed <details>) falls back to a default.
+    resizePreviewCanvas() {
+        if (!this.previewCanvas) return;
+        const store = Alpine.store('app');
+        const w = store.exportWidth;
+        const h = store.exportHeight;
+        if (!w || !h) return;
+        const dpr = window.devicePixelRatio || 1;
+        const displayWidth = this.previewCanvas.clientWidth || 320;
+        const backingWidth = Math.max(1, Math.round(displayWidth * dpr));
+        this.previewCanvas.width = backingWidth;
+        this.previewCanvas.height = Math.max(1, Math.round(backingWidth * (h / w)));
     }
 
     async loadUserFile(file) {
@@ -323,18 +371,93 @@ export class ProjectionApp {
         if (!this.renderer) return;
 
         const store = Alpine.store('app');
-        const dst = store.destinationProjection;
-        const src = store.sourceProjection;
-        const cameraLat = store.obliqueLat * Math.PI / 180;
-        const cameraLon = store.obliqueLon * Math.PI / 180;
-        const zoom = store.zoom;
-        const showTissot = store.tissot ? 1.0 : 0.0;
-        const showGraticule = store.graticule ? 1.0 : 0.0;
-        const aspectRatioMultiplier = store.aspectRatio;
-        const rotation = store.rotation * Math.PI / 180;
-        const panX = store.panX;
-        const panY = store.panY;
+        this.renderer.render({
+            dst: store.destinationProjection,
+            src: store.sourceProjection,
+            cameraLat: store.obliqueLat * Math.PI / 180,
+            cameraLon: store.obliqueLon * Math.PI / 180,
+            zoom: store.zoom,
+            showTissot: store.tissot ? 1.0 : 0.0,
+            showGraticule: store.graticule ? 1.0 : 0.0,
+            aspectRatioMultiplier: store.aspectRatio,
+            rotation: store.rotation * Math.PI / 180,
+            panX: store.panX,
+            panY: store.panY,
+            graticuleWidth: store.graticuleWidth,
+        });
+    }
 
-        this.renderer.render(dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier, rotation, panX, panY);
+    renderPreview() {
+        if (!this.renderer || !this.previewCanvas) return;
+
+        const store = Alpine.store('app');
+        const [bgR, bgG, bgB] = hexToRgbNormalized(store.exportBackgroundColor);
+        const bgA = store.exportTransparent ? 0.0 : 1.0;
+        this.renderer.renderPreview({
+            dst: store.destinationProjection,
+            src: store.sourceProjection,
+            cameraLat: store.obliqueLat * Math.PI / 180,
+            cameraLon: store.obliqueLon * Math.PI / 180,
+            zoom: store.zoom,
+            showTissot: store.tissot ? 1.0 : 0.0,
+            showGraticule: store.graticule ? 1.0 : 0.0,
+            aspectRatioMultiplier: store.aspectRatio,
+            rotation: store.rotation * Math.PI / 180,
+            panX: store.panX,
+            panY: store.panY,
+            graticuleWidth: store.graticuleWidth,
+            backgroundColor: [bgR, bgG, bgB, bgA],
+        });
+    }
+
+    async exportImage() {
+        await this.ready;
+        const store = Alpine.store('app');
+        if (store.exportInProgress) return;
+        store.exportInProgress = true;
+        const [bgR, bgG, bgB] = hexToRgbNormalized(store.exportBackgroundColor);
+        const bgA = store.exportTransparent ? 0.0 : 1.0;
+        try {
+            let blob = await this.renderer.exportToBlob({
+                dst: store.destinationProjection,
+                src: store.sourceProjection,
+                width: store.exportWidth,
+                height: store.exportHeight,
+                cameraLat: store.obliqueLat * Math.PI / 180,
+                cameraLon: store.obliqueLon * Math.PI / 180,
+                zoom: store.zoom,
+                showTissot: store.tissot ? 1.0 : 0.0,
+                showGraticule: store.graticule ? 1.0 : 0.0,
+                aspectRatioMultiplier: store.aspectRatio,
+                rotation: store.rotation * Math.PI / 180,
+                panX: store.panX,
+                panY: store.panY,
+                graticuleWidth: store.graticuleWidth,
+                backgroundColor: [bgR, bgG, bgB, bgA],
+                format: store.exportFormat,
+                quality: store.exportQuality / 100,
+            });
+            const payload = serializeProjectionState(store, projections);
+            if (store.exportFormat === 'png') {
+                blob = await embedPngMetadata(blob, payload);
+            } else if (store.exportFormat === 'jpeg') {
+                blob = await embedJpegMetadata(blob, payload);
+            } else if (store.exportFormat === 'webp') {
+                blob = await embedWebpMetadata(blob, payload);
+            }
+            const ext = store.exportFormat === 'jpeg' ? 'jpg' : store.exportFormat;
+            const rawBasename = store.exportFilename.trim() || generateAutoBasename(store, projections);
+            const safeBasename = sanitizeFilename(rawBasename) || 'flatsphere';
+            const filename = withImageExtension(safeBasename, ext);
+            triggerDownload(blob, filename);
+            store.showSuccess(`Exported ${filename}`);
+        } catch (error) {
+            console.error('Export failed:', error);
+            store.showError(`Export failed: ${error.message}`);
+        } finally {
+            store.exportInProgress = false;
+            // Restore viewport uniforms (export overwrote them)
+            this.render();
+        }
     }
 }

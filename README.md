@@ -8,6 +8,8 @@ Try it at: [https://flatsphere.dev](https://flatsphere.dev)
 
 Every flat map of the Earth introduces distortion. Flatsphere lets you explore that distortion hands-on by switching between projections, dragging the viewpoint, and building intuition with overlays like Tissot's indicatrices and graticule lines. The default visualization uses a world map texture for familiar geographic context, but you can load a local or remotely-hosted image, and even choose a source projection for it if it's not equirectangular by default.
 
+The current view can be exported as PNG, JPEG, or WebP at custom dimensions or common presets (1080p, 4K, A4/Letter at 300 dpi, square). Exported images embed the projection state (destination projection, oblique view, rotation, zoom, pan, and overlay settings) as PNG `tEXt`, JPEG EXIF, or WebP XMP metadata. Using this metadata, the parameters used to produce a given image are recoverable from the file itself.
+
 Projection math originally based on the [flatsphere](https://github.com/robertkleffner/flatsphere) Go library, in turn based on the excellent [Map Projections](https://github.com/jkunimune/Map-Projections) software suite by Justin Kunimune.
 
 ## Local Development

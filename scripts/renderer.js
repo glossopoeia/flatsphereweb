@@ -3,6 +3,16 @@ import { projections } from "./projections.js";
 
 const MAX_IMAGE_PIXELS = 4096 * 4096; // keep in sync with image-loader.js
 
+// Shader uniform layout: 12 scalars + vec4f (background_color). See reproject.wesl Uniforms.
+const UNIFORM_FLOAT_COUNT = 16;
+const UNIFORM_BUFFER_SIZE = UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT;
+
+// WebGPU spec: copyTextureToBuffer requires bytesPerRow to be a multiple of 256.
+const COPY_BYTES_PER_ROW_ALIGNMENT = 256;
+
+// Export texture format is rgba8unorm; 4 bytes per pixel.
+const BYTES_PER_PIXEL = 4;
+
 export class ProjectionRenderer {
     constructor() {
         this.device = null;
@@ -68,7 +78,7 @@ export class ProjectionRenderer {
         
         // Create uniform buffer
         this.uniformBuffer = this.device.createBuffer({
-            size: 48, // 12 floats * 4 bytes each (16-byte aligned)
+            size: UNIFORM_BUFFER_SIZE,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         
@@ -106,14 +116,14 @@ export class ProjectionRenderer {
     }
 
     // Cache entries are tagged: { kind: 'pipeline' | 'promise' | 'error', value }
-    async ensurePipeline(dst, src) {
-        const key = `${dst},${src}`;
+    async ensurePipeline(dst, src, targetFormat = this.canvasFormat) {
+        const key = `${dst},${src},${targetFormat}`;
         const entry = this.pipelineCache.get(key);
         if (entry) {
             if (entry.kind === 'error') throw entry.value;
             return entry.value; // pipeline or in-flight promise; both awaitable
         }
-        const promise = this._createPipeline(dst, src);
+        const promise = this._createPipeline(dst, src, targetFormat);
         this.pipelineCache.set(key, { kind: 'promise', value: promise });
         try {
             const pipeline = await promise;
@@ -125,7 +135,7 @@ export class ProjectionRenderer {
         }
     }
 
-    async _createPipeline(dst, src) {
+    async _createPipeline(dst, src, targetFormat) {
         const s = this.shaderSources;
         const linked = await link({
             rootModuleName: "./reproject.wesl",
@@ -152,7 +162,7 @@ export class ProjectionRenderer {
                 module,
                 entryPoint: 'fs_main',
                 targets: [{
-                    format: this.canvasFormat,
+                    format: targetFormat,
                 }],
             },
             primitive: {
@@ -235,11 +245,57 @@ export class ProjectionRenderer {
         });
     }
     
-    render(dst, src, cameraLat, cameraLon, zoom, showTissot, showGraticule, aspectRatioMultiplier = 1.0, rotation = 0.0, panX = 0.0, panY = 0.0) {
+    // Pack render parameters into the uniform-buffer Float32Array layout. Callers compute the
+    // aspect ratio for their target (canvas vs export texture); everything else is the same shape.
+    // Keep this in sync with the Uniforms struct in reproject.wesl.
+    _packUniforms({ cameraLat, cameraLon, zoom, aspect, showTissot, showGraticule, rotation,
+                    panX, panY, graticuleWidth, backgroundColor }) {
+        return new Float32Array([
+            cameraLat,
+            cameraLon,
+            zoom,
+            aspect,
+            showTissot,
+            showGraticule,
+            rotation,
+            panX,
+            panY,
+            graticuleWidth,
+            0, 0, // padding before vec4f at offset 48
+            backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3],
+        ]);
+    }
+
+    // Configure a second canvas as the export-preview swapchain. Uses 'premultiplied' alpha
+    // so that the shader's background_color with alpha < 1 produces real transparency on the
+    // canvas — letting the wrapper's checkerboard show through when Transparent is on.
+    initPreviewContext(previewCanvas) {
+        this.previewCanvas = previewCanvas;
+        this.previewContext = previewCanvas.getContext('webgpu');
+        this.previewContext.configure({
+            device: this.device,
+            format: this.canvasFormat,
+            alphaMode: 'premultiplied',
+        });
+    }
+
+    render(params) {
+        this._renderToCanvas(this.context, this.canvas, params);
+    }
+
+    renderPreview(params) {
+        if (!this.previewContext || !this.previewCanvas) return;
+        this._renderToCanvas(this.previewContext, this.previewCanvas, params);
+    }
+
+    _renderToCanvas(context, canvas, { dst, src, cameraLat, cameraLon, zoom,
+                                       showTissot, showGraticule, aspectRatioMultiplier = 1.0,
+                                       rotation = 0.0, panX = 0.0, panY = 0.0,
+                                       graticuleWidth = 1.0, backgroundColor = [0, 0, 0, 1] }) {
         // Initialize hasn't finished yet (e.g. resize event fired during async startup); no-op cleanly
         if (!this.shaderSources || !this.bindGroupLayout) return;
 
-        const entry = this.pipelineCache.get(`${dst},${src}`);
+        const entry = this.pipelineCache.get(`${dst},${src},${this.canvasFormat}`);
 
         if (entry?.kind !== 'pipeline') {
             // Not ready: missing entry, in-flight compile, or previously failed
@@ -254,29 +310,19 @@ export class ProjectionRenderer {
 
         const pipeline = entry.value;
 
-        const canvasWidth = this.canvas.width;
-        const canvasHeight = this.canvas.height;
-        const aspect = (canvasWidth / canvasHeight) * aspectRatioMultiplier;
+        const aspect = (canvas.width / canvas.height) * aspectRatioMultiplier;
+        const uniformData = this._packUniforms({
+            cameraLat, cameraLon, zoom, aspect,
+            showTissot, showGraticule, rotation,
+            panX, panY, graticuleWidth, backgroundColor,
+        });
 
-        const uniformData = new Float32Array([
-            cameraLat,
-            cameraLon,
-            zoom,
-            aspect,
-            showTissot,
-            showGraticule,
-            rotation,
-            panX,
-            panY,
-            0, 0, 0, // padding for 16-byte alignment
-        ]);
-        
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
-        
+
         // Create command encoder and render pass
         const commandEncoder = this.device.createCommandEncoder();
-        const textureView = this.context.getCurrentTexture().createView();
-        
+        const textureView = context.getCurrentTexture().createView();
+
         const renderPass = commandEncoder.beginRenderPass({
             colorAttachments: [{
                 view: textureView,
@@ -285,12 +331,108 @@ export class ProjectionRenderer {
                 storeOp: 'store',
             }]
         });
-        
+
         renderPass.setPipeline(pipeline);
         renderPass.setBindGroup(0, this.bindGroup);
         renderPass.draw(4); // Draw a quad (triangle strip with 4 vertices)
         renderPass.end();
-        
+
         this.device.queue.submit([commandEncoder.finish()]);
+    }
+
+    // Render the current projection state to an offscreen texture at arbitrary size and encode as
+    // an image blob. Uses rgba8unorm for predictable RGBA byte order on readback.
+    async exportToBlob({ dst, src, width, height, cameraLat, cameraLon, zoom,
+                         showTissot, showGraticule, aspectRatioMultiplier, rotation,
+                         panX, panY, graticuleWidth, backgroundColor, format, quality }) {
+        // Validate everything up front before touching the GPU. Two limits matter: the texture
+        // axis limit (maxTextureDimension2D) and the readback buffer size (maxBufferSize).
+        // A single-axis check is not enough — e.g. 16384×16384 may pass the axis check but
+        // require a ~1 GiB readback buffer that exceeds maxBufferSize on most devices.
+        const maxDim = this.device.limits.maxTextureDimension2D;
+        if (width < 1 || height < 1 || width > maxDim || height > maxDim) {
+            throw new Error(`Export dimensions must be between 1 and ${maxDim} on each axis (got ${width}×${height}).`);
+        }
+
+        const bytesPerRowUnpadded = width * BYTES_PER_PIXEL;
+        const bytesPerRow = Math.ceil(bytesPerRowUnpadded / COPY_BYTES_PER_ROW_ALIGNMENT) * COPY_BYTES_PER_ROW_ALIGNMENT;
+        const readbackSize = bytesPerRow * height;
+        const maxBufferSize = this.device.limits.maxBufferSize;
+        if (readbackSize > maxBufferSize) {
+            const mib = n => (n / (1024 * 1024)).toFixed(1);
+            throw new Error(
+                `Export at ${width}×${height} needs a ${mib(readbackSize)} MiB readback buffer, ` +
+                `but this GPU's maximum is ${mib(maxBufferSize)} MiB. Try smaller dimensions.`,
+            );
+        }
+
+        const exportFormat = 'rgba8unorm';
+        const pipeline = await this.ensurePipeline(dst, src, exportFormat);
+
+        const texture = this.device.createTexture({
+            size: [width, height, 1],
+            format: exportFormat,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+        });
+
+        const aspect = (width / height) * aspectRatioMultiplier;
+        const uniformData = this._packUniforms({
+            cameraLat, cameraLon, zoom, aspect,
+            showTissot, showGraticule, rotation,
+            panX, panY, graticuleWidth, backgroundColor,
+        });
+        this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
+
+        const readbackBuffer = this.device.createBuffer({
+            size: readbackSize,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+
+        const commandEncoder = this.device.createCommandEncoder();
+        const renderPass = commandEncoder.beginRenderPass({
+            colorAttachments: [{
+                view: texture.createView(),
+                clearValue: { r: 0, g: 0, b: 0, a: 1 },
+                loadOp: 'clear',
+                storeOp: 'store',
+            }],
+        });
+        renderPass.setPipeline(pipeline);
+        renderPass.setBindGroup(0, this.bindGroup);
+        renderPass.draw(4);
+        renderPass.end();
+
+        commandEncoder.copyTextureToBuffer(
+            { texture },
+            { buffer: readbackBuffer, bytesPerRow, rowsPerImage: height },
+            [width, height, 1]
+        );
+        this.device.queue.submit([commandEncoder.finish()]);
+
+        await readbackBuffer.mapAsync(GPUMapMode.READ);
+        const mapped = new Uint8Array(readbackBuffer.getMappedRange());
+
+        // Strip per-row padding into a tightly packed RGBA buffer for ImageData
+        const tight = new Uint8ClampedArray(width * height * 4);
+        for (let y = 0; y < height; y++) {
+            const srcStart = y * bytesPerRow;
+            tight.set(mapped.subarray(srcStart, srcStart + bytesPerRowUnpadded), y * bytesPerRowUnpadded);
+        }
+
+        readbackBuffer.unmap();
+        readbackBuffer.destroy();
+        texture.destroy();
+
+        const mime = format === 'png' ? 'image/png'
+                   : format === 'jpeg' ? 'image/jpeg'
+                   : 'image/webp';
+        const canvas = new OffscreenCanvas(width, height);
+        const ctx = canvas.getContext('2d');
+        ctx.putImageData(new ImageData(tight, width, height), 0, 0);
+        const blobOptions = { type: mime };
+        if (format !== 'png') {
+            blobOptions.quality = quality;
+        }
+        return await canvas.convertToBlob(blobOptions);
     }
 }

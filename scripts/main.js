@@ -14,6 +14,7 @@ Alpine.store('app', {
     // Display toggles
     tissot: false,
     graticule: false,
+    graticuleWidth: 1.0,
     fullscreen: false,
 
     // Sliders
@@ -41,6 +42,17 @@ Alpine.store('app', {
     // Pan offset (projection-space coordinates)
     panX: 0.0,
     panY: 0.0,
+
+    // Export state
+    exportFormat: 'png',
+    exportPreset: '1920x1080',
+    exportWidth: 1920,
+    exportHeight: 1080,
+    exportTransparent: false,
+    exportBackgroundColor: '#000000',
+    exportQuality: 92,
+    exportFilename: '',
+    exportInProgress: false,
 
     // Projection info dialog
     projectionInfo: {

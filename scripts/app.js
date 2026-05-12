@@ -4,7 +4,8 @@ import { ProjectionRenderer } from './renderer.js';
 import { projections } from './projections.js';
 import { loadImageFromUrl } from './image-loader.js';
 import { triggerDownload, hexToRgbNormalized, generateAutoBasename, withImageExtension,
-         serializeProjectionState, embedPngMetadata, embedJpegMetadata, embedWebpMetadata } from './export.js';
+         sanitizeFilename, serializeProjectionState,
+         embedPngMetadata, embedJpegMetadata, embedWebpMetadata } from './export.js';
 
 export class ProjectionApp {
     constructor() {
@@ -377,8 +378,9 @@ export class ProjectionApp {
                 blob = await embedWebpMetadata(blob, payload);
             }
             const ext = store.exportFormat === 'jpeg' ? 'jpg' : store.exportFormat;
-            const basename = store.exportFilename.trim() || generateAutoBasename(store, projections);
-            const filename = withImageExtension(basename, ext);
+            const rawBasename = store.exportFilename.trim() || generateAutoBasename(store, projections);
+            const safeBasename = sanitizeFilename(rawBasename) || 'flatsphere';
+            const filename = withImageExtension(safeBasename, ext);
             triggerDownload(blob, filename);
             store.showSuccess(`Exported ${filename}`);
         } catch (error) {

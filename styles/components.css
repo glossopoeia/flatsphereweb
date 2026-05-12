@@ -80,6 +80,14 @@
     display: block;
 }
 
+/* Export aspect-mismatch hint: gap above comes from the W×H fieldset's margin-bottom (8px);
+   gap below is intentionally larger so the hint reads as belonging to the W×H above rather
+   than to the Match Viewport button below. Selector specificity must beat #sidebar small. */
+#sidebar #exportAspectHint {
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+}
+
 .upload-btn {
     display: flex;
     align-items: center;

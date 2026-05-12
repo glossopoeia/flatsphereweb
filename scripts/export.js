@@ -9,8 +9,33 @@ const METADATA_SCHEMA_VERSION = 1;
 // VP8X flags byte bits (see libwebp's webp/format_constants.h).
 const WEBP_XMP_FLAG = 0x04;
 
-// Build a JSON-serializable payload describing the current projection state.
-// This is the format embedded in PNG/JPEG/WebP metadata, designed to round-trip back into the app.
+/**
+ * Build a JSON-serializable payload describing the current projection state.
+ * Embedded in PNG/JPEG/WebP metadata so an exported image carries the settings it was
+ * created with — designed to round-trip back into the app for a future import path.
+ *
+ * Schema (version 1):
+ *   tool:                 'flatsphere'                  — identifies the producing tool
+ *   schemaVersion:        1                             — bump when format changes incompatibly
+ *   projection.destination: shader slug                 — e.g. 'mollweide', 'plate-carree'
+ *   projection.source:    shader slug                   — projection of the source texture
+ *   view.obliqueLatDeg:   number, -90..90 (degrees)     — camera oblique latitude
+ *   view.obliqueLonDeg:   number, -180..180 (degrees)   — camera oblique longitude
+ *   view.rotationDeg:     number, -180..180 (degrees)   — 2D rotation applied to the plane
+ *   view.zoom:            number, 0.01..10              — linear zoom factor
+ *   view.panX, view.panY: numbers (projection-space)    — pan offset
+ *   view.aspectRatioMultiplier: number                  — multiplier on the screen aspect
+ *   overlays.tissot:      bool                          — Tissot indicatrices visible
+ *   overlays.graticule:   bool                          — graticule visible
+ *   overlays.graticuleWidth: number                     — graticule line-width multiplier
+ *
+ * Where embedded:
+ *   PNG  → tEXt chunk, keyword 'flatsphere'. JSON is ASCII-escaped (\uXXXX) since tEXt is Latin-1;
+ *          JSON.parse restores the original code points on read.
+ *   JPEG → EXIF tags: ImageDescription holds raw JSON, Software holds 'flatsphere/<version>'.
+ *   WebP → XMP chunk in the RIFF container; payload sits under namespace
+ *          'https://flatsphere.dev/ns/1#' as element <flatsphere:state>.
+ */
 export function serializeProjectionState(store, projections) {
     const dst = projections.find(p => p.id === store.destinationProjection);
     const src = projections.find(p => p.id === store.sourceProjection);
@@ -220,13 +245,17 @@ export function hexToRgbNormalized(hex) {
 }
 
 // Build a descriptive basename from current projection state.
-// e.g. "flatsphere-mollweide-lat15-lon-30-rot45". Caller appends extension.
+// Defaults are omitted (oblique at lat=90,lon=0 and rotation=0) so a freshly-loaded
+// view exports as just "flatsphere-<projection>" rather than carrying noise.
 export function generateAutoBasename(store, projections) {
     const proj = projections.find(p => p.id === store.destinationProjection);
     const projSlug = proj ? proj.shader : `proj${store.destinationProjection}`;
+    const parts = ['flatsphere', projSlug];
     const lat = Math.round(store.obliqueLat);
     const lon = Math.round(store.obliqueLon);
-    const parts = ['flatsphere', projSlug, `lat${lat}`, `lon${lon}`];
+    if (lat !== 90 || lon !== 0) {
+        parts.push(`lat${lat}`, `lon${lon}`);
+    }
     const rot = Math.round(store.rotation);
     if (rot !== 0) parts.push(`rot${rot}`);
     return parts.join('-');
@@ -236,4 +265,14 @@ export function generateAutoBasename(store, projections) {
 export function withImageExtension(basename, ext) {
     const stripped = basename.replace(/\.(png|jpe?g|webp)$/i, '');
     return `${stripped}.${ext}`;
+}
+
+// Replace characters that are invalid in filenames on common OSes with underscores.
+// Covers Windows (most restrictive set), macOS, and Linux. Also collapses runs of
+// underscores and trims leading/trailing underscores so the result is tidy.
+export function sanitizeFilename(name) {
+    return name
+        .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '');
 }

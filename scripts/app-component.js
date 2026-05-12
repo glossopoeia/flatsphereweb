@@ -80,6 +80,23 @@ export function createAppComponent() {
                 this.$refs.exportButton.value = store.exportInProgress ? 'Exporting…' : 'Export';
             });
 
+            // Aspect-mismatch hint: visible when the export aspect differs from the viewport's
+            // by more than 10%, signalling that the shader will reframe (not just resample).
+            const updateAspectHint = () => {
+                const canvas = document.getElementById('projectionCanvas');
+                const w = store.exportWidth, h = store.exportHeight;
+                if (!canvas || !canvas.clientWidth || !canvas.clientHeight || !w || !h) {
+                    this.$refs.exportAspectHint.hidden = true;
+                    return;
+                }
+                const viewportAspect = canvas.clientWidth / canvas.clientHeight;
+                const exportAspect = w / h;
+                const ratio = Math.max(viewportAspect, exportAspect) / Math.min(viewportAspect, exportAspect);
+                this.$refs.exportAspectHint.hidden = ratio < 1.10;
+            };
+            Alpine.effect(updateAspectHint);
+            window.addEventListener('resize', updateAspectHint);
+
             // Sync pan inputs when changed by drag interaction
             Alpine.effect(() => {
                 this.$refs.panXInput.value = store.panX.toFixed(2);

@@ -173,6 +173,7 @@
                         <input type="number" id="exportWidth" x-ref="exportWidth" x-on:input="onExportWidthInput" aria-label="Export width" min="1" step="1" value="1920">
                         <input type="number" id="exportHeight" x-ref="exportHeight" x-on:input="onExportHeightInput" aria-label="Export height" min="1" step="1" value="1080">
                     </fieldset>
+                    <small x-ref="exportAspectHint" id="exportAspectHint" hidden>Aspect differs from viewport — the view will reframe.</small>
                     <input type="button" class="secondary" x-on:click="onExportMatchViewport" value="Match Viewport">
                     <label>
                         <input type="checkbox" role="switch" id="exportTransparent" x-ref="exportTransparent" x-on:change="onExportTransparentChange">

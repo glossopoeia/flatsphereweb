@@ -308,7 +308,6 @@ export function createAppComponent() {
                 store.currentFile = file;
                 this.$refs.imageUrl.value = file.name;
                 store.app.loadUserFile(file);
-                trackEvent('image_load_attempted', { source: 'file' });
             }
         },
 
@@ -320,9 +319,6 @@ export function createAppComponent() {
                 store.app.loadUserFile(store.currentFile);
             } else {
                 store.app.loadUserImage(imageUrl);
-                if (imageUrl) {
-                    trackEvent('image_load_attempted', { source: 'url' });
-                }
             }
         },
 

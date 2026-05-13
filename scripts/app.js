@@ -313,6 +313,7 @@ export class ProjectionApp {
 
     async loadUserFile(file) {
         await this.ready;
+        trackEvent('image_load_attempted', { source: 'file' });
         try {
             Alpine.store('app').isLoading = true;
 
@@ -338,6 +339,7 @@ export class ProjectionApp {
         if (!imageUrl) {
             return this.loadDefaultImage();
         }
+        trackEvent('image_load_attempted', { source: 'url' });
         if (!SecurityManager.validateImageURL(imageUrl)) {
             Alpine.store('app').showError('Invalid URL. Please use HTTPS URLs only.');
             trackEvent('image_load_failed', { source: 'url', error_name: 'InvalidURL' });

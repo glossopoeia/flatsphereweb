@@ -1,6 +1,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm.js';
 import { ProjectionApp } from './app.js';
 import { createAppComponent } from './app-component.js';
+import { trackEvent } from './analytics.js';
 
 // Make Alpine available globally (for console debugging)
 window.Alpine = Alpine;
@@ -155,6 +156,7 @@ async function checkWebGPUSupport() {
     // Check if WebGPU is available at all
     if (!navigator.gpu) {
         store.showError('WebGPU is not supported in this browser. Try Chrome 113+, Edge 113+, or Safari 18+ with WebGPU enabled.', true);
+        trackEvent('webgpu_init_failed', { reason: 'no_webgpu_api' });
         return false;
     }
 
@@ -163,6 +165,7 @@ async function checkWebGPUSupport() {
         const adapter = await navigator.gpu.requestAdapter();
         if (!adapter) {
             store.showError('WebGPU adapter not found. This may indicate hardware compatibility issues or that WebGPU is disabled.', true);
+            trackEvent('webgpu_init_failed', { reason: 'no_adapter' });
             return false;
         }
 
@@ -191,6 +194,7 @@ async function checkWebGPUSupport() {
         }
 
         store.showError(message, true);
+        trackEvent('webgpu_init_failed', { reason: 'init_error', error_name: error.name });
         return false;
     }
 }

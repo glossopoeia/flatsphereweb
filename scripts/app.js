@@ -6,6 +6,7 @@ import { loadImageFromUrl } from './image-loader.js';
 import { triggerDownload, hexToRgbNormalized, generateAutoBasename, withImageExtension,
          sanitizeFilename, serializeProjectionState,
          embedPngMetadata, embedJpegMetadata, embedWebpMetadata } from './export.js';
+import { trackEvent } from './analytics.js';
 
 export class ProjectionApp {
     constructor() {
@@ -312,13 +313,14 @@ export class ProjectionApp {
 
     async loadUserFile(file) {
         await this.ready;
+        trackEvent('image_load_attempted', { source: 'file' });
         try {
             Alpine.store('app').isLoading = true;
 
             await this.renderer.loadCustomTexture(file);
             this.render();
             Alpine.store('app').showSuccess(`Loaded local file: ${file.name}`);
-
+            trackEvent('image_load_succeeded', { source: 'file' });
         } catch (error) {
             console.error('File loading failed:', error);
             Alpine.store('app').showError(`Failed to load file: ${error.message}`);
@@ -326,6 +328,7 @@ export class ProjectionApp {
             store.currentFile = null;
             const fileInput = document.getElementById('fileInput');
             if (fileInput) fileInput.value = '';
+            trackEvent('image_load_failed', { source: 'file', error_name: error.name });
         } finally {
             Alpine.store('app').isLoading = false;
         }
@@ -336,8 +339,10 @@ export class ProjectionApp {
         if (!imageUrl) {
             return this.loadDefaultImage();
         }
+        trackEvent('image_load_attempted', { source: 'url' });
         if (!SecurityManager.validateImageURL(imageUrl)) {
             Alpine.store('app').showError('Invalid URL. Please use HTTPS URLs only.');
+            trackEvent('image_load_failed', { source: 'url', error_name: 'InvalidURL' });
             return;
         }
         const store = Alpine.store('app');
@@ -347,8 +352,10 @@ export class ProjectionApp {
             await this.renderer.loadCustomTexture(blob);
             this.render();
             store.showSuccess('Image loaded successfully!');
+            trackEvent('image_load_succeeded', { source: 'url' });
         } catch (error) {
             store.showError(`Failed to load image: ${error.message}. Try a different URL or use a CORS-enabled image.`);
+            trackEvent('image_load_failed', { source: 'url', error_name: error.name });
         } finally {
             store.isLoading = false;
         }
@@ -451,9 +458,18 @@ export class ProjectionApp {
             const filename = withImageExtension(safeBasename, ext);
             triggerDownload(blob, filename);
             store.showSuccess(`Exported ${filename}`);
+            const dstProj = projections.find(p => p.id === store.destinationProjection);
+            trackEvent('export_completed', {
+                format: store.exportFormat,
+                preset: store.exportPreset,
+                width: store.exportWidth,
+                height: store.exportHeight,
+                projection: dstProj?.shader || String(store.destinationProjection),
+            });
         } catch (error) {
             console.error('Export failed:', error);
             store.showError(`Export failed: ${error.message}`);
+            trackEvent('export_failed', { format: store.exportFormat, error_name: error.name });
         } finally {
             store.exportInProgress = false;
             // Restore viewport uniforms (export overwrote them)

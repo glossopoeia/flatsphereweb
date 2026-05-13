@@ -2,6 +2,7 @@ import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm
 import { SecurityManager } from './security.js';
 import { projections } from './projections.js';
 import { generateAutoBasename } from './export.js';
+import { trackEvent } from './analytics.js';
 
 // Alpine x-data component factory. Wires DOM event handlers and Alpine effects that bridge
 // the store to the sidebar UI. Registered in main.js via Alpine.data('app', createAppComponent).
@@ -135,7 +136,10 @@ export function createAppComponent() {
         },
 
         onProjectionInfo() {
-            Alpine.store('app').showProjectionInfo();
+            const store = Alpine.store('app');
+            store.showProjectionInfo();
+            const proj = projections.find(p => p.id === store.destinationProjection);
+            trackEvent('projection_info_opened', { name: proj?.shader || String(store.destinationProjection) });
         },
 
         onProjectionInfoClose() {
@@ -187,18 +191,27 @@ export function createAppComponent() {
         onDestinationChange() {
             const id = parseInt(this.$refs.dstProjection.value, 10);
             Alpine.store('app').destinationProjection = id;
+            const proj = projections.find(p => p.id === id);
+            trackEvent('projection_changed', { role: 'destination', name: proj?.shader || String(id) });
         },
 
         onSourceChange() {
-            Alpine.store('app').sourceProjection = parseInt(this.$refs.srcProjection.value, 10);
+            const id = parseInt(this.$refs.srcProjection.value, 10);
+            Alpine.store('app').sourceProjection = id;
+            const proj = projections.find(p => p.id === id);
+            trackEvent('projection_changed', { role: 'source', name: proj?.shader || String(id) });
         },
 
         onTissotChange() {
-            Alpine.store('app').tissot = this.$refs.tissotToggle.checked;
+            const enabled = this.$refs.tissotToggle.checked;
+            Alpine.store('app').tissot = enabled;
+            trackEvent('display_option_toggled', { option: 'tissot', enabled });
         },
 
         onGraticuleChange() {
-            Alpine.store('app').graticule = this.$refs.graticuleToggle.checked;
+            const enabled = this.$refs.graticuleToggle.checked;
+            Alpine.store('app').graticule = enabled;
+            trackEvent('display_option_toggled', { option: 'graticule', enabled });
         },
 
         onGraticuleWidthInput() {

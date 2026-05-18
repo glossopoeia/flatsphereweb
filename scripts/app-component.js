@@ -153,7 +153,7 @@ export function createAppComponent() {
             const p = projections.find(proj => proj.id === store.destinationProjection);
             if (!p) return;
 
-            this.$refs.projInfoTitle.textContent = `${p.emoji} ${p.name}`;
+            this.$refs.projInfoTitle.textContent = p.name;
             this.$refs.projInfoCreators.textContent = p.creators.join(', ');
             this.$refs.projInfoOriginated.textContent = p.originated;
             this.$refs.projInfoSummary.textContent = p.summary;

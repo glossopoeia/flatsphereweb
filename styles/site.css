@@ -229,10 +229,6 @@
   font-size: 2rem;
 }
 
-.projection-detail-emoji {
-  margin-right: 0.25rem;
-}
-
 .projection-detail-meta {
   display: flex;
   flex-wrap: wrap;

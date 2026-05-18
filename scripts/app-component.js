@@ -1,6 +1,6 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm.js';
 import { SecurityManager } from './security.js';
-import { projections } from './projections.js';
+import projections from '/data/projections.json' with { type: 'json' };
 import { generateAutoBasename } from './export.js';
 import { trackEvent } from './analytics.js';
 
@@ -129,10 +129,6 @@ export function createAppComponent() {
                 }
             });
 
-        },
-
-        onComingSoon() {
-            Alpine.store('app').showNotification('Feature Coming Soon', 'success', false, 3000);
         },
 
         onProjectionInfo() {

@@ -1,7 +1,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm.js';
 import { SecurityManager } from './security.js'
 import { ProjectionRenderer } from './renderer.js';
-import { projections } from './projections.js';
+import projections from '/data/projections.json' with { type: 'json' };
 import { loadImageFromUrl } from './image-loader.js';
 import { triggerDownload, hexToRgbNormalized, generateAutoBasename, withImageExtension,
          sanitizeFilename, serializeProjectionState,

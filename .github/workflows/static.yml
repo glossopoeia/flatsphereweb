@@ -30,6 +30,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - name: Stage projection data for Jekyll
+        run: |
+          if [ -f data/projections.json ]; then
+            mkdir -p _data
+            cp data/projections.json _data/projections.json
+          fi
+      - name: Build site with Jekyll (safe mode)
+        run: bundle exec jekyll build --safe --destination _site
+        env:
+          JEKYLL_ENV: production
       - name: Inject version
         run: |
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
@@ -37,13 +52,13 @@ jobs:
           else
             VERSION="dev"
           fi
-          sed -i "s/__VERSION__/${VERSION}/" index.html
+          sed -i "s/__VERSION__/${VERSION}/" _site/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: '.'
+          path: '_site'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

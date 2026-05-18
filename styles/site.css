@@ -129,10 +129,9 @@
   color: var(--pico-muted-color);
 }
 
-/* ---------- Property pills (gallery cards + projection detail) ----------
-   Shared rule for displaying a projection's cartographic properties.
-   The SPA's components.css has its own .prop-pill rule that includes inactive variants;
-   step 7 will consolidate. For now this rule only applies on standalone pages. */
+/* ---------- Property pills ----------
+   Shared rule for displaying a projection's cartographic properties. Used by the
+   gallery cards, the projection-detail page, and the SPA's projection-info dialog. */
 
 .prop-pills {
   display: flex;
@@ -358,10 +357,11 @@
   border-top: 1px solid var(--pico-muted-border-color);
 }
 
-/* ---------- Site nav embedded in SPA app-header (dark) ----------
-   Step 7 inserts the nav into the SPA's app-header. These overrides match the SPA's
-   existing dark-themed look so the nav doesn't look out of place. The selectors are
-   namespaced under #app-header so they don't affect standalone pages. */
+/* ---------- Site nav, SPA app-header context ----------
+   The site nav include also lives inside the SPA's app-header. These overrides match
+   the SPA chrome's coloring (which is driven by --text-primary / --bg-tertiary from
+   base.css and switches with system theme). Namespaced under #app-header so they
+   don't affect standalone pages. */
 
 #app-header .site-nav-item {
   color: var(--text-primary);

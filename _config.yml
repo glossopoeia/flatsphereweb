@@ -29,7 +29,6 @@ defaults:
       nav: blog
 
 exclude:
-  - PLAN.md
   - README.md
   - Gemfile
   - Gemfile.lock

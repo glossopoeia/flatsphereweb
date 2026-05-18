@@ -3,8 +3,9 @@ Site nav. Right side of the header on every page.
 Parameters:
   active — slug of current page (gallery|blog|merch|home), used for active styling.
 
-The SPA's projection-info button is rendered separately in index.html (on the left
-side of the app-header) — not via this include, since it's SPA-only chrome.
+The SPA's projection-info button is bespoke chrome rendered inline in index.html
+(immediately before this include in .app-header-right) — not part of this template,
+since it's SPA-only and has Alpine bindings.
 {%- endcomment -%}
 <nav class="site-nav" aria-label="Site">
   <a class="site-nav-item{% if include.active == 'gallery' %} is-active{% endif %}" href="/gallery/" aria-label="Gallery">

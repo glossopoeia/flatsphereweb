@@ -143,10 +143,11 @@
   list-style: none;
 }
 
-/* Scoped to .prop-pills container so this doesn't override the SPA's existing
-   .prop-pill / .prop-active / .prop-inactive rules in components.css, which use
-   the same class name but include an inactive variant. */
-.prop-pills .prop-pill {
+/* Base pill styling. Default appearance is "active" (filled with primary color) — used
+   directly by the gallery cards and projection-detail page. The SPA's projection-info
+   dialog adds .prop-active or .prop-inactive on top; .prop-active is a no-op visually
+   (matches the base), .prop-inactive overrides to a muted style. */
+.prop-pill {
   display: inline-block;
   padding: 0.15rem 0.6rem;
   border-radius: 999px;
@@ -155,6 +156,12 @@
   background: var(--pico-primary-background);
   color: var(--pico-primary-inverse);
   white-space: nowrap;
+}
+
+.prop-pill.prop-inactive {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  opacity: 0.4;
 }
 
 /* ---------- Gallery index ---------- */

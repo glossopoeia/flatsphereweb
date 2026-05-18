@@ -17,7 +17,7 @@ nav: home
     <meta property="og:title" content="Flatsphere: Interactive Reprojections of the Sphere">
     <meta property="og:description" content="Interactive web tool for comparing different cartographic projections">
     <meta property="og:type" content="website">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net https://cloud.umami.is; img-src 'self' data: blob: https:; connect-src 'self' https://api.allorigins.win https://api-gateway.umami.dev https://cloud.umami.is; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+    {% include csp.html %}
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.orange.min.css">
     <link rel="stylesheet" href="styles/main.css">
@@ -33,7 +33,7 @@ nav: home
         <p>This application requires JavaScript and WebGPU support to function.</p>
     </noscript>
     <main class="app-container" x-data="app">
-        <header id="app-header" data-theme="dark">
+        <header id="app-header">
             <div class="app-header-left">
                 <img src="flatsphere-logo-static.svg" alt="" aria-hidden="true" class="app-header-logo">
                 <h1 class="app-header-title">Flatsphere</h1>
@@ -53,7 +53,7 @@ nav: home
 
         <canvas id="projectionCanvas" aria-label="Interactive map projection visualization" role="img"></canvas>
 
-        <aside id="sidebar" x-ref="sidebar" data-theme="dark">
+        <aside id="sidebar" x-ref="sidebar">
             <header>
                 <h2 class="sidebar-title">Settings</h2>
                 <div class="sidebar-header-buttons">
@@ -194,7 +194,7 @@ nav: home
             </nav>
         </aside>
 
-        <footer id="app-footer" data-theme="dark">
+        <footer id="app-footer">
             <div class="app-footer-left">
                 <small class="version-label">Version __VERSION__</small>
             </div>

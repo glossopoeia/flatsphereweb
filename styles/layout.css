@@ -26,7 +26,14 @@
 .app-header-logo {
     width: 28px;
     height: 28px;
-    filter: invert(1);
+}
+
+/* The logo SVG is stroke="black", which disappears against the dark page chrome.
+   Invert it in dark mode only — matches .site-header-logo on standalone pages. */
+@media (prefers-color-scheme: dark) {
+    .app-header-logo {
+        filter: invert(1);
+    }
 }
 
 .app-header-title {
@@ -40,28 +47,6 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
-}
-
-.app-header-btn {
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    margin: 0;
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-primary);
-    opacity: 0.7;
-    transition: opacity var(--transition-fast);
-    border-radius: var(--radius-sm);
-}
-
-.app-header-btn:hover {
-    opacity: 1;
-    background: var(--bg-tertiary);
 }
 
 /* App footer */

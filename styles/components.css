@@ -174,31 +174,13 @@
     margin-bottom: 0;
 }
 
-/* Property pills */
+/* Property pill container in the projection-info dialog. The pill rules themselves
+   (.prop-pill base + .prop-pill.prop-inactive override) live in styles/site.css since
+   they're shared with the gallery and projection-detail pages. */
 .proj-info-pills {
     display: flex;
     flex-wrap: wrap;
     gap: var(--spacing-sm);
-}
-
-.prop-pill {
-    display: inline-block;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: 999px;
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.prop-active {
-    background-color: var(--pico-primary-background);
-    color: var(--pico-primary-inverse);
-}
-
-.prop-inactive {
-    background-color: var(--bg-tertiary);
-    color: var(--text-secondary);
-    opacity: 0.4;
 }
 
 /* Resources list */

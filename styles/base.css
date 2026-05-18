@@ -6,7 +6,9 @@
 }
 
 :root {
-    /* Color scheme */
+    /* Color scheme — dark variants by default. Light overrides are below in
+       the @media (prefers-color-scheme: light) block so the SPA chrome follows
+       system theme via Pico's auto mode. */
     --bg-primary: #1e1e1e;
     --bg-secondary: rgba(45, 45, 45, 0.9);
     --bg-tertiary: rgba(64, 64, 64, 0.8);
@@ -38,6 +40,17 @@
     --font-size-sm: 0.8em;
     --font-size-base: 0.9em;
     --font-size-lg: 1em;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg-primary: #fafafa;
+        --bg-secondary: rgba(255, 255, 255, 0.92);
+        --bg-tertiary: rgba(0, 0, 0, 0.06);
+        --border-color: #d0d0d0;
+        --text-primary: #1e1e1e;
+        --text-secondary: #555;
+    }
 }
 
 html, body {

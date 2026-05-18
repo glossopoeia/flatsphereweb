@@ -21,7 +21,8 @@ this layout looks up the matching record in site.data.projections and renders it
 <article class="projection-detail">
   <img class="projection-detail-thumb"
        src="{{ thumb.path | default: '/assets/gallery/placeholder.png' | relative_url }}"
-       alt="{{ p.name }} thumbnail">
+       alt="{{ p.name }} thumbnail"
+       width="600" height="400">
 
   <header class="projection-detail-header">
     <h1><span class="projection-detail-emoji" aria-hidden="true">{{ p.emoji }}</span> {{ p.name }}</h1>

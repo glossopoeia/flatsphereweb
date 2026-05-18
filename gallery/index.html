@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Gallery
+description: The set of cartographic projection Flatsphere can render, along with each projection's history, properties, and references.
 nav: gallery
 permalink: /gallery/
 ---
@@ -24,6 +25,7 @@ permalink: /gallery/
           <img class="gallery-card-thumb"
                src="{{ thumb.path | default: '/assets/gallery/placeholder.png' | relative_url }}"
                alt="{{ p.name }} thumbnail"
+               width="600" height="400"
                loading="lazy">
           <div class="gallery-card-body">
             <h3 class="gallery-card-name">{{ p.name }}</h3>

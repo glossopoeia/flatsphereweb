@@ -52,7 +52,7 @@ jobs:
           else
             VERSION="dev"
           fi
-          sed -i "s/__VERSION__/${VERSION}/" _site/index.html
+          sed -i "s/__VERSION__/${VERSION}/g" _site/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact

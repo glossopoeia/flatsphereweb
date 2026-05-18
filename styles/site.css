@@ -1,5 +1,5 @@
 /* Site-wide styles for standalone pages and the shared site nav.
-   The SPA loads styles/main.css (which carries SPA-specific globals); standalone pages
+   The app loads styles/main.css (which carries app-specific globals); standalone pages
    load only Pico + this file. The shared site-nav lives in both surfaces, so its rules
    need to work in either context. */
 
@@ -39,7 +39,7 @@
 }
 
 /* The logo SVG is stroke="black", which disappears against the dark page background.
-   Invert it in dark mode to match the SPA's app-header treatment. */
+   Invert it in dark mode to match the app-header treatment in index.html. */
 @media (prefers-color-scheme: dark) {
   .site-header-logo {
     filter: invert(1);
@@ -131,7 +131,7 @@
 
 /* ---------- Property pills ----------
    Shared rule for displaying a projection's cartographic properties. Used by the
-   gallery cards, the projection-detail page, and the SPA's projection-info dialog. */
+   gallery cards, the projection-detail page, and the app's projection-info dialog. */
 
 .prop-pills {
   display: flex;
@@ -143,7 +143,7 @@
 }
 
 /* Base pill styling. Default appearance is "active" (filled with primary color) — used
-   directly by the gallery cards and projection-detail page. The SPA's projection-info
+   directly by the gallery cards and projection-detail page. The app's projection-info
    dialog adds .prop-active or .prop-inactive on top; .prop-active is a no-op visually
    (matches the base), .prop-inactive overrides to a muted style. */
 .prop-pill {
@@ -357,9 +357,9 @@
   border-top: 1px solid var(--pico-muted-border-color);
 }
 
-/* ---------- Site nav, SPA app-header context ----------
-   The site nav include also lives inside the SPA's app-header. These overrides match
-   the SPA chrome's coloring (which is driven by --text-primary / --bg-tertiary from
+/* ---------- Site nav, app-header context ----------
+   The site nav include also lives inside the app's app-header. These overrides match
+   the app chrome's coloring (which is driven by --text-primary / --bg-tertiary from
    base.css and switches with system theme). Namespaced under #app-header so they
    don't affect standalone pages. */
 

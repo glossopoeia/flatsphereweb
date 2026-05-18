@@ -7,7 +7,7 @@
 
 :root {
     /* Color scheme — dark variants by default. Light overrides are below in
-       the @media (prefers-color-scheme: light) block so the SPA chrome follows
+       the @media (prefers-color-scheme: light) block so the app chrome follows
        system theme via Pico's auto mode. */
     --bg-primary: #1e1e1e;
     --bg-secondary: rgba(45, 45, 45, 0.9);

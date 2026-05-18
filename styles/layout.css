@@ -14,7 +14,7 @@
     justify-content: space-between;
     padding-left: max(var(--spacing-lg), env(safe-area-inset-left, 0px));
     padding-right: max(var(--spacing-lg), env(safe-area-inset-right, 0px));
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--pico-muted-border-color);
 }
 
 .app-header-left {
@@ -41,6 +41,10 @@
     font-weight: 600;
     margin: 0;
     white-space: nowrap;
+    /* The <h1> picks up Pico's --pico-h1-color (brighter than --pico-color), which
+       looks louder than the matching <span> brand mark on standalone pages. Match by
+       inheriting the header's text color instead. */
+    color: inherit;
 }
 
 .app-header-right {
@@ -65,7 +69,7 @@
     justify-content: space-between;
     padding-left: max(var(--spacing-lg), env(safe-area-inset-left, 0px));
     padding-right: max(var(--spacing-lg), env(safe-area-inset-right, 0px));
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--pico-muted-border-color);
     font-size: var(--font-size-sm);
 }
 
@@ -92,7 +96,7 @@
 /* Tool toggle (footer) */
 fieldset.tool-toggle {
     display: flex;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--radius-sm);
     overflow: hidden;
     margin: 0;
@@ -104,7 +108,7 @@ fieldset.tool-toggle {
     margin: 0;
     font-size: 0.75rem;
     line-height: 1;
-    color: var(--text-secondary);
+    color: var(--pico-muted-color);
     cursor: pointer;
     white-space: nowrap;
     transition: background var(--transition-fast), color var(--transition-fast);
@@ -141,7 +145,7 @@ fieldset.tool-toggle {
     z-index: 150;
     background: var(--bg-secondary);
     backdrop-filter: blur(10px);
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid var(--pico-muted-border-color);
     display: flex;
     flex-direction: column;
     transition: width var(--transition-normal);
@@ -153,7 +157,7 @@ fieldset.tool-toggle {
     align-items: center;
     justify-content: space-between;
     padding: var(--spacing-xs) var(--spacing-lg);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--pico-muted-border-color);
     flex-shrink: 0;
     background: transparent;
 }
@@ -176,7 +180,7 @@ fieldset.tool-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-primary);
+    color: var(--pico-color);
     opacity: 0.7;
     transition: opacity var(--transition-fast);
 }
@@ -211,7 +215,7 @@ fieldset.tool-toggle {
     display: block;
     width: 18px;
     height: 2px;
-    background: var(--text-primary);
+    background: var(--pico-color);
     position: relative;
 }
 
@@ -221,7 +225,7 @@ fieldset.tool-toggle {
     display: block;
     width: 18px;
     height: 2px;
-    background: var(--text-primary);
+    background: var(--pico-color);
     position: absolute;
     left: 0;
 }
@@ -270,7 +274,7 @@ fieldset.tool-toggle {
     left: auto;
     right: 0;
     border-right: none;
-    border-left: 1px solid var(--border-color);
+    border-left: 1px solid var(--pico-muted-border-color);
 }
 
 /* Loading backdrop */
@@ -297,7 +301,7 @@ fieldset.tool-toggle {
 
 .loading-content {
     text-align: center;
-    color: var(--text-primary);
+    color: var(--pico-color);
 }
 
 .loading-logo {
@@ -313,6 +317,6 @@ fieldset.tool-toggle {
     margin-top: var(--spacing-lg);
     font-size: var(--font-size-lg);
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--pico-color);
 }
 

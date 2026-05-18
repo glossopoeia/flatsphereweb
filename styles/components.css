@@ -99,7 +99,7 @@
     background-image: conic-gradient(#4a4a4a 25%, transparent 0 50%, #4a4a4a 0 75%, transparent 0);
     background-size: 16px 16px;
     background-repeat: repeat;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--radius-sm);
     overflow: hidden;
     line-height: 0; /* prevent inline-baseline gap below the canvas */

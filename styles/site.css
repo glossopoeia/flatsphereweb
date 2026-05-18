@@ -159,7 +159,7 @@
 
 .prop-pill.prop-inactive {
   background: var(--bg-tertiary);
-  color: var(--text-secondary);
+  color: var(--pico-muted-color);
   opacity: 0.4;
 }
 
@@ -358,14 +358,11 @@
 }
 
 /* ---------- Site nav, app-header context ----------
-   The site nav include also lives inside the app's app-header. These overrides match
-   the app chrome's coloring (which is driven by --text-primary / --bg-tertiary from
-   base.css and switches with system theme). Namespaced under #app-header so they
-   don't affect standalone pages. */
-
-#app-header .site-nav-item {
-  color: var(--text-primary);
-}
+   Hover background and active color overrides for the nav inside the app's app-header.
+   The base .site-nav-item rule already sets `color: inherit`, which correctly inherits
+   the app-header's text color — we deliberately don't re-set color via var(--pico-color)
+   here because Pico redefines --pico-color per-element-type (orange on <a>, white on
+   <button>), so resolving it at the nav-item level produces mismatched colors. */
 
 #app-header .site-nav-item:hover,
 #app-header .site-nav-item:focus-visible {

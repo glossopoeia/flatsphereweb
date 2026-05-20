@@ -1,4 +1,5 @@
-const planar_scale: vec2f = vec2(1.5);
+// Visible disc radius = sqrt((D-1)/(D+1)) for D = 10. The projection's natural extent.
+const planar_scale: vec2f = vec2(0.9045340);
 
 const D = 10.0;
 

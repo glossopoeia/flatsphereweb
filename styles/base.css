@@ -6,23 +6,24 @@
 }
 
 :root {
-    /* Color scheme */
-    --bg-primary: #1e1e1e;
-    --bg-secondary: rgba(45, 45, 45, 0.9);
-    --bg-tertiary: rgba(64, 64, 64, 0.8);
-    --border-color: #555;
-    --text-primary: #fff;
-    --text-secondary: #ccc;
+    /* Translucent app-chrome backgrounds, derived from Pico's tokens so they follow
+       the active color scheme automatically. Used by #app-header, #app-footer, and
+       #sidebar — alpha is intentional so backdrop-filter blur shows the canvas behind. */
+    --bg-secondary: color-mix(in srgb, var(--pico-background-color) 92%, transparent);
+    /* Subtle hover/tertiary surface tinted by the active text color, so it reads as
+       "slightly stronger than the page" on either theme. */
+    --bg-tertiary: color-mix(in srgb, var(--pico-color) 10%, transparent);
+
     /* Spacing */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 12px;
     --spacing-lg: 15px;
     --spacing-xl: 20px;
-    
+
     /* Border radius */
     --radius-sm: 6px;
-    
+
     /* App bar heights (base, without safe area) */
     --header-height: 48px;
     --footer-height: 36px;
@@ -33,7 +34,7 @@
     /* Transitions */
     --transition-fast: 0.2s ease;
     --transition-normal: 0.3s ease;
-    
+
     /* Typography */
     --font-size-sm: 0.8em;
     --font-size-base: 0.9em;
@@ -47,8 +48,8 @@ html, body {
     width: 100%;
     height: 100%;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
+    background-color: var(--pico-background-color);
+    color: var(--pico-color);
 }
 
 .app-container {

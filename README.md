@@ -14,13 +14,18 @@ Projection math originally based on the [flatsphere](https://github.com/robertkl
 
 ## Local Development
 
-A local web server is required for WebGPU security policies.
+The site is served locally with Jekyll, which assembles `index.html` and the standalone pages (gallery, blog, merch, 404) from shared layouts and includes. Install the Ruby dependencies once, then run the dev server:
 
 ```bash
-python3 -m http.server 8080
+bundle install
+make serve
 ```
 
-Then open `http://localhost:8080` in a browser with WebGPU support (recent Chrome/Edge, recent Safari, etc).
+This serves the whole site — including the app at `/` — on `http://localhost:4000` with livereload. Open it in a browser with WebGPU support (recent Chrome/Edge, recent Safari, etc).
+
+`make serve` also stages the projection data file into Jekyll's `_data/` directory and watches it for changes. A plain static server (e.g. `python3 -m http.server`) will show an incomplete `index.html` with its Jekyll front matter and `{% include %}` tags unprocessed. The app's JavaScript, CSS, and WESL shaders are still loaded directly by the browser with no build step.
+
+Requirements: Ruby 3.x and Bundler. The same Jekyll build runs in CI during deploys (see `.github/workflows/static.yml`).
 
 ## Versioning and Deployment
 
@@ -38,6 +43,7 @@ The tag name is injected into the page footer at build time and is expected to u
 - [Pico CSS](https://picocss.com) — Minimal classless CSS framework
 - [Alpine.js](https://alpinejs.dev) — Lightweight reactive JavaScript framework
 - [WESL](https://wesl-lang.dev) — WebGPU Extended Shading Language
+- [Jekyll](https://jekyllrb.com) — Static site generator for the standalone pages (blog, gallery, merch, 404)
 
 ## Credits
 

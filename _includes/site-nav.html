@@ -1,0 +1,37 @@
+{%- comment -%}
+Site nav. Right side of the header on every page.
+Parameters:
+  active — slug of current page (gallery|blog|merch|home), used for active styling.
+
+The app's projection-info button is bespoke chrome rendered inline in index.html
+(immediately before this include in .app-header-right) — not part of this template,
+since it's app-only and has Alpine bindings.
+{%- endcomment -%}
+<nav class="site-nav" aria-label="Site">
+  <a class="site-nav-item{% if include.active == 'gallery' %} is-active{% endif %}" href="/gallery/" aria-label="Gallery">
+    <svg class="site-nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <polyline points="21 15 16 10 5 21"/>
+    </svg>
+    <span class="site-nav-label">Gallery</span>
+  </a>
+  <a class="site-nav-item{% if include.active == 'blog' %} is-active{% endif %}" href="/blog/" aria-label="Blog">
+    <svg class="site-nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+    <span class="site-nav-label">Blog</span>
+  </a>
+  <a class="site-nav-item{% if include.active == 'merch' %} is-active{% endif %}" href="/merch/" aria-label="Merch">
+    <svg class="site-nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <path d="M16 10a4 4 0 0 1-8 0"/>
+    </svg>
+    <span class="site-nav-label">Merch</span>
+  </a>
+</nav>

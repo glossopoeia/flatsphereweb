@@ -1,0 +1,39 @@
+title: Flatsphere
+description: Interactive reprojections of the sphere.
+url: https://flatsphere.dev
+baseurl: ""
+permalink: /blog/:slug/
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+collections:
+  projections:
+    output: true
+    permalink: /gallery/:path/
+
+defaults:
+  - scope:
+      path: ""
+      type: projections
+    values:
+      layout: projection
+      nav: gallery
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+      nav: blog
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - Makefile
+  - vendor/
+  - "*.pem"
+  - server.log
+  - .claude/

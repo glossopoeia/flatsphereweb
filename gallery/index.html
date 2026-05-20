@@ -1,0 +1,44 @@
+---
+layout: default
+title: Gallery
+description: The set of cartographic projection Flatsphere can render, along with each projection's history, properties, and references.
+nav: gallery
+permalink: /gallery/
+---
+
+<section>
+  <h1>Projection Gallery</h1>
+  <p>Every cartographic projection Flatsphere can render, with its history, properties, and references. Click any card for a closer look.</p>
+
+  <div class="gallery-grid">
+    {%- comment -%}
+    Iterate data (in id order) and resolve each to its collection page for the URL.
+    A data entry without a stub file in _projections/ is skipped — keeps the grid in
+    sync with what actually has a detail page.
+    {%- endcomment -%}
+    {%- for p in site.data.projections -%}
+      {%- assign proj_page = site.projections | where: "slug", p.shader | first -%}
+      {%- if proj_page -%}
+        {%- assign thumb_path = "/assets/gallery/" | append: p.shader | append: ".png" -%}
+        {%- assign thumb = site.static_files | where: "path", thumb_path | first -%}
+        <a class="gallery-card" href="{{ proj_page.url | relative_url }}">
+          <img class="gallery-card-thumb"
+               src="{{ thumb.path | default: '/assets/gallery/placeholder.png' | relative_url }}"
+               alt="{{ p.name }} thumbnail"
+               width="600" height="400"
+               loading="lazy">
+          <div class="gallery-card-body">
+            <h3 class="gallery-card-name">{{ p.name }}</h3>
+            {%- if p.properties.size > 0 -%}
+            <ul class="prop-pills">
+              {%- for prop in p.properties -%}
+              <li class="prop-pill">{{ prop }}</li>
+              {%- endfor -%}
+            </ul>
+            {%- endif -%}
+          </div>
+        </a>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+</section>

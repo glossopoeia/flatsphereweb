@@ -1,0 +1,72 @@
+---
+layout: default
+---
+{%- comment -%}
+Per-projection detail page. Stub files in _projections/{slug}.md provide page.slug;
+this layout looks up the matching record in site.data.projections and renders it.
+{%- endcomment -%}
+
+{%- assign p = site.data.projections | where: "shader", page.slug | first -%}
+
+{%- if p == nil -%}
+<section>
+  <h1>Unknown projection: {{ page.slug }}</h1>
+  <p>No matching record found in data/projections.json. <a href="/gallery/">Back to gallery</a>.</p>
+</section>
+{%- else -%}
+
+{%- assign thumb_path = "/assets/gallery/" | append: p.shader | append: ".png" -%}
+{%- assign thumb = site.static_files | where: "path", thumb_path | first -%}
+
+<article class="projection-detail">
+  <img class="projection-detail-thumb"
+       src="{{ thumb.path | default: '/assets/gallery/placeholder.png' | relative_url }}"
+       alt="{{ p.name }} thumbnail"
+       width="600" height="400">
+
+  <header class="projection-detail-header">
+    <h1>{{ p.name }}</h1>
+  </header>
+
+  <dl class="projection-detail-meta">
+    <div>
+      <dt>Creator{% if p.creators.size != 1 %}s{% endif %}</dt>
+      <dd>{{ p.creators | join: ", " }}</dd>
+    </div>
+    <div>
+      <dt>Originated</dt>
+      <dd>{{ p.originated }}</dd>
+    </div>
+  </dl>
+
+  <section class="projection-detail-section">
+    <h2>Overview</h2>
+    <p>{{ p.summary }}</p>
+  </section>
+
+  <section class="projection-detail-section">
+    <h2>Properties</h2>
+    {%- if p.properties.size > 0 -%}
+    <ul class="prop-pills">
+      {%- for prop in p.properties -%}
+      <li class="prop-pill">{{ prop }}</li>
+      {%- endfor -%}
+    </ul>
+    {%- else -%}
+    <p>This projection has no standard cartographic property classifications.</p>
+    {%- endif -%}
+  </section>
+
+  <section class="projection-detail-section">
+    <h2>Additional Resources</h2>
+    <ul class="projection-detail-resources">
+      {%- for r in p.resources -%}
+      <li><a href="{{ r.url }}" target="_blank" rel="noopener">{{ r.title }}</a></li>
+      {%- endfor -%}
+    </ul>
+  </section>
+
+  <p class="projection-detail-back"><a href="/gallery/">← Back to gallery</a></p>
+</article>
+
+{%- endif -%}

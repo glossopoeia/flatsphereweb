@@ -1,6 +1,6 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm.js';
 import { SecurityManager } from './security.js';
-import { projections } from './projections.js';
+import projections from '/data/projections.json' with { type: 'json' };
 import { generateAutoBasename } from './export.js';
 import { trackEvent } from './analytics.js';
 
@@ -13,6 +13,9 @@ export function createAppComponent() {
             const optionsHtml = projections.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
             this.$refs.dstProjection.innerHTML = optionsHtml;
             this.$refs.srcProjection.innerHTML = optionsHtml;
+
+            // Seed the aspect-ratio slider from the initial destination projection.
+            this.applyProjectionAspect(store.destinationProjection);
 
             // Start with sidebar collapsed on mobile portrait
             if (window.matchMedia('(max-width: 768px)').matches) {
@@ -131,10 +134,6 @@ export function createAppComponent() {
 
         },
 
-        onComingSoon() {
-            Alpine.store('app').showNotification('Feature Coming Soon', 'success', false, 3000);
-        },
-
         onProjectionInfo() {
             const store = Alpine.store('app');
             store.showProjectionInfo();
@@ -157,7 +156,7 @@ export function createAppComponent() {
             const p = projections.find(proj => proj.id === store.destinationProjection);
             if (!p) return;
 
-            this.$refs.projInfoTitle.textContent = `${p.emoji} ${p.name}`;
+            this.$refs.projInfoTitle.textContent = p.name;
             this.$refs.projInfoCreators.textContent = p.creators.join(', ');
             this.$refs.projInfoOriginated.textContent = p.originated;
             this.$refs.projInfoSummary.textContent = p.summary;
@@ -191,8 +190,19 @@ export function createAppComponent() {
         onDestinationChange() {
             const id = parseInt(this.$refs.dstProjection.value, 10);
             Alpine.store('app').destinationProjection = id;
+            this.applyProjectionAspect(id);
             const proj = projections.find(p => p.id === id);
             trackEvent('projection_changed', { role: 'destination', name: proj?.shader || String(id) });
+        },
+
+        // Reset the aspect-ratio slider to a projection's natural aspect (planar_scale.y /
+        // planar_scale.x), so switching projections always yields an undistorted render.
+        // NOTE: Always overrides any manual aspect ratio adjustments, do we actually want that behavior?
+        applyProjectionAspect(projId) {
+            const proj = projections.find(p => p.id === projId);
+            if (proj && typeof proj.defaultAspect === 'number') {
+                Alpine.store('app').aspectRatio = proj.defaultAspect;
+            }
         },
 
         onSourceChange() {

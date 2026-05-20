@@ -1,0 +1,29 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e1e1e" media="(prefers-color-scheme: dark)">
+{% include csp.html %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.orange.min.css">
+<link rel="stylesheet" href="/styles/site.css">
+<link rel="icon" type="image/svg+xml" sizes="any" href="/flatsphere-logo-static.svg">
+<link rel="apple-touch-icon" href="/flatsphere-logo-fixed-black.png">
+<link rel="alternate" type="application/atom+xml" title="Flatsphere blog" href="/feed.xml">
+
+{%- comment -%}
+For projection detail pages, emit an og:image pointing at the projection's thumbnail
+if one exists. Falls back to no og:image (placeholder.png isn't useful for sharing).
+jekyll-seo-tag won't emit a competing og:image because page.image isn't set on these.
+{%- endcomment -%}
+{%- if page.layout == 'projection' -%}
+  {%- assign thumb_path = "/assets/gallery/" | append: page.slug | append: ".png" -%}
+  {%- assign thumb = site.static_files | where: "path", thumb_path | first -%}
+  {%- if thumb -%}
+<meta property="og:image" content="{{ site.url }}{{ thumb.path }}">
+  {%- endif -%}
+{%- endif -%}
+
+{% seo %}
+
+<script defer src="https://cloud.umami.is/script.js" data-website-id="55475bae-f03e-4870-b444-3c81d0cb28bc" data-domains="flatsphere.dev,www.flatsphere.dev"></script>

@@ -1,6 +1,6 @@
-import package::common::{PI, HALF_PI};
+import package::common::{PI};
 
-const planar_scale: vec2f = vec2(1, 1);
+const planar_scale: vec2f = vec2(2.0, 1.0);
 
 fn project(lat: f32, lon: f32) -> vec2f {
     let z = sqrt(1.0 + cos(lat) * cos(lon / 2.0));
@@ -39,7 +39,7 @@ fn inverse(x: f32, y: f32) -> vec2f {
 }
 
 fn to_texture(projX: f32, projY: f32) -> vec2f {
-    let u = clamp((projX + PI) / (2.0 * PI), 0.0, 1.0); // Map [-PI,PI] to [0,1]
-    let v = clamp((projY + HALF_PI) / PI, 0.0, 1.0);    // Map [-PI/2,PI/2] to [0,1]
+    let u = clamp((projX + 2.0) / 4.0, 0.0, 1.0); // Map [-2,2] to [0,1]
+    let v = clamp((projY + 1.0) / 2.0, 0.0, 1.0); // Map [-1,1] to [0,1]
     return vec2f(u, 1.0 - v);
 }

@@ -1,1 +1,9 @@
 *.pem
+_data/
+_site/
+.jekyll-cache/
+.bundle/
+vendor/
+
+# macOS noise
+*.DS_Store

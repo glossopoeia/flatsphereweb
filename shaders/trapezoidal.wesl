@@ -6,7 +6,7 @@ import package::common::{PI, HALF_PI};
 const EQUATOR_FRACTION: f32 = 1;        // x_max = π at equator
 const POLE_FRACTION: f32 = 0.33333333333333333;  // x_max = π/3 at pole
 
-const planar_scale: vec2f = vec2(HALF_PI, HALF_PI);
+const planar_scale: vec2f = vec2(PI, HALF_PI);
 
 fn meridian_factor(abs_lat: f32) -> f32 {
     return EQUATOR_FRACTION + (POLE_FRACTION - EQUATOR_FRACTION) * (abs_lat / HALF_PI);

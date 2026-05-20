@@ -2,6 +2,7 @@
   {
     "id": 0,
     "shader": "plate-carree",
+    "defaultAspect": 0.5,
     "name": "Plate Carrée (Equirectangular)",
     "properties": [
       "Equidistant"
@@ -25,6 +26,7 @@
   {
     "id": 1,
     "shader": "mercator",
+    "defaultAspect": 0.95493,
     "name": "Mercator",
     "properties": [
       "Conformal"
@@ -52,6 +54,7 @@
   {
     "id": 2,
     "shader": "orthographic",
+    "defaultAspect": 1.0,
     "name": "Orthographic",
     "properties": [
       "Azimuthal"
@@ -75,6 +78,7 @@
   {
     "id": 3,
     "shader": "vertical-perspective",
+    "defaultAspect": 1.0,
     "name": "Vertical Perspective",
     "properties": [
       "Azimuthal"
@@ -98,6 +102,7 @@
   {
     "id": 4,
     "shader": "azimuthal-equidistant",
+    "defaultAspect": 1.0,
     "name": "Azimuthal Equidistant",
     "properties": [
       "Azimuthal",
@@ -122,6 +127,7 @@
   {
     "id": 5,
     "shader": "stereographic",
+    "defaultAspect": 1.0,
     "name": "Stereographic",
     "properties": [
       "Conformal",
@@ -146,6 +152,7 @@
   {
     "id": 6,
     "shader": "sinusoidal",
+    "defaultAspect": 0.5,
     "name": "Sinusoidal",
     "properties": [
       "Equal-Area"
@@ -170,6 +177,7 @@
   {
     "id": 7,
     "shader": "lambert-azimuthal",
+    "defaultAspect": 1.0,
     "name": "Lambert Azimuthal Equal-Area",
     "properties": [
       "Equal-Area",
@@ -194,6 +202,7 @@
   {
     "id": 8,
     "shader": "gnomonic",
+    "defaultAspect": 1.0,
     "name": "Gnomonic",
     "properties": [
       "Azimuthal",
@@ -218,6 +227,7 @@
   {
     "id": 9,
     "shader": "mollweide",
+    "defaultAspect": 0.5,
     "name": "Mollweide",
     "properties": [
       "Equal-Area"
@@ -241,6 +251,7 @@
   {
     "id": 10,
     "shader": "central",
+    "defaultAspect": 1.0,
     "name": "Central Cylindrical",
     "properties": [],
     "creators": [
@@ -262,6 +273,7 @@
   {
     "id": 11,
     "shader": "lagrange",
+    "defaultAspect": 1.0,
     "name": "Lagrange",
     "properties": [
       "Conformal"
@@ -285,6 +297,7 @@
   {
     "id": 12,
     "shader": "aitoff",
+    "defaultAspect": 0.5,
     "name": "Aitoff",
     "properties": [],
     "creators": [
@@ -306,6 +319,7 @@
   {
     "id": 13,
     "shader": "hammer",
+    "defaultAspect": 0.5,
     "name": "Hammer (Hammer-Aitoff)",
     "properties": [
       "Equal-Area"
@@ -329,6 +343,7 @@
   {
     "id": 14,
     "shader": "trapezoidal",
+    "defaultAspect": 0.5,
     "name": "Trapezoidal",
     "properties": [],
     "creators": [
@@ -350,6 +365,7 @@
   {
     "id": 15,
     "shader": "goode-homolosine",
+    "defaultAspect": 0.43335,
     "name": "Goode Homolosine",
     "properties": [
       "Equal-Area"
@@ -373,6 +389,7 @@
   {
     "id": 16,
     "shader": "goode-homolosine-interrupted",
+    "defaultAspect": 0.43335,
     "name": "Goode Homolosine (Interrupted)",
     "properties": [
       "Equal-Area"

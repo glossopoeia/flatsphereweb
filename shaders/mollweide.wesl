@@ -1,6 +1,6 @@
 import package::common::{PI, HALF_PI, SQRT_2};
 
-const planar_scale: vec2f = vec2(SQRT_2, SQRT_2);
+const planar_scale: vec2f = vec2(2.0 * SQRT_2, SQRT_2);
 
 const tolerance: f32 = 1e-9;
 const epsilon: f32 = 1e-15;

@@ -1,6 +1,6 @@
 import package::common::{PI, HALF_PI};
 
-const planar_scale: vec2f = vec2(HALF_PI, HALF_PI);
+const planar_scale: vec2f = vec2(PI, HALF_PI);
 
 fn project(lat: f32, lon: f32) -> vec2f {
     let a = acos(cos(lat) * cos(lon / 2.0));

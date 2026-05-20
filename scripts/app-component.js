@@ -14,6 +14,9 @@ export function createAppComponent() {
             this.$refs.dstProjection.innerHTML = optionsHtml;
             this.$refs.srcProjection.innerHTML = optionsHtml;
 
+            // Seed the aspect-ratio slider from the initial destination projection.
+            this.applyProjectionAspect(store.destinationProjection);
+
             // Start with sidebar collapsed on mobile portrait
             if (window.matchMedia('(max-width: 768px)').matches) {
                 this.$refs.sidebar.classList.add('collapsed');
@@ -187,8 +190,19 @@ export function createAppComponent() {
         onDestinationChange() {
             const id = parseInt(this.$refs.dstProjection.value, 10);
             Alpine.store('app').destinationProjection = id;
+            this.applyProjectionAspect(id);
             const proj = projections.find(p => p.id === id);
             trackEvent('projection_changed', { role: 'destination', name: proj?.shader || String(id) });
+        },
+
+        // Reset the aspect-ratio slider to a projection's natural aspect (planar_scale.y /
+        // planar_scale.x), so switching projections always yields an undistorted render.
+        // NOTE: Always overrides any manual aspect ratio adjustments, do we actually want that behavior?
+        applyProjectionAspect(projId) {
+            const proj = projections.find(p => p.id === projId);
+            if (proj && typeof proj.defaultAspect === 'number') {
+                Alpine.store('app').aspectRatio = proj.defaultAspect;
+            }
         },
 
         onSourceChange() {

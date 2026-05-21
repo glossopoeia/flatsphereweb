@@ -365,7 +365,7 @@ export class ProjectionApp {
         const store = Alpine.store('app');
         try {
             await this.renderer.loadDefaultTexture(false);
-            // Default world map is plate-carrée; sync the store so the UI matches what we render
+            // Default world map is equirectangular; sync the store so the UI matches what we render
             store.sourceProjection = 0;
             this.render();
             store.showSuccess('Loaded default image');

@@ -17,7 +17,7 @@ const WEBP_XMP_FLAG = 0x04;
  * Schema (version 1):
  *   tool:                 'flatsphere'                  — identifies the producing tool
  *   schemaVersion:        1                             — bump when format changes incompatibly
- *   projection.destination: shader slug                 — e.g. 'mollweide', 'plate-carree'
+ *   projection.destination: shader slug                 — e.g. 'mollweide', 'equirectangular'
  *   projection.source:    shader slug                   — projection of the source texture
  *   view.obliqueLatDeg:   number, -90..90 (degrees)     — camera oblique latitude
  *   view.obliqueLonDeg:   number, -180..180 (degrees)   — camera oblique longitude

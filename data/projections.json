@@ -1,9 +1,9 @@
 [
   {
     "id": 0,
-    "shader": "plate-carree",
+    "shader": "equirectangular",
     "defaultAspect": 0.5,
-    "name": "Plate Carrée (Equirectangular)",
+    "name": "Equirectangular",
     "properties": [
       "Equidistant"
     ],
@@ -11,7 +11,7 @@
       "Marinus of Tyre"
     ],
     "originated": "~100 AD",
-    "summary": "One of the oldest and simplest map projections. It maps meridians to evenly spaced vertical lines and parallels to evenly spaced horizontal lines. While it distorts shapes and areas significantly away from the standard parallels, its simplicity makes it the most common format for storing raster geographic data.",
+    "summary": "One of the oldest and simplest map projections, mapping meridians to evenly spaced vertical lines and parallels to evenly spaced horizontal lines. The whole family is defined by a single parameter: the standard parallel, which is the latitude at which the map is drawn at true scale. Named members include the Plate Carrée (standard parallel 0°, the most common format for storing raster geographic data), Marinus of Tyre (36°), the Gall isographic (45°), and Ronald Miller's minimum-distortion variants (37.5°, 43.5°, and 50.5°).",
     "resources": [
       {
         "title": "Wikipedia: Equirectangular Projection",

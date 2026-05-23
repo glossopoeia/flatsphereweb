@@ -1,5 +1,5 @@
 import package::common::{PI, HALF_PI};
-import package::dstproj::{inverse, planar_scale};
+import package::dstproj::{inverse, planar_scale, set_extra_params};
 import package::srcproj::{project, to_texture};
 import package::tissot::{is_tissot_indicatrix, apply_tissot_indicatrices};
 import package::graticule::{apply_graticule, is_graticule_line};
@@ -19,6 +19,7 @@ struct Uniforms {
     _pad1: f32,
     _pad2: f32,
     background_color: vec4f,
+    proj_extra_params: vec4f,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -65,6 +66,11 @@ fn source_color_at(lat: f32, lon: f32) -> vec3f {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    // Feed the destination projection its extra parameters before any projection math runs.
+    // It would be nice setting private vars persisted across shader stages so we could set them once in
+    // the vertex shader, but that's not how it works, so we have to do it here once per fragment.
+    set_extra_params(uniforms.proj_extra_params);
+
     // Convert screen coordinates to projection space using dynamic aspect ratio
     var coord = vec2f(in.uv.x * uniforms.aspect, in.uv.y);
 

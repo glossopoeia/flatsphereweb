@@ -2,15 +2,30 @@ import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm
 import { ProjectionApp } from './app.js';
 import { createAppComponent } from './app-component.js';
 import { trackEvent } from './analytics.js';
+import projections from '/data/projections.json' with { type: 'json' };
 
 // Make Alpine available globally (for console debugging)
 window.Alpine = Alpine;
+
+// Seed per-projection parameter values from the declarative `parameters` arrays in projections.json.
+const initialProjParams = {};
+for (const p of projections) {
+    if (Array.isArray(p.parameters)) {
+        initialProjParams[p.id] = {};
+        for (const param of p.parameters) {
+            initialProjParams[p.id][param.key] = param.default;
+        }
+    }
+}
 
 // Register store before Alpine starts
 Alpine.store('app', {
     // Projection state
     destinationProjection: 0,
     sourceProjection: 0,
+
+    // Per-projection extra-parameter values, keyed by projection id (see projections.json `parameters`)
+    projParams: initialProjParams,
 
     // Display toggles
     tissot: false,
@@ -139,6 +154,14 @@ Alpine.store('app', {
         let v = ((deg % 360) + 360) % 360;
         if (v > 180) v -= 360;
         this.obliqueLon = v;
+    },
+
+    // Set a destination projection's extra-parameter value (see projections.json `parameters`).
+    setProjParam(projId, key, value) {
+        if (!this.projParams[projId]) {
+            this.projParams[projId] = {};
+        }
+        this.projParams[projId][key] = value;
     },
 });
 

@@ -17,6 +17,9 @@ export function createAppComponent() {
             // Seed the aspect-ratio slider from the initial destination projection.
             this.applyProjectionAspect(store.destinationProjection);
 
+            // Build parameter controls for the initial destination projection.
+            this.renderProjectionParameters(store.destinationProjection);
+
             // Start with sidebar collapsed on mobile portrait
             if (window.matchMedia('(max-width: 768px)').matches) {
                 this.$refs.sidebar.classList.add('collapsed');
@@ -191,6 +194,7 @@ export function createAppComponent() {
             const id = parseInt(this.$refs.dstProjection.value, 10);
             Alpine.store('app').destinationProjection = id;
             this.applyProjectionAspect(id);
+            this.renderProjectionParameters(id);
             const proj = projections.find(p => p.id === id);
             trackEvent('projection_changed', { role: 'destination', name: proj?.shader || String(id) });
         },
@@ -203,6 +207,85 @@ export function createAppComponent() {
             if (proj && typeof proj.defaultAspect === 'number') {
                 Alpine.store('app').aspectRatio = proj.defaultAspect;
             }
+        },
+
+        // Rebuild the destination projection's parameter controls from its declarative
+        // `parameters` array. Controls are created imperatively (no Alpine directives on
+        // generated nodes) to stay compatible with the Alpine CSP build.
+        renderProjectionParameters(projId) {
+            const container = this.$refs.projParams;
+            if (!container) return;
+            container.innerHTML = '';
+            const proj = projections.find(p => p.id === projId);
+            if (!proj || !Array.isArray(proj.parameters)) return;
+            const store = Alpine.store('app');
+            for (const param of proj.parameters) {
+                if (param.control === 'radio') {
+                    container.appendChild(this.buildRadioParam(projId, param, store));
+                } else if (param.control === 'slider') {
+                    container.appendChild(this.buildSliderParam(projId, param, store));
+                }
+            }
+        },
+
+        // Build one radio-group control: a <fieldset> of mutually exclusive options that
+        // writes the chosen value into the store and triggers a re-render.
+        buildRadioParam(projId, param, store) {
+            const fieldset = document.createElement('fieldset');
+            const legend = document.createElement('legend');
+            legend.textContent = param.label;
+            fieldset.appendChild(legend);
+            const current = store.projParams[projId]?.[param.key] ?? param.default;
+            for (const opt of param.options) {
+                const optionLabel = document.createElement('label');
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = `projparam-${projId}-${param.key}`;
+                input.value = String(opt.value);
+                input.checked = opt.value === current;
+                input.addEventListener('change', () => {
+                    store.setProjParam(projId, param.key, opt.value);
+                    if (store.app) {
+                        store.app.render();
+                        store.app.renderPreview();
+                    }
+                });
+                optionLabel.appendChild(input);
+                optionLabel.appendChild(document.createTextNode(' ' + opt.label));
+                fieldset.appendChild(optionLabel);
+            }
+            return fieldset;
+        },
+
+        // Build one slider control: a labelled range input with a live value readout
+        // that writes the chosen value into the store and triggers a re-render.
+        buildSliderParam(projId, param, store) {
+            const label = document.createElement('label');
+            const current = store.projParams[projId]?.[param.key] ?? param.default;
+            // Decimal places for the readout, derived from the parameter's step.
+            const decimals = (String(param.step).split('.')[1] || '').length;
+            const unit = param.unit || '';
+            const valueSpan = document.createElement('span');
+            valueSpan.textContent = current.toFixed(decimals) + unit;
+            label.appendChild(document.createTextNode(param.label + ': '));
+            label.appendChild(valueSpan);
+            const input = document.createElement('input');
+            input.type = 'range';
+            input.min = String(param.min);
+            input.max = String(param.max);
+            input.step = String(param.step);
+            input.value = String(current);
+            input.addEventListener('input', () => {
+                const v = parseFloat(input.value);
+                valueSpan.textContent = v.toFixed(decimals) + unit;
+                store.setProjParam(projId, param.key, v);
+                if (store.app) {
+                    store.app.render();
+                    store.app.renderPreview();
+                }
+            });
+            label.appendChild(input);
+            return label;
         },
 
         onSourceChange() {

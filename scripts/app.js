@@ -374,6 +374,23 @@ export class ProjectionApp {
         }
     }
 
+    // Collect the destination projection's shader-bound parameters into the 4-slot vec4
+    // the shader's proj_extra_params uniform expects (see projections.json `parameters`).
+    computeProjExtraParams() {
+        const store = Alpine.store('app');
+        const params = [0, 0, 0, 0];
+        const proj = projections.find(p => p.id === store.destinationProjection);
+        const values = store.projParams[store.destinationProjection];
+        if (proj && Array.isArray(proj.parameters) && values) {
+            for (const param of proj.parameters) {
+                if (param.effect === 'shader' && Number.isInteger(param.slot)) {
+                    params[param.slot] = values[param.key] ?? param.default ?? 0;
+                }
+            }
+        }
+        return params;
+    }
+
     render() {
         if (!this.renderer) return;
 
@@ -391,6 +408,7 @@ export class ProjectionApp {
             panX: store.panX,
             panY: store.panY,
             graticuleWidth: store.graticuleWidth,
+            projExtraParams: this.computeProjExtraParams(),
         });
     }
 
@@ -414,6 +432,7 @@ export class ProjectionApp {
             panY: store.panY,
             graticuleWidth: store.graticuleWidth,
             backgroundColor: [bgR, bgG, bgB, bgA],
+            projExtraParams: this.computeProjExtraParams(),
         });
     }
 
@@ -441,6 +460,7 @@ export class ProjectionApp {
                 panY: store.panY,
                 graticuleWidth: store.graticuleWidth,
                 backgroundColor: [bgR, bgG, bgB, bgA],
+                projExtraParams: this.computeProjExtraParams(),
                 format: store.exportFormat,
                 quality: store.exportQuality / 100,
             });

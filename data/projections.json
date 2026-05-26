@@ -1,9 +1,9 @@
 [
   {
     "id": 0,
-    "shader": "plate-carree",
+    "shader": "equirectangular",
     "defaultAspect": 0.5,
-    "name": "Plate Carrée (Equirectangular)",
+    "name": "Equirectangular",
     "properties": [
       "Equidistant"
     ],
@@ -11,7 +11,7 @@
       "Marinus of Tyre"
     ],
     "originated": "~100 AD",
-    "summary": "One of the oldest and simplest map projections. It maps meridians to evenly spaced vertical lines and parallels to evenly spaced horizontal lines. While it distorts shapes and areas significantly away from the standard parallels, its simplicity makes it the most common format for storing raster geographic data.",
+    "summary": "One of the oldest and simplest map projections, mapping meridians to evenly spaced vertical lines and parallels to evenly spaced horizontal lines. The whole family is defined by a single parameter: the standard parallel, which is the latitude at which the map is drawn at true scale. Named members include the Plate Carrée (standard parallel 0°, the most common format for storing raster geographic data), Marinus of Tyre (36°), the Gall isographic (45°), and Ronald Miller's minimum-distortion variants (37.5°, 43.5°, and 50.5°).",
     "resources": [
       {
         "title": "Wikipedia: Equirectangular Projection",
@@ -87,7 +87,7 @@
       "Ancient Greek astronomers"
     ],
     "originated": "~150 BC",
-    "summary": "A generalization of the orthographic projection that simulates the view from a finite altitude above the Earth. Often called the \"near-side perspective\" projection, it produces views similar to satellite or aerial photography. Used extensively by NASA and in television graphics to show realistic views of Earth.",
+    "summary": "A generalization of the orthographic projection that simulates the view from a finite distance above the Earth. Often called the \"near-side perspective\" projection, it produces views similar to satellite or aerial photography. Used extensively by NASA and in television graphics to show realistic views of Earth. The Viewpoint Distance control moves the camera from close above the surface out to a near-orthographic distance.",
     "resources": [
       {
         "title": "Wikipedia: General Perspective Projection",
@@ -96,6 +96,19 @@
       {
         "title": "NASA Visible Earth",
         "url": "https://visibleearth.nasa.gov/"
+      }
+    ],
+    "parameters": [
+      {
+        "key": "distance",
+        "label": "Viewpoint Distance",
+        "control": "slider",
+        "min": 1.1,
+        "max": 20,
+        "step": 0.1,
+        "default": 10,
+        "effect": "shader",
+        "slot": 0
       }
     ]
   },
@@ -374,7 +387,7 @@
       "J. Paul Goode"
     ],
     "originated": "1923",
-    "summary": "A composite equal-area projection that uses the sinusoidal projection at low latitudes (within roughly ±40°44') and the Mollweide projection at higher latitudes, joining the two halves where their y-coordinates match. The form shown here is the non-interrupted composite; Goode's canonical presentation interrupts the map into lobes to minimize distortion across major landmasses or oceans.",
+    "summary": "A composite equal-area projection that uses the sinusoidal projection at low latitudes (within roughly ±40°44') and the Mollweide projection at higher latitudes, joining the two halves where their y-coordinates match. Most frequently presented in an interrupted form that splits the oceans to reduce distortion of landmasses.",
     "resources": [
       {
         "title": "Wikipedia: Goode Homolosine Projection",
@@ -384,29 +397,20 @@
         "title": "Map Projections: A Working Manual (USGS)",
         "url": "https://pubs.usgs.gov/pp/1395/report.pdf"
       }
-    ]
-  },
-  {
-    "id": 16,
-    "shader": "goode-homolosine-interrupted",
-    "defaultAspect": 0.43335,
-    "name": "Goode Homolosine (Interrupted)",
-    "properties": [
-      "Equal-Area"
     ],
-    "creators": [
-      "J. Paul Goode"
-    ],
-    "originated": "1923",
-    "summary": "Goode's canonical \"land\" arrangement of the homolosine projection, broken into six lobes: two in the northern hemisphere centered on North America and Eurasia, and four in the southern hemisphere centered on the Pacific, South America, Africa, and Australia. The interruptions are placed in the oceans, keeping the major landmasses intact and minimizing shape distortion across them.",
-    "resources": [
+    "parameters": [
       {
-        "title": "Wikipedia: Goode Homolosine Projection",
-        "url": "https://en.wikipedia.org/wiki/Goode_homolosine_projection"
-      },
-      {
-        "title": "Map Projections: A Working Manual (USGS)",
-        "url": "https://pubs.usgs.gov/pp/1395/report.pdf"
+        "key": "arrangement",
+        "label": "Arrangement",
+        "control": "radio",
+        "default": 0,
+        "effect": "shader",
+        "slot": 0,
+        "options": [
+          { "label": "Uninterrupted", "value": 0 },
+          { "label": "Land", "value": 1 },
+          { "label": "Ocean", "value": 2 }
+        ]
       }
     ]
   }

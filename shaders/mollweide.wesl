@@ -51,3 +51,5 @@ fn to_texture(projX: f32, projY: f32) -> vec2f {
     let v = (projY + SQRT_2) / (2.0 * SQRT_2); // Map [-sqrt(2),sqrt(2)] to [0,1]
     return vec2f(u, 1.0 - v);
 }
+
+fn set_extra_params(p: vec4f) { }

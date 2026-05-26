@@ -81,6 +81,7 @@ nav: home
                         Shown Projection
                         <select id="destinationProjection" x-ref="dstProjection" x-on:change="onDestinationChange"></select>
                     </label>
+                    <div id="projParams" x-ref="projParams"></div>
                     <label for="obliqueLatSlider">
                         Oblique Lat: <span x-ref="obliqueLatLabel" id="obliqueLatValue">90°</span>
                         <input type="range" id="obliqueLatSlider" x-ref="obliqueLatSlider" x-on:input="onObliqueLatInput" min="-90" max="90" step="1" value="90">

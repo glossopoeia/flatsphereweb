@@ -3,8 +3,8 @@ import projections from "/data/projections.json" with { type: "json" };
 
 const MAX_IMAGE_PIXELS = 4096 * 4096; // keep in sync with image-loader.js
 
-// Shader uniform layout: 12 scalars + vec4f (background_color). See reproject.wesl Uniforms.
-const UNIFORM_FLOAT_COUNT = 16;
+// Shader uniform layout: 12 scalars + 2 vec4f (background_color, proj_extra_params). See reproject.wesl Uniforms.
+const UNIFORM_FLOAT_COUNT = 20;
 const UNIFORM_BUFFER_SIZE = UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT;
 
 // WebGPU spec: copyTextureToBuffer requires bytesPerRow to be a multiple of 256.
@@ -249,7 +249,7 @@ export class ProjectionRenderer {
     // aspect ratio for their target (canvas vs export texture); everything else is the same shape.
     // Keep this in sync with the Uniforms struct in reproject.wesl.
     _packUniforms({ cameraLat, cameraLon, zoom, aspect, showTissot, showGraticule, rotation,
-                    panX, panY, graticuleWidth, backgroundColor }) {
+                    panX, panY, graticuleWidth, backgroundColor, projExtraParams = [0, 0, 0, 0] }) {
         return new Float32Array([
             cameraLat,
             cameraLon,
@@ -263,6 +263,7 @@ export class ProjectionRenderer {
             graticuleWidth,
             0, 0, // padding before vec4f at offset 48
             backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3],
+            projExtraParams[0], projExtraParams[1], projExtraParams[2], projExtraParams[3],
         ]);
     }
 
@@ -291,7 +292,8 @@ export class ProjectionRenderer {
     _renderToCanvas(context, canvas, { dst, src, cameraLat, cameraLon, zoom,
                                        showTissot, showGraticule, aspectRatioMultiplier = 1.0,
                                        rotation = 0.0, panX = 0.0, panY = 0.0,
-                                       graticuleWidth = 1.0, backgroundColor = [0, 0, 0, 1] }) {
+                                       graticuleWidth = 1.0, backgroundColor = [0, 0, 0, 1],
+                                       projExtraParams = [0, 0, 0, 0] }) {
         // Initialize hasn't finished yet (e.g. resize event fired during async startup); no-op cleanly
         if (!this.shaderSources || !this.bindGroupLayout) return;
 
@@ -314,7 +316,7 @@ export class ProjectionRenderer {
         const uniformData = this._packUniforms({
             cameraLat, cameraLon, zoom, aspect,
             showTissot, showGraticule, rotation,
-            panX, panY, graticuleWidth, backgroundColor,
+            panX, panY, graticuleWidth, backgroundColor, projExtraParams,
         });
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
@@ -344,7 +346,7 @@ export class ProjectionRenderer {
     // an image blob. Uses rgba8unorm for predictable RGBA byte order on readback.
     async exportToBlob({ dst, src, width, height, cameraLat, cameraLon, zoom,
                          showTissot, showGraticule, aspectRatioMultiplier, rotation,
-                         panX, panY, graticuleWidth, backgroundColor, format, quality }) {
+                         panX, panY, graticuleWidth, backgroundColor, projExtraParams, format, quality }) {
         // Validate everything up front before touching the GPU. Two limits matter: the texture
         // axis limit (maxTextureDimension2D) and the readback buffer size (maxBufferSize).
         // A single-axis check is not enough — e.g. 16384×16384 may pass the axis check but
@@ -379,7 +381,7 @@ export class ProjectionRenderer {
         const uniformData = this._packUniforms({
             cameraLat, cameraLon, zoom, aspect,
             showTissot, showGraticule, rotation,
-            panX, panY, graticuleWidth, backgroundColor,
+            panX, panY, graticuleWidth, backgroundColor, projExtraParams,
         });
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
 

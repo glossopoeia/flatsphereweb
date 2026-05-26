@@ -22,3 +22,5 @@ fn to_texture(projX: f32, projY: f32) -> vec2f {
     let v = (projY + 1.0) / 2.0;
     return vec2f(clamp(u, 0.0, 1.0), clamp(1.0 - v, 0.0, 1.0));
 }
+
+fn set_extra_params(p: vec4f) { }

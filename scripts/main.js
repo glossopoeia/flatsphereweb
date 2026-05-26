@@ -2,15 +2,31 @@ import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm
 import { ProjectionApp } from './app.js';
 import { createAppComponent } from './app-component.js';
 import { trackEvent } from './analytics.js';
+import projections from '/data/projections.json' with { type: 'json' };
 
 // Make Alpine available globally (for console debugging)
 window.Alpine = Alpine;
+
+// Seed per-projection parameter values from the declarative `parameters` arrays in projections.json.
+// Returns a Map<ShaderName, { [paramKey]: defaultValue }>. Projections with no parameters get an empty object.
+const initialProjParams = {};
+for (const p of projections) {
+    if (Array.isArray(p.parameters)) {
+        initialProjParams[p.shader] = {};
+        for (const param of p.parameters) {
+            initialProjParams[p.shader][param.key] = param.default;
+        }
+    }
+}
 
 // Register store before Alpine starts
 Alpine.store('app', {
     // Projection state
     destinationProjection: 0,
     sourceProjection: 0,
+
+    // Per-projection extra-parameter values, a Map<ShaderName, { [paramKey]: value }>.
+    projParams: initialProjParams,
 
     // Display toggles
     tissot: false,
@@ -139,6 +155,14 @@ Alpine.store('app', {
         let v = ((deg % 360) + 360) % 360;
         if (v > 180) v -= 360;
         this.obliqueLon = v;
+    },
+
+    // Set a projection's extra-parameter value (see projections.json `parameters`).
+    setProjParam(projShader, key, value) {
+        if (!this.projParams[projShader]) {
+            this.projParams[projShader] = {};
+        }
+        this.projParams[projShader][key] = value;
     },
 });
 

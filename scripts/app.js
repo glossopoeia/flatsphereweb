@@ -365,13 +365,32 @@ export class ProjectionApp {
         const store = Alpine.store('app');
         try {
             await this.renderer.loadDefaultTexture(false);
-            // Default world map is plate-carrée; sync the store so the UI matches what we render
+            // Default world map is equirectangular; sync the store so the UI matches what we render
             store.sourceProjection = 0;
             this.render();
             store.showSuccess('Loaded default image');
         } catch (error) {
             store.showError(`Failed to load default image: ${error.message}`);
         }
+    }
+
+    // Collect the destination projection's shader-bound parameters into the 4-slot vec4
+    // the shader's proj_extra_params uniform expects (see projections.json `parameters`).
+    computeProjExtraParams() {
+        const store = Alpine.store('app');
+        const params = [0, 0, 0, 0];
+        const proj = projections.find(p => p.id === store.destinationProjection);
+        const values = proj ? store.projParams[proj.shader] : undefined;
+        if (proj && Array.isArray(proj.parameters) && values) {
+            for (const param of proj.parameters) {
+                if (param.effect === 'shader'
+                    && Number.isInteger(param.slot)
+                    && param.slot >= 0 && param.slot < 4) {
+                    params[param.slot] = values[param.key] ?? param.default ?? 0;
+                }
+            }
+        }
+        return params;
     }
 
     render() {
@@ -391,6 +410,7 @@ export class ProjectionApp {
             panX: store.panX,
             panY: store.panY,
             graticuleWidth: store.graticuleWidth,
+            projExtraParams: this.computeProjExtraParams(),
         });
     }
 
@@ -414,6 +434,7 @@ export class ProjectionApp {
             panY: store.panY,
             graticuleWidth: store.graticuleWidth,
             backgroundColor: [bgR, bgG, bgB, bgA],
+            projExtraParams: this.computeProjExtraParams(),
         });
     }
 
@@ -441,6 +462,7 @@ export class ProjectionApp {
                 panY: store.panY,
                 graticuleWidth: store.graticuleWidth,
                 backgroundColor: [bgR, bgG, bgB, bgA],
+                projExtraParams: this.computeProjExtraParams(),
                 format: store.exportFormat,
                 quality: store.exportQuality / 100,
             });

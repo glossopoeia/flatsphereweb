@@ -380,10 +380,12 @@ export class ProjectionApp {
         const store = Alpine.store('app');
         const params = [0, 0, 0, 0];
         const proj = projections.find(p => p.id === store.destinationProjection);
-        const values = store.projParams[store.destinationProjection];
+        const values = proj ? store.projParams[proj.shader] : undefined;
         if (proj && Array.isArray(proj.parameters) && values) {
             for (const param of proj.parameters) {
-                if (param.effect === 'shader' && Number.isInteger(param.slot)) {
+                if (param.effect === 'shader'
+                    && Number.isInteger(param.slot)
+                    && param.slot >= 0 && param.slot < 4) {
                     params[param.slot] = values[param.key] ?? param.default ?? 0;
                 }
             }

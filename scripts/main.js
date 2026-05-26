@@ -8,12 +8,13 @@ import projections from '/data/projections.json' with { type: 'json' };
 window.Alpine = Alpine;
 
 // Seed per-projection parameter values from the declarative `parameters` arrays in projections.json.
+// Returns a Map<ShaderName, { [paramKey]: defaultValue }>. Projections with no parameters get an empty object.
 const initialProjParams = {};
 for (const p of projections) {
     if (Array.isArray(p.parameters)) {
-        initialProjParams[p.id] = {};
+        initialProjParams[p.shader] = {};
         for (const param of p.parameters) {
-            initialProjParams[p.id][param.key] = param.default;
+            initialProjParams[p.shader][param.key] = param.default;
         }
     }
 }
@@ -24,7 +25,7 @@ Alpine.store('app', {
     destinationProjection: 0,
     sourceProjection: 0,
 
-    // Per-projection extra-parameter values, keyed by projection id (see projections.json `parameters`)
+    // Per-projection extra-parameter values, a Map<ShaderName, { [paramKey]: value }>.
     projParams: initialProjParams,
 
     // Display toggles
@@ -156,12 +157,12 @@ Alpine.store('app', {
         this.obliqueLon = v;
     },
 
-    // Set a destination projection's extra-parameter value (see projections.json `parameters`).
-    setProjParam(projId, key, value) {
-        if (!this.projParams[projId]) {
-            this.projParams[projId] = {};
+    // Set a projection's extra-parameter value (see projections.json `parameters`).
+    setProjParam(projShader, key, value) {
+        if (!this.projParams[projShader]) {
+            this.projParams[projShader] = {};
         }
-        this.projParams[projId][key] = value;
+        this.projParams[projShader][key] = value;
     },
 });
 

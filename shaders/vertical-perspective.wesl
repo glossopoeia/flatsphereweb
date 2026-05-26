@@ -24,7 +24,9 @@ fn vp_disc_radius() -> f32 {
 
 fn project(lat: f32, lon: f32) -> vec2f {
     let d = vp_distance;
-    let cos_c = sin(lat);
+    // cos(c) where c is the great-circle distance from the (lat=0, lon=0) projection
+    // centre; matches the equator-aspect inverse below.
+    let cos_c = cos(lat) * cos(lon);
     let k = (d - 1.0) / (d - cos_c);
 
     let x = k * cos(lat) * sin(lon);

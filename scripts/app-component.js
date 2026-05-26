@@ -209,8 +209,29 @@ export function createAppComponent() {
             }
         },
 
-        // Rebuild the destination projection's parameter controls from its declarative
-        // `parameters` array. Controls are created imperatively (no Alpine directives on
+        // Build the destination projection's parameter controls from its declarative
+        // `parameters` array in data/projections.json. Schema for one entry:
+        //
+        //   {
+        //     key:     <string>   stable id; the store key and the exported-metadata key
+        //     label:   <string>   shown in the UI
+        //     control: "slider" | "radio"
+        //     default: <number>   initial value
+        //     effect:  "shader"   how the value is applied (only "shader" today)
+        //     slot:    <0..3>     for effect="shader", the proj_extra_params component
+        //
+        //     // slider-only:
+        //     min, max, step: <number>
+        //     unit:    <string?>  optional suffix shown alongside the readout
+        //
+        //     // radio-only:
+        //     options: [{ label: <string>, value: <number> }, ...]
+        //   }
+        //
+        // To parameterise a new projection: add a `parameters` entry, implement
+        // `fn set_extra_params(p: vec4f)` in the shader to read p[slot], and make sure
+        // the shader's behaviour at each option's default value matches the prior
+        // hard-coded shader. Controls are built imperatively (no Alpine directives on
         // generated nodes) to stay compatible with the Alpine CSP build.
         renderProjectionParameters(projId) {
             const container = this.$refs.projParams;
@@ -221,30 +242,30 @@ export function createAppComponent() {
             const store = Alpine.store('app');
             for (const param of proj.parameters) {
                 if (param.control === 'radio') {
-                    container.appendChild(this.buildRadioParam(projId, param, store));
+                    container.appendChild(this.buildRadioParam(proj.shader, param, store));
                 } else if (param.control === 'slider') {
-                    container.appendChild(this.buildSliderParam(projId, param, store));
+                    container.appendChild(this.buildSliderParam(proj.shader, param, store));
                 }
             }
         },
 
         // Build one radio-group control: a <fieldset> of mutually exclusive options that
         // writes the chosen value into the store and triggers a re-render.
-        buildRadioParam(projId, param, store) {
+        buildRadioParam(projShader, param, store) {
             const fieldset = document.createElement('fieldset');
             const legend = document.createElement('legend');
             legend.textContent = param.label;
             fieldset.appendChild(legend);
-            const current = store.projParams[projId]?.[param.key] ?? param.default;
+            const current = store.projParams[projShader]?.[param.key] ?? param.default;
             for (const opt of param.options) {
                 const optionLabel = document.createElement('label');
                 const input = document.createElement('input');
                 input.type = 'radio';
-                input.name = `projparam-${projId}-${param.key}`;
+                input.name = `projparam-${projShader}-${param.key}`;
                 input.value = String(opt.value);
                 input.checked = opt.value === current;
                 input.addEventListener('change', () => {
-                    store.setProjParam(projId, param.key, opt.value);
+                    store.setProjParam(projShader, param.key, opt.value);
                     if (store.app) {
                         store.app.render();
                         store.app.renderPreview();
@@ -259,9 +280,9 @@ export function createAppComponent() {
 
         // Build one slider control: a labelled range input with a live value readout
         // that writes the chosen value into the store and triggers a re-render.
-        buildSliderParam(projId, param, store) {
+        buildSliderParam(projShader, param, store) {
             const label = document.createElement('label');
-            const current = store.projParams[projId]?.[param.key] ?? param.default;
+            const current = store.projParams[projShader]?.[param.key] ?? param.default;
             // Decimal places for the readout, derived from the parameter's step.
             const decimals = (String(param.step).split('.')[1] || '').length;
             const unit = param.unit || '';
@@ -278,7 +299,7 @@ export function createAppComponent() {
             input.addEventListener('input', () => {
                 const v = parseFloat(input.value);
                 valueSpan.textContent = v.toFixed(decimals) + unit;
-                store.setProjParam(projId, param.key, v);
+                store.setProjParam(projShader, param.key, v);
                 if (store.app) {
                     store.app.render();
                     store.app.renderPreview();

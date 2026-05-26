@@ -12,13 +12,15 @@ const WEBP_XMP_FLAG = 0x04;
 /**
  * Build a JSON-serializable payload describing the current projection state.
  * Embedded in PNG/JPEG/WebP metadata so an exported image carries the settings it was
- * created with — designed to round-trip back into the app for a future import path.
+ * created with. Designed to round-trip back into the app for a future import path.
  *
  * Schema (version 1):
  *   tool:                 'flatsphere'                  — identifies the producing tool
  *   schemaVersion:        1                             — bump when format changes incompatibly
  *   projection.destination: shader slug                 — e.g. 'mollweide', 'equirectangular'
  *   projection.source:    shader slug                   — projection of the source texture
+ *   projection.parameters: { [key]: number } | absent   — destination-projection extra params,
+ *                                                         absent for projections with no parameters.
  *   view.obliqueLatDeg:   number, -90..90 (degrees)     — camera oblique latitude
  *   view.obliqueLonDeg:   number, -180..180 (degrees)   — camera oblique longitude
  *   view.rotationDeg:     number, -180..180 (degrees)   — 2D rotation applied to the plane
@@ -42,12 +44,18 @@ const WEBP_XMP_FLAG = 0x04;
 export function serializeProjectionState(store, projections) {
     const dst = projections.find(p => p.id === store.destinationProjection);
     const src = projections.find(p => p.id === store.sourceProjection);
+    // Snapshot the destination projection's parameter values. Round-trips into the importer reliably.
+    const dstParamValues = dst ? store.projParams?.[dst.shader] : undefined;
+    const dstParams = (dst?.parameters?.length && dstParamValues)
+        ? Object.fromEntries(dst.parameters.map(p => [p.key, dstParamValues[p.key] ?? p.default]))
+        : undefined;
     return {
         tool: 'flatsphere',
         schemaVersion: METADATA_SCHEMA_VERSION,
         projection: {
             destination: dst ? dst.shader : null,
             source: src ? src.shader : null,
+            ...(dstParams ? { parameters: dstParams } : {}),
         },
         view: {
             obliqueLatDeg: store.obliqueLat,
@@ -261,6 +269,23 @@ export function generateAutoBasename(store, projections) {
     }
     const rot = Math.round(store.rotation);
     if (rot !== 0) parts.push(`rot${rot}`);
+    // Append non-default parameter values so two exports that differ only in a parameter
+    // get distinct filenames. Radio values become a human-readable option label slug
+    // (e.g. `arrangement-land`); slider values are appended numerically (`distance5.5`).
+    if (proj?.parameters?.length) {
+        const values = store.projParams?.[proj?.shader];
+        for (const param of proj.parameters) {
+            const v = values?.[param.key] ?? param.default;
+            if (v === param.default) continue;
+            if (param.control === 'radio') {
+                const opt = param.options?.find(o => o.value === v);
+                const labelSlug = opt ? opt.label.toLowerCase().replace(/\s+/g, '-') : String(v);
+                parts.push(`${param.key}-${labelSlug}`);
+            } else {
+                parts.push(`${param.key}${v}`);
+            }
+        }
+    }
     return parts.join('-');
 }
 

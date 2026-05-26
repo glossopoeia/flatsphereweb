@@ -46,7 +46,11 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
     return out;
 }
 
-// Sample world map texture based on lat/lon and source projection
+// Sample world map texture based on lat/lon and source projection.
+// Source-projection parameters are not user-controlled: srcproj is never told its
+// extra parameters (only dstproj is, in fs_main), so its var<private> state stays at
+// the declared defaults — e.g. a Goode source always uses the uninterrupted lobing
+// regardless of what arrangement the destination is rendering with.
 fn source_color_at(lat: f32, lon: f32) -> vec3f {
     // Normalize longitude to [-π, π] range using proper modular arithmetic
     // WGSL doesn't have fmod, so we use: a - floor(a/b) * b

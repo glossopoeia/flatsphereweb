@@ -14,7 +14,8 @@ const planar_scale: vec2f = vec2(1.0, 1.0);
 var<private> vp_distance: f32 = 10.0;
 
 fn set_extra_params(p: vec4f) {
-    vp_distance = p.x;
+    // Valid range is distance > 1 Earth radius; clamp to avoid NaNs/div-by-zero.
+    vp_distance = max(p.x, 1.0001);
 }
 
 // Radius of the visible disc, in projection units, for the current viewpoint distance.

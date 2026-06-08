@@ -5,26 +5,34 @@ fn is_graticule_line(lat: f32, lon: f32, width_mult: f32) -> f32 {
     // Grid spacing for graticules (every 15 degrees)
     let grid_spacing = PI / 12.0; // 15 degrees
 
-    // Use screen-space derivatives to get consistent pixel-width lines
-    // dFdx/dFdy give us the rate of change per pixel in screen space
-    let dlat_dx = dpdx(lat);
-    let dlat_dy = dpdy(lat);
-    let dlon_dx = dpdx(lon);
-    let dlon_dy = dpdy(lon);
-
-    // Calculate the screen-space line width (~1 pixel, scaled by user multiplier)
-    let lat_pixel_width = sqrt(dlat_dx * dlat_dx + dlat_dy * dlat_dy) * width_mult;
-    let lon_pixel_width = sqrt(dlon_dx * dlon_dx + dlon_dy * dlon_dy) * width_mult;
-    
-    // Check for meridians (lines of constant longitude) with anti-aliasing
+    // Distance (in radians) from this point to the nearest meridian / parallel.
     let meridian_lon = round(lon / grid_spacing) * grid_spacing;
     let meridian_distance = abs(lon - meridian_lon);
-    let meridian_intensity = 1.0 - smoothstep(0.0, lon_pixel_width, meridian_distance);
-    
-    // Check for parallels (lines of constant latitude) with anti-aliasing
     let parallel_lat = round(lat / grid_spacing) * grid_spacing;
     let parallel_distance = abs(lat - parallel_lat);
-    let parallel_intensity = 1.0 - smoothstep(0.0, lat_pixel_width, parallel_distance);
+
+    // Convert a fixed on-screen thickness into a lat/lon width via screen-space derivatives.
+    // This is what holds lines to a constant pixel size at every zoom level (and supplies an
+    // anti-aliased edge): zooming in slows the per-pixel change in lat/lon, the width shrinks in
+    // radians to match, and the line stays the same thickness on screen.
+    //
+    // Longitude can't be differentiated directly: it wraps from +PI to -PI at the antimeridian,
+    // so dpdx(lon) spikes across that seam and bloats that one meridian into a fat, doubled-looking
+    // line. Recover the true angular gradient from sin/cos(lon), which stay continuous across the
+    // seam (and smooth through every line center, unlike a distance field):
+    //   d(lon) = cos(lon) * d(sin lon) - sin(lon) * d(cos lon)
+    let s = sin(lon);
+    let c = cos(lon);
+    let dlon_dx = c * dpdx(s) - s * dpdx(c);
+    let dlon_dy = c * dpdy(s) - s * dpdy(c);
+    let meridian_pixel_width = sqrt(dlon_dx * dlon_dx + dlon_dy * dlon_dy) * width_mult;
+
+    let dlat_dx = dpdx(lat);
+    let dlat_dy = dpdy(lat);
+    let parallel_pixel_width = sqrt(dlat_dx * dlat_dx + dlat_dy * dlat_dy) * width_mult;
+
+    let meridian_intensity = 1.0 - smoothstep(0.0, meridian_pixel_width, meridian_distance);
+    let parallel_intensity = 1.0 - smoothstep(0.0, parallel_pixel_width, parallel_distance);
     
     // Return the maximum intensity (lines can overlap at intersections)
     return max(meridian_intensity, parallel_intensity);

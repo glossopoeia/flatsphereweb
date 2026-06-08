@@ -413,5 +413,84 @@
         ]
       }
     ]
+  },
+  {
+    "id": 16,
+    "shader": "healpix",
+    "defaultAspect": 0.5,
+    "name": "HEALPix",
+    "properties": [
+      "Equal-Area"
+    ],
+    "creators": [
+      "Mark Calabretta",
+      "Boudewijn Roukema"
+    ],
+    "originated": "2007",
+    "summary": "An equal-area projection devised for pixelizing the celestial sphere. A Lambert cylindrical equal-area band covers the equatorial zone (where the sine of the latitude lies within ±2/3), while each polar cap is split into four interrupted Collignon facets that taper to the poles, giving HEALPix its distinctive stepped outline. Because every facet preserves area, the whole map is equal-area and subdivides into equal-area, isolatitude pixels — the property that made it the standard grid for all-sky astrophysical data such as the cosmic microwave background. This projection realizes the HEALPix grid introduced by Górski et al.",
+    "resources": [
+      {
+        "title": "Wikipedia: HEALPix",
+        "url": "https://en.wikipedia.org/wiki/HEALPix"
+      },
+      {
+        "title": "Mapping on the HEALPix Grid (Calabretta & Roukema, 2007)",
+        "url": "https://arxiv.org/abs/astro-ph/0412607"
+      },
+      {
+        "title": "HEALPix",
+        "url": "https://healpix.sourceforge.io/"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "shader": "cylindrical-equal-area",
+    "defaultAspect": 0.31831,
+    "name": "Cylindrical Equal Area",
+    "properties": [
+      "Equal-Area"
+    ],
+    "creators": [
+      "Johann Heinrich Lambert"
+    ],
+    "originated": "1772",
+    "summary": "A cylindrical projection that maps meridians to equally spaced vertical lines and parallels to horizontal lines spaced by the sine of the latitude — making it equal-area, so every region takes up map space proportional to its true area. The whole family is defined by a single parameter, the standard parallel (the latitude of true scale), which scales the map horizontally by the cosine of that parallel and vertically by its reciprocal. Because that trade-off is purely a change of aspect ratio (width:height = π·cos² of the standard parallel), the named members differ only in proportion: the Lambert cylindrical equal-area (standard parallel 0°, the base form shown here), Behrmann (30°), Hobo–Dyer (37.5°), the Gall–Peters or Gall orthographic (45°), and Balthasart (50°). Rather than a dedicated parameter, Flatsphere reaches these with the display aspect-ratio control — narrowing the default Lambert view to half its width, for example, gives the familiar Gall–Peters proportions.",
+    "resources": [
+      {
+        "title": "Wikipedia: Cylindrical Equal-Area Projection",
+        "url": "https://en.wikipedia.org/wiki/Cylindrical_equal-area_projection"
+      },
+      {
+        "title": "Wikipedia: Gall–Peters Projection",
+        "url": "https://en.wikipedia.org/wiki/Gall%E2%80%93Peters_projection"
+      },
+      {
+        "title": "Map Projections: A Working Manual (USGS)",
+        "url": "https://pubs.usgs.gov/pp/1395/report.pdf"
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "shader": "winkel-tripel",
+    "defaultAspect": 0.61101,
+    "name": "Winkel-Tripel",
+    "properties": [],
+    "creators": [
+      "Oswald Winkel"
+    ],
+    "originated": "1921",
+    "summary": "A compromise projection introduced by Oswald Winkel in 1921, formed as the arithmetic mean of the equirectangular and Aitoff projections. Its name — 'Tripel' is German for 'triple' — reflects Winkel's aim of simultaneously minimizing distortion in area, direction, and distance rather than eliminating any single one. The equirectangular half uses a standard parallel of arccos(2/π) ≈ 50.46°. The poles map to lines rather than points, and the gently curved meridians give a balanced, familiar appearance that led the National Geographic Society to adopt it for its reference world maps in 1998. The forward projection is closed-form, but the inverse has none; Flatsphere recovers it with Newton's method seeded by the closed-form inverse of its Aitoff half.",
+    "resources": [
+      {
+        "title": "Wikipedia: Winkel Tripel Projection",
+        "url": "https://en.wikipedia.org/wiki/Winkel_tripel_projection"
+      },
+      {
+        "title": "Map Projections: A Working Manual (USGS)",
+        "url": "https://pubs.usgs.gov/pp/1395/report.pdf"
+      }
+    ]
   }
 ]

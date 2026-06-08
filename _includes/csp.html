@@ -1,10 +1,14 @@
 {%- comment -%}
 Unified Content Security Policy for every page on the site. The app needs:
   - workers (WebGPU shader compilation runs in a worker context)
-  - cdn.jsdelivr.net (Pico CSS, Alpine.js, WESL, image metadata libs)
+  - cdn.jsdelivr.net (Pico CSS, Alpine.js, WESL, image metadata libs, MathJax)
   - cloud.umami.is + api-gateway.umami.dev (analytics)
   - api.allorigins.win (CORS proxy for fetching user-supplied remote images)
+Blog posts opting into math rendering additionally need:
+  - 'unsafe-inline' in style-src for MathJax's inline style attributes on
+    rendered math elements
+  - font-src https://cdn.jsdelivr.net for MathJax's WOFF font files
 The standalone pages don't use workers / allorigins, but the looser CSP is
 harmless for them — no requests will fire to URLs they don't reach.
 {%- endcomment -%}
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net https://cloud.umami.is; img-src 'self' data: blob: https:; connect-src 'self' https://api.allorigins.win https://api-gateway.umami.dev https://cloud.umami.is; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net https://cloud.umami.is; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://api.allorigins.win https://api-gateway.umami.dev https://cloud.umami.is; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">

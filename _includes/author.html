@@ -1,0 +1,16 @@
+{%- comment -%}
+Renders an author's byline name, linked to their profile when one is on file.
+
+Resolves `slug` against _data/authors.yml. If there's no matching record we print
+the raw slug. Shared by _layouts/post.html and _layouts/blog-index.html.
+
+Param:
+  slug - author identifier, e.g. page.author / post.author
+{%- endcomment -%}
+{%- assign author = site.data.authors[include.slug] -%}
+{%- if author -%}
+  {%- assign author_name = author.name | default: include.slug -%}
+  {%- if author.uri -%}<a class="author-link" href="{{ author.uri }}" rel="author">{{ author_name }}</a>{%- else -%}{{ author_name }}{%- endif -%}
+{%- else -%}
+  {{- include.slug -}}
+{%- endif -%}

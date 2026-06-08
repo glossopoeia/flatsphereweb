@@ -1,4 +1,4 @@
 ---
 slug: gnomonic
-description: "The oldest known map projection."
+description: "An ancient map projection originating from astronomy, useful for navigation since it maps great circles into straight lines."
 ---

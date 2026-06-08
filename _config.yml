@@ -9,6 +9,13 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
 
+# Disable kramdown's built-in math engine. MathJax 3 (loaded only on posts
+# that opt in via `math: true` front matter) scans for $...$ and $$...$$
+# delimiters directly, which kramdown would otherwise wrap in
+# <script type="math/tex"> tags that MathJax 3 doesn't process by default.
+kramdown:
+  math_engine: null
+
 collections:
   projections:
     output: true
@@ -27,6 +34,7 @@ defaults:
     values:
       layout: post
       nav: blog
+      author: rob
 
 exclude:
   - README.md

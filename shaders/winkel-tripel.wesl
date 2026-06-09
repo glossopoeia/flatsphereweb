@@ -108,9 +108,13 @@ fn inverse(x: f32, y: f32) -> vec2f {
         lat = clamp(lat - dlat, -HALF_PI, HALF_PI);
         lon = lon - dlon;
     }
-    // Reject points outside the projection outline: a real preimage is on the sphere and
-    // reproduces the input under the forward map.
-    if (abs(lat) > HALF_PI + 1e-3) {
+    // Reject points outside the projection outline. A real preimage is on the sphere
+    // (|lat| ≤ π/2 and |lon| ≤ π) and reproduces the input under the forward map. The |lon|
+    // bound is essential: the forward map continues past the antimeridian, so for an exterior
+    // pixel Newton can converge to an out-of-range longitude whose forward also equals (x, y).
+    // That passes the round-trip check below, so without this bound it renders as a distorted
+    // duplicate of the map outside the outline.
+    if (abs(lat) > HALF_PI + 1e-3 || abs(lon) > PI + 1e-3) {
         return vec2f(-181.0, 0.0);
     }
     let check = project(lat, lon);

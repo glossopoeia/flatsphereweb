@@ -353,6 +353,25 @@
   border-top: 1px solid var(--pico-muted-border-color);
 }
 
+/* ---------- Post figures ---------- */
+.post-figure {
+  margin: 1.75rem 0;
+}
+
+.post-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.post-figure figcaption {
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--pico-muted-color);
+}
+
 /* ---------- Site nav, app-header context ----------
    Hover background and active color overrides for the nav inside the app's app-header.
    The base .site-nav-item rule already sets `color: inherit`, which correctly inherits

@@ -1,5 +1,7 @@
 *.pem
-_data/
+# _data/projections.json is generated from data/projections.json, and we don't
+# want to track it twice.
+_data/projections.json
 _site/
 .jekyll-cache/
 .bundle/

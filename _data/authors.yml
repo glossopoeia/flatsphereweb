@@ -1,0 +1,17 @@
+# Author profiles for blog posts.
+# Fields, for future reference:
+#   name    - display name. Required; everything else falls back to it.
+#   uri     - profile/home URL. Links the byline and fills the feed <uri>.
+#   email   - published in the feed entry's <email> if present. Omit to keep private.
+#   twitter - handle without the @; used for <meta name="twitter:creator">.
+#
+# Add guest author: copy the commented block below, pick a slug, and set
+# `author: that-slug` in their post's front matter.
+
+rob:
+  name: Rob Kleffner
+
+# jane-doe:
+#   name: Jane Doe
+#   uri: https://example.com
+#   twitter: janedoe

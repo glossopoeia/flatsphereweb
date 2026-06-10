@@ -7,6 +7,7 @@ layout: default
     <h1>{{ page.title }}</h1>
     <p class="post-meta">
       <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%B %-d, %Y" }}</time>
+      {%- if page.author %} &middot; by {% include author.html slug=page.author %}{% endif -%}
     </p>
   </header>
 
@@ -16,3 +17,8 @@ layout: default
 
   <p class="post-back"><a href="/blog/">← Back to blog</a></p>
 </article>
+
+{%- if page.math -%}
+<script src="/scripts/mathjax-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+{%- endif -%}

@@ -3,6 +3,12 @@ title: Introducing Flatsphere
 excerpt: "Introducing Flatsphere, a GPU-powered tool for manipulating, transforming, and exporting imagery across 15+ map projections, along with the journey and motivation behind its creation."
 ---
 
+{% include figure.html
+     src="/assets/posts/introducing-flatsphere/flatsphere-winkel-tripel-lat90-lon180.png"
+     alt="A Flatsphere rendering of Winkel-Tripel with Tissot's Indicatrices"
+     caption="The Winkel-Tripel projection with Tissot's Indicatrices, as rendered by Flatsphere."
+     width="1600" height="1000" %}
+
 When I was in middle school, my parents got me a big [National Geographic map](https://www.natgeomaps.com/re-world-executive-poster-size). The Earth was displayed on it in three different projections: the [Winkel-Tripel]({% link _projections/winkel-tripel.md %}) serving as the centerpiece, with [azimuthal equidistant]({% link _projections/azimuthal-equidistant.md %}) aspects showcasing the poles and a couple of [Goode homolosine]({% link _projections/goode-homolosine.md %}) 'orange-peels' demonstrating some Earth-wide data. I had a globe as well, but the flat map was much larger, showed the Earth and its nations all at once from a distance, and had much better detail when I walked up close. Because the main projection was Winkel-Tripel, rather than Mercator or, God forbid, [Gall-Peters]({% link _projections/cylindrical-equal-area.md %}), I had a better sense of the northern hemisphere's scale and shape compared to the rest of the Earth at a glance.
 
 I didn't realize it at the time, but this was my first experience with the value different map projections provide. Having three different projections in the same scene motivated curiosity about different ways to display the Earth. That interest has simmered for many years as I acquired more maps and knowledge about them. Starting today, I hope to satisfy and inspire that curiosity in others with the launch of Flatsphere: a tool to easily manipulate, transform, and export images in a wide variety of projections.
@@ -14,6 +20,12 @@ We can't flatten a sphere or ellipsoid without introducing distortion somewhere,
 ## The Path to Flatsphere
 
 I finally began to explore projections more in depth a couple of years ago, when I created a [library](https://github.com/glossopoeia/flatsphere) in the Go programming language for general-purpose forward and inverse projection. This was motivated in part by the excellent work done by [Justin Kunimune](https://kunimune.blog/) on his [Map Projection software](https://github.com/jkunimune/Map-Projections), and also by what I saw as the lack of Go-native projection solutions. My initial interest was to understand how the [HEALPix]({% link _projections/healpix.md %}) projection worked and use it for some digital elevation datasets, but I fell into the rabbit hole of projection math thanks to his elegant implementation. I worked on the Go library for a while and used it for some side projects, but I was satisfied with working on the numerical mathematics side and not porting Kunimune's full visualization suite to Go.
+
+{% include figure.html
+     src="https://github.com/jkunimune/Map-Projections/blob/master/res/gui_image.png?raw=true"
+     alt="Example GUI screenshot of Kunimune's Map Projections software"
+     caption="A screenshot sample of the GUI from Justin Kunimune's [Map Projections](https://github.com/jkunimune/Map-Projections) software."
+     width="1600" height="1067" %}
 
 It turns out that projection math is the perfect fit for GPUs. Because each projection can be computed independently from its latitude and longitude inputs (needing no other information from its neighbors), it's a classic example of an "embarrassingly parallel" problem of the sort GPUs eat for breakfast. Last year I got the itch to learn WebGPU, as that API recently gained wide support. To get a more bare metal understanding, I needed a project I could work on to really understand how the mechanics all worked together. Since I already had the Flatsphere library fairly built out and moderately tested, I would be able to focus on learning about the GPU layer rather than learning some other domain in parallel. These three threads — my continued interest in projections, the Go library where I cut my teeth on the math, and the WebGPU project that gave me a runtime worth using — converged into the Flatsphere I'm launching today.
 

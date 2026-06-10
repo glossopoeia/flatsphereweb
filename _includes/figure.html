@@ -1,0 +1,29 @@
+{%- comment -%}
+Captioned image for posts. Renders a semantic <figure> with an optional <figcaption>.
+
+Usage:
+  {% include figure.html
+       src="/assets/posts/introducing-flatsphere/natgeo-map.jpg"
+       alt="My 1990s National Geographic world map on the wall"
+       caption="The map that started it all. Source: [National Geographic](https://www.natgeomaps.com/)."
+       width="1600" height="1067" %}
+
+Params:
+  src     (required)  site-absolute path; passed through relative_url.
+  alt     (required)  screen-reader / fallback text — keep distinct from the caption.
+  caption (optional)  visible caption; inline Markdown is allowed (links, emphasis).
+                      Use plain URLs in caption links: Liquid tags (the link tag, etc.)
+                      are not evaluated inside include string parameters.
+  width   (optional)  intrinsic pixel width.  Set width + height to reserve space (avoid CLS).
+  height  (optional)  intrinsic pixel height.
+  class   (optional)  extra class on the <figure> element.
+{%- endcomment -%}
+<figure class="post-figure{% if include.class %} {{ include.class }}{% endif %}">
+  <img src="{{ include.src | relative_url }}" alt="{{ include.alt | escape }}"
+       loading="lazy" decoding="async"
+       {%- if include.width %} width="{{ include.width }}"{% endif %}
+       {%- if include.height %} height="{{ include.height }}"{% endif %}>
+  {%- if include.caption -%}
+  <figcaption>{{ include.caption | markdownify | remove: "<p>" | remove: "</p>" | strip_newlines }}</figcaption>
+  {%- endif -%}
+</figure>

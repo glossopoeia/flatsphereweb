@@ -1,6 +1,6 @@
 ---
 title: Introducing Flatsphere
-excerpt: "Introducing Flatsphere, a GPU-powered tool for manipulating, transforming, and exporting imagery across 15+ map projections — and the childhood map and Go library that led me here."
+excerpt: "Introducing Flatsphere, a GPU-powered tool for manipulating, transforming, and exporting imagery across 15+ map projections, along with the journey and motivation behind its creation."
 ---
 
 When I was in middle school, my parents got me a big [National Geographic map](https://www.natgeomaps.com/re-world-executive-poster-size). The Earth was displayed on it in three different projections: the [Winkel-Tripel]({% link _projections/winkel-tripel.md %}) serving as the centerpiece, with [azimuthal equidistant]({% link _projections/azimuthal-equidistant.md %}) aspects showcasing the poles and a couple of [Goode homolosine]({% link _projections/goode-homolosine.md %}) 'orange-peels' demonstrating some Earth-wide data. I had a globe as well, but the flat map was much larger, showed the Earth and its nations all at once from a distance, and had much better detail when I walked up close. Because the main projection was Winkel-Tripel, rather than Mercator or, God forbid, [Gall-Peters]({% link _projections/cylindrical-equal-area.md %}), I had a better sense of the northern hemisphere's scale and shape compared to the rest of the Earth at a glance.

@@ -8,13 +8,13 @@ The app's projection-info button is bespoke chrome rendered inline in index.html
 since it's app-only and has Alpine bindings.
 {%- endcomment -%}
 <nav class="site-nav" aria-label="Site">
-  <a class="site-nav-item{% if include.active == 'gallery' %} is-active{% endif %}" href="/gallery/" aria-label="Gallery">
+  <a class="site-nav-item{% if include.active == 'gallery' %} is-active{% endif %}" href="/gallery/" aria-label="Projections">
     <svg class="site-nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
       <circle cx="8.5" cy="8.5" r="1.5"/>
       <polyline points="21 15 16 10 5 21"/>
     </svg>
-    <span class="site-nav-label">Gallery</span>
+    <span class="site-nav-label">Projections</span>
   </a>
   <a class="site-nav-item{% if include.active == 'blog' %} is-active{% endif %}" href="/blog/" aria-label="Blog">
     <svg class="site-nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

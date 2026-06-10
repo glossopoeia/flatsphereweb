@@ -11,7 +11,7 @@ this layout looks up the matching record in site.data.projections and renders it
 {%- if p == nil -%}
 <section>
   <h1>Unknown projection: {{ page.slug }}</h1>
-  <p>No matching record found in data/projections.json. <a href="/gallery/">Back to gallery</a>.</p>
+  <p>No matching record found in data/projections.json. <a href="/gallery/">Back to the Projection Gallery</a>.</p>
 </section>
 {%- else -%}
 
@@ -66,7 +66,7 @@ this layout looks up the matching record in site.data.projections and renders it
     </ul>
   </section>
 
-  <p class="projection-detail-back"><a href="/gallery/">← Back to gallery</a></p>
+  <p class="projection-detail-back"><a href="/gallery/">← Back to the Projection Gallery</a></p>
 </article>
 
 {%- endif -%}

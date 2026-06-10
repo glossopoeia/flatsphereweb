@@ -295,7 +295,7 @@
       "Joseph-Louis Lagrange"
     ],
     "originated": "1779",
-    "summary": "A rarely used projection that maps the sphere to a square. While it is conformal, it has significant distortion at the edges. It has been used in some artistic and thematic maps where the square format is desired.",
+    "summary": "A rarely used projection that maps the sphere to a circle. While it is conformal, it has significant distortion at the edges. It has been used in some artistic and thematic maps where the circular format is desired.",
     "resources": [
       {
         "title": "Wikipedia: Lagrange Projection",

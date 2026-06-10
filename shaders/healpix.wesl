@@ -22,7 +22,9 @@ const gap_eps: f32 = 1e-4;          // tolerance so shared facet edges aren't dr
 fn set_extra_params(p: vec4f) { }
 
 // Central meridian of the polar facet that owns projection-x `x` (one of -3pi/4, -pi/4,
-// pi/4, 3pi/4 across the valid range). Matches the Go library's facet selection.
+// pi/4, 3pi/4 across the valid range). Because the domain of the planar bounds are the
+// same as the longitude bounds, we can reuse the same formula for both forward and inverse
+// projections without coordinate system conversions.
 fn facet_center(x: f32) -> f32 {
     return (PI / 4.0) * (2.0 * floor(2.0 + (2.0 * x) / PI) - 3.0);
 }

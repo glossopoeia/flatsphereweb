@@ -1,4 +1,4 @@
-import { link } from "https://cdn.jsdelivr.net/npm/wesl/+esm";
+import { link } from "https://cdn.jsdelivr.net/npm/wesl@0.7.27/+esm";
 import projections from "/data/projections.json" with { type: "json" };
 
 const MAX_IMAGE_PIXELS = 4096 * 4096; // keep in sync with image-loader.js

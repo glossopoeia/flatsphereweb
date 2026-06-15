@@ -1,7 +1,7 @@
-import extract from 'https://cdn.jsdelivr.net/npm/png-chunks-extract@1/+esm';
-import encode from 'https://cdn.jsdelivr.net/npm/png-chunks-encode@1/+esm';
-import text from 'https://cdn.jsdelivr.net/npm/png-chunk-text@1/+esm';
-import piexif from 'https://cdn.jsdelivr.net/npm/piexifjs@1/+esm';
+import extract from 'https://cdn.jsdelivr.net/npm/png-chunks-extract@1.0.0/+esm';
+import encode from 'https://cdn.jsdelivr.net/npm/png-chunks-encode@1.0.0/+esm';
+import text from 'https://cdn.jsdelivr.net/npm/png-chunk-text@1.0.0/+esm';
+import piexif from 'https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/+esm';
 
 const METADATA_KEY = 'flatsphere';
 const METADATA_SCHEMA_VERSION = 1;

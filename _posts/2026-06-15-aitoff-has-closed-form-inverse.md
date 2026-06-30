@@ -75,9 +75,11 @@ This construction is what makes the closed-form inverse possible. Azimuthal equi
 The inverse projection function takes an $x/y$ planar coordinate and transforms it back into the spherical coordinate (latitude and longitude) we supplied above. We are only concerned about values within the range of the forward projection, which for Aitoff is:
 
 $$
-x \in [-\pi,\pi]
+\begin{aligned}
+x &\in [-\pi,\pi]
 \\
-y \in [-\pi/2,\pi/2]
+y &\in [-\pi/2,\pi/2]
+\end{aligned}
 $$
 
 The common factor $A = \frac{\alpha}{\sin \alpha}$ appears in both forward coordinates, allowing us to momentarily simplify with a substitution:
@@ -99,31 +101,37 @@ $$
 Now that the trig operations are isolated (in the brackets) we can transform the bracketed term using a couple standard identities. Noticing that $\alpha$ is defined in terms of cosine, we choose to replace $\sin^2\tfrac{\lambda}{2}$ with $1 - \cos^2\tfrac{\lambda}{2}$, and $\sin^2\varphi$ with $1 - \cos^2\varphi$.
 
 $$
-\cos^2\varphi \cdot \sin^2\tfrac{\lambda}{2} + \sin^2\varphi \equiv
+\begin{aligned}
+&\cos^2\varphi \cdot \sin^2\tfrac{\lambda}{2} + \sin^2\varphi
 \\
-\cos^2\varphi - \cos^2\varphi \cdot \cos^2\tfrac{\lambda}{2} + \sin^2\varphi \equiv
+&\equiv \cos^2\varphi - \cos^2\varphi \cdot \cos^2\tfrac{\lambda}{2} + \sin^2\varphi
 \\
-1 - \cos^2\varphi \cdot \cos^2\tfrac{\lambda}{2}
+&\equiv 1 - \cos^2\varphi \cdot \cos^2\tfrac{\lambda}{2}
+\end{aligned}
 $$
 
 We then apply our definition of $\alpha$, or rather $\cos\alpha$, which allows us to replace $\cos^2\varphi \cdot \cos^2\tfrac{\lambda}{2}$ with $\cos^2\alpha$.
 
 $$
-1 - \cos^2\varphi \cdot \cos^2\tfrac{\lambda}{2}
+\begin{aligned}
+& 1 - \cos^2\varphi \cdot \cos^2\tfrac{\lambda}{2}
 \\
-1 - \cos^2\alpha
+& \equiv 1 - \cos^2\alpha
 \\
-\sin^2\alpha
+& \equiv \sin^2\alpha
+\end{aligned}
 $$
 
 We can now substitute $\sin^2\alpha$ back in for the original bracketed factor in the combined equation, and simplify further by re-expanding $A$ and another trig identity:
 
 $$
-A^2 \cdot \sin^2\alpha \equiv
+\begin{aligned}
+& A^2 \cdot \sin^2\alpha
 \\
-\tfrac{\alpha^2}{\sin^2\alpha} \cdot \sin^2\alpha \equiv
+& \equiv \tfrac{\alpha^2}{\sin^2\alpha} \cdot \sin^2\alpha
 \\
-\alpha^2
+& \equiv \alpha^2
+\end{aligned}
 $$
 
 Leaving us with:
@@ -236,7 +244,7 @@ To check that the closed-form inverse behaves correctly under standard double-pr
 
 All three harnesses sample the same 5,151-point grid spanning the Aitoff ellipse with a 2 % stand-off from the boundary, forward-project each point, run both the closed-form and the iterative inverse on the result, and record the per-point disagreement. The full harness lives at [github.com/glossopoeia/aitoff-closed-form](https://github.com/glossopoeia/aitoff-closed-form).
 
-The headline result is what you'd hope:
+The results indicates good equivalence, and better numerical behavior at the extremeties vs d3-geo:
 
 | Harness | Interior max error (rad) | Boundary max error (rad) | Branch-drift points |
 |---:|---:|---:|---:|
@@ -324,7 +332,13 @@ We tried a few iterative approaches with the closed-form Aitoff as the inner ste
 Wagner IX is the cleaner result. It's a direct modification of Aitoff by Karlheinz Wagner in 1949, designed to give the poles a finite line instead of collapsing them to a point. The construction pre-scales latitude and longitude before applying Aitoff:
 
 $$
-\varphi' = \arcsin(m \sin\varphi), \qquad \lambda' = n\lambda, \qquad (x, y) = (s_x, s_y) \cdot \mathrm{Aitoff}(\varphi', \lambda')
+\begin{aligned}
+\varphi' &= \arcsin(m \sin\varphi)
+\\
+\lambda' &= n\lambda
+\\
+(x, y) &= (s_x, s_y) \cdot \mathrm{Aitoff}(\varphi', \lambda')
+\end{aligned}
 $$
 
 for fixed Wagner constants $m, n, s_x, s_y$. Each piece is closed-form on its own, so the inverse is derived straightforwardly: undo the output scaling, apply the closed-form Aitoff inverse, undo the input scaling.

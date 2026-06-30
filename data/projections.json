@@ -492,5 +492,31 @@
         "url": "https://pubs.usgs.gov/pp/1395/report.pdf"
       }
     ]
+  },
+  {
+    "id": 19,
+    "shader": "wagner-ix",
+    "defaultAspect": 0.40187,
+    "name": "Wagner IX (Aitoff-Wagner)",
+    "properties": [],
+    "creators": [
+      "Karlheinz Wagner"
+    ],
+    "originated": "1949",
+    "summary": "A compromise projection that modifies Aitoff to give the poles a finite, gently curved line instead of a single point, easing the polar shape distortion of the original. Wagner pre-scales latitude and longitude before applying the Aitoff construction, then rescales the result, keeping the equator at true scale. Like Aitoff it is neither conformal nor equal-area, but the longer pole line gives high-latitude features a more natural appearance on world maps.",
+    "resources": [
+      {
+        "title": "Wikipedia: Aitoff Projection",
+        "url": "https://en.wikipedia.org/wiki/Aitoff_projection"
+      },
+      {
+        "title": "Directory of Map Projections: Aitoff-Wagner",
+        "url": "https://www.mapthematics.com/ProjectionsList.php?Projection=280"
+      },
+      {
+        "title": "Compare Map Projections: Wagner IX derivation",
+        "url": "https://map-projections.net/make-my-wagner/wagner9.php"
+      }
+    ]
   }
 ]

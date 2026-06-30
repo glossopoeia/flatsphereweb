@@ -72,23 +72,35 @@ $$
 \sin\varphi = \frac{y}{A} = \frac{y \cdot \sin\alpha}{\alpha}, \qquad \varphi = \arcsin\!\left(\frac{y \cdot \sin\alpha}{\alpha}\right).
 $$
 
-For the longitude, observe that
+For the longitude, the latitude trick (divide one forward equation by the common factor $A$) does not work directly: the only way to isolate $\sin\tfrac{\lambda}{2}$ from $x/2 = A \cos\varphi \sin\tfrac{\lambda}{2}$ is to divide by $A \cos\varphi$, and $\cos\varphi$ is still unknown at this point. We need a second equation to eliminate it.
+
+That equation is the definition of $\alpha$ itself, rearranged. From $\cos\alpha = \cos\varphi \cdot \cos\tfrac{\lambda}{2}$,
 
 $$
-\frac{x/2}{y} = \frac{A \cdot \cos\varphi \cdot \sin\tfrac{\lambda}{2}}{A \cdot \sin\varphi} = \frac{\cos\varphi \cdot \sin\tfrac{\lambda}{2}}{\sin\varphi},
+\cos\varphi = \frac{\cos\alpha}{\cos\tfrac{\lambda}{2}},
 $$
 
-which is the standard expression for $\tan$ of the bearing $\beta$ from the projection center $(0, 0)$ to the point $(\varphi, \tfrac{\lambda}{2})$ on the sphere. The azimuthal-equidistant projection places $(\varphi, \tfrac{\lambda}{2})$ at planar polar coordinates $(\alpha, \beta)$, so $(x/2, y) = (\alpha \sin\beta, \alpha\cos\beta)$. Therefore
+valid wherever $\cos\tfrac{\lambda}{2} \neq 0$ — that is, off the antipodal arc $\lambda = \pm\pi$. Substituting this expression for $\cos\varphi$ into the $x$ forward equation:
 
 $$
-\sin\tfrac{\lambda}{2} = \frac{(x/2) \cdot \sin\alpha}{\alpha \cdot \cos\varphi}, \qquad \cos\tfrac{\lambda}{2} = \frac{\cos\alpha}{\cos\varphi},
+\frac{x}{2} = A \cdot \cos\varphi \cdot \sin\tfrac{\lambda}{2} = A \cdot \frac{\cos\alpha}{\cos\tfrac{\lambda}{2}} \cdot \sin\tfrac{\lambda}{2} = A \cdot \cos\alpha \cdot \tan\tfrac{\lambda}{2}.
 $$
 
-where the second equation follows directly from $\cos\alpha = \cos\varphi \cdot \cos\tfrac{\lambda}{2}$. The cleanest form for $\lambda$ uses these together via `atan2`, which selects the correct quadrant and avoids the $0/0$ degeneracy at the poles:
+The unknown $\cos\varphi$ has been replaced by something written entirely in known quantities ($\alpha$) and the single remaining unknown ($\lambda$), and the $\sin\tfrac{\lambda}{2}$ and $\cos\tfrac{\lambda}{2}$ that the substitution carried in have collapsed into $\tan\tfrac{\lambda}{2}$. Solving for it, and using $A = \alpha/\sin\alpha$:
+
+$$
+\tan\tfrac{\lambda}{2} = \frac{x/2}{A \cos\alpha} = \frac{(x/2)\sin\alpha}{\alpha \cos\alpha}.
+$$
+
+This gives $\lambda$ in terms only of quantities we know — the planar $x$, the recovered $\alpha$, and elementary functions of $\alpha$ — with $\cos\varphi$ eliminated cleanly.
+
+Computing $\lambda$ as $2\arctan$ of this ratio would work on the interior, but $\arctan$ has two failure modes near the projection boundary: it returns values only in $(-\pi/2, \pi/2)$, so the result is implicitly in $(-\pi, \pi)$ but with no branch handling; and it diverges as $\cos\alpha \to 0$ on the antipodal arc $\alpha = \pi/2$, where both numerator and denominator approach finite limits but the ratio blows up. The two-argument `atan2`, which takes numerator and denominator separately, handles both cleanly: it returns the correct quadrant in $[-\pi, \pi]$ by looking at the signs of its arguments, and it is well-defined when its second argument is zero (returning $\pm\pi/2$ depending on the sign of the first). Writing $\tan\tfrac{\lambda}{2}$ as a ratio of two finite quantities and feeding them to `atan2`:
 
 $$
 \boxed{\lambda = 2 \cdot \mathrm{atan2}\bigl((x/2) \cdot \sin\alpha,\; \alpha \cdot \cos\alpha\bigr).}
 $$
+
+Two observations on what we just did. First, the cancellation of $\cos\varphi$ between the two equations is *the* reason the inverse is closed-form rather than algebraic: had we needed to recover $\cos\varphi$ explicitly before solving for $\lambda$, we would have introduced another transcendental dependency, and the inverse would have become coupled. Aitoff's particular construction — equatorial-aspect azimuthal-equidistant of $(\varphi, \lambda/2)$ — produces $x$ and $\cos\alpha$ relations that share exactly one common factor, $\cos\varphi$, which lets us divide it out. Second, this is the algebraic mechanism behind the geometric statement that $(\varphi, \lambda/2)$ lies at planar polar coordinates $(\alpha, \beta)$ in the azimuthal-equidistant picture, with $\beta$ the bearing from $(0,0)$ to $(\varphi, \lambda/2)$: $\tan\beta$ is exactly the ratio we just computed, and $\lambda/2$ is recovered from $\beta$ by the spherical bearing relations. The algebraic derivation does not require importing that geometric picture, but the picture is what tells us such a clean elimination must exist.
 
 Three special cases close the derivation:
 

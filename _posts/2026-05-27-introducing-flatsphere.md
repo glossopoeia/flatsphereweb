@@ -33,7 +33,7 @@ It turns out that projection math is the perfect fit for GPUs. Because each proj
 
 So what can we do with Flatsphere right now? The most obvious is to see the Earth in over 15 different projections. But Flatsphere also renders more than just the default Earth scene. Suppose you have an [equirectangular image of Mars](https://www.solarsystemscope.com/textures/download/2k_mars.jpg) you want to turn into a view from space using the [orthographic]({% link _projections/orthographic.md %}) projection: paste a link or upload your image, set the source projection, then choose orthographic. You can then drag your mouse to transform the view at high resolution and interactive framerates thanks to the WebGPU rendering pipeline. You're also not limited to transformations of planetary bodies: the [background radiation of the universe](https://upload.wikimedia.org/wikipedia/commons/e/ed/WMAP_2012.png) and other whole-sky data can be supplied as input and reprojected the same as any other projection source. If you come up with something you want to save, an export will automatically include the projection information in the image metadata for you.
 
-## What the Journey Taught
+## Key Takeaways from the Journey
 
 A few things really stuck out to me while building Flatsphere. Most obvious in hindsight was how much having a visualization helps when debugging what is, at its core, a visualization problem. The Go library had some hard-coded numbers and a suite of property tests prior to the WebGPU pipelines, but visualizing the projections in Flatsphere immediately and viscerally pointed to problems with a few of the projections that the property tests and simple hardcoded cases had missed. The Aitoff and Hammer projection discrepancies were particularly bad.
 

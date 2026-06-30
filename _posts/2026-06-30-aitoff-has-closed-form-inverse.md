@@ -1,6 +1,6 @@
 ---
 title: A Closed-Form Inverse for the Aitoff Projection
-excerpt: "The Aitoff projection's inverse is widely treated as an iterative-only problem in modern cartographic software. I was surprised to find that there's a closed-form solution with good numeric properties. A short derivation gives a non-iterative formula that matches Newton–Raphson to machine precision on the interior of the projection's domain and improves on it near the antipodes."
+excerpt: "The Aitoff projection's inverse is widely treated as an iterative-only problem in modern cartographic software. I was surprised to find that there's a closed-form solution with good numeric properties. A short derivation gives a non-iterative formula that matches Newton–Raphson to machine precision and improves on it near the antipodes - and it's much faster too!"
 math: true
 ---
 
@@ -8,7 +8,7 @@ This is a story of how recent AI tools helped me re-discover a cleaner method fo
 
 **For the non-technical audience**: a closed-form equation (e.g. the quadratic formula) is often easier to comprehend and more efficient to compute than an 'iterative solution' for a given mathematical function. For the latter, you have to compute the same set of steps multiple times, using the approximated result from the last round to generate a better estimate. Usually, the higher the number of rounds you iterate, the better the approximation. A closed-form solution often has many benefits compared to the approximation: 1) the set of steps only gets computed once, 2) the solution is often more accurate for less work, and 3) even when it's not more accurate, it sometimes has better numerical 'behavior' compared to a result arrived at iteratively.
 
-So, the fact that the Aitoff projection has a closed-form inverse that few major implementers are using means there's opportunity for improvement!
+So, the fact that the Aitoff projection has a closed-form inverse that few big players are using means there's opportunity for improvement!
 
 ## Background
 

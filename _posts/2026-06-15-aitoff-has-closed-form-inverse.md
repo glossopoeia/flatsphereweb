@@ -4,7 +4,7 @@ excerpt: "The Aitoff projection's inverse is widely treated as an iterative-only
 math: true
 ---
 
-This is a story of how recent AI tools helped me re-discover a cleaner method for computing the inverse of a century old projection. While the Aitoff projection isn't terribly popular (you're probably better off using Hammer in most applicable scenarios), this re-discovery helps correct the record, and was the most intriguing experience I've had to date with one of the brand-name LLMs.
+This is a story of how recent AI tools helped me re-discover a cleaner method for computing the inverse of a century-old projection. While the Aitoff projection isn't terribly popular (you're probably better off using Hammer in most applicable scenarios), this re-discovery helps correct the record, and was the most intriguing experience I've had to date with one of the brand-name LLMs.
 
 **For the non-technical audience**: a closed-form equation (e.g. the quadratic formula) is often easier to comprehend and more efficient to compute than an 'iterative solution' for a given mathematical function. For the latter, you have to compute the same set of steps multiple times, using the approximated result from the last round to generate a better estimate. Usually, the higher the number of rounds you iterate, the better the approximation. A closed-form solution often has many benefits compared to the approximation: 1) the set of steps only gets computed once, 2) the solution is often more accurate for less work, and 3) even when it's not more accurate, it sometimes has better numerical 'behavior' compared to a result arrived at iteratively.
 
@@ -28,7 +28,7 @@ Because I hadn't instructed it to look for a closed-form inverse, I was surprise
 
 This was the most fascinating interaction I've had with an AI agent to date (in truth, most interactions are bog standard while also being incredibly convenient). To me, this singular chat bordered on true creativity: the agent was instructed to perform a task, even in a certain way, but immediately noticed a more efficient technique and suggested that instead. It did this, so it claims, without having that answer directly baked into its training data.
 
-A bit later, we widened the literature check beyond PROJ and d3-geo. [Justin Kunimune's Map-Projections](https://github.com/jkunimune/Map-Projections), the Java projection library Flatsphere itself descended from, has had a closed-form Aitoff inverse since at least 2017. Given that his software was the inspiration for Flatsphere, it was myopic of me not to check here first. He doesn't write down the algebraic identity, though. His version is structural: apply the polar azimuthal-equidistant inverse to $(x/2, y)$, then run the result through an oblique transformation that rotates the polar pole back to the equator, then double the longitude. This actually makes his implementation the most readable at three lines of Java and is definitionally correct at a glance. We'll show experimentally that it's equivalent to the direct formula we'll derive below.
+A bit later, we widened the literature check beyond PROJ and d3-geo. [Justin Kunimune's Map-Projections](https://github.com/jkunimune/Map-Projections), the Java projection library Flatsphere itself descended from, has had a closed-form Aitoff inverse since at least 2017. Given that his software was the inspiration for Flatsphere, it was myopic of me not to check here first. He doesn't write down the algebraic identity, though. His version is structural: apply the polar azimuthal-equidistant inverse to $(x/2, y)$, then run the result through an oblique transformation that rotates the polar pole back to the equator, then double the longitude. This actually makes his implementation the most readable of them all at three lines of Java, and it's definitionally correct at a glance. We'll show experimentally that it's equivalent to the direct formula we'll derive below.
 
 While Kunimune's software has had the closed form inverse for years, it's still missing from every industry-dominant library that downstream tools depend on. A significant purpose of this post is to describe the closed-form and motivate replacing the iterative method with it.
 
@@ -244,7 +244,7 @@ To check that the closed-form inverse behaves correctly under standard double-pr
 
 All three harnesses sample the same 5,151-point grid spanning the Aitoff ellipse with a 2 % stand-off from the boundary, forward-project each point, run both the closed-form and the iterative inverse on the result, and record the per-point disagreement. The full harness lives at [github.com/glossopoeia/aitoff-closed-form](https://github.com/glossopoeia/aitoff-closed-form).
 
-The results indicates good equivalence, and better numerical behavior at the extremeties vs d3-geo:
+The results indicate good equivalence, and better numerical behavior at the extremities vs d3-geo:
 
 | Harness | Interior max error (rad) | Boundary max error (rad) | Branch-drift points |
 |---:|---:|---:|---:|
@@ -254,15 +254,15 @@ The results indicates good equivalence, and better numerical behavior at the ext
 
 In the interior 95 % or so of the Aitoff ellipse, every comparison is at machine precision, i.e. the closed-form and the iterative reference agree to within the smallest representable difference. Both methods are computing the same well-conditioned function on a region where it's smooth.
 
-The boundary numbers tell a more interesting story. d3-geo's flat Newton–Raphson drifts to a non-canonical longitude near the antipodal arc in 132 of 5,151 grid points, around 2.5 %. PROJ's nested Newton–Raphson validates each candidate in the outer loop and retries with an improved guess if a round-trip projection exceeds the tolerance. Thus, it also eliminate drifts across the same grid. It is important to note that both d3-geo's result and ours are *mathematically* correct, but the closed-form's `atan2` keeps its output in the expected $[-\pi, \pi]$ forward domain by construction, while d3-geo's iterate can wander.
+The boundary numbers tell a more interesting story. d3-geo's flat Newton–Raphson drifts to a non-canonical longitude near the antipodal arc in 132 of 5,151 grid points, around 2.5 %. PROJ's nested Newton–Raphson validates each candidate in the outer loop and retries with an improved guess if a round-trip projection exceeds the tolerance. As a result, it shows zero drift across the same grid. It is important to note that both d3-geo's result and ours are *mathematically* correct, but the closed-form's `atan2` keeps its output in the expected $[-\pi, \pi]$ forward domain by construction, while d3-geo's iterate can wander.
 
-The harness also runs each implementation's algebraic identity against Kunimune's structural decomposition on the same grid, to confirm they agree pointwise. They do, to about $1.4 \times 10^{-14}$ rad (about as close as IEEE-754 double-precision numbers can get) across all 5,151 points in every language. The two formulations are computing the same closed-form function by different routes, and the numerical agreement confirms it.
+The harness also runs each implementation's algebraic identity against Kunimune's structural version on the same grid, to confirm they agree pointwise. They do, to about $1.4 \times 10^{-14}$ rad (about as close as IEEE-754 double-precision numbers can get) across all 5,151 points in every language. The two formulations are computing the same closed-form function, just by different routes.
 
-We already see that either expression of the closed form has some real benefits when compared to the iterative methods. Compared to d3-geo specifically, it's marginally more robust at the boundary; it matches PROJ's robustness while doing the work in five transcendental calls instead of a Newton loop. Both library teams would benefit from picking up one of these closed form constructions.
+We already see that either expression of the closed form has some real benefits when compared to the iterative methods. Compared to d3-geo specifically, it's marginally more robust at the boundary, and it matches PROJ's robustness while doing the work in five transcendental calls instead of a Newton loop.
 
 ## Performance
 
-The other tantalizing benefit of a closed-form inverse is speed. In the example repository, each language's harness also includes a wall-clock benchmark that times the inverse one coordinate pair at a time across the 5,151-point grid, multi-trial, with the minimum reported. All numbers below are from an Apple M2 at `-O2`, PROJ 9.8.1, Node 26.3, Python 3.14.6 with pyproj 3.7.2 (bundled PROJ 9.5.1). Trial-to-trial variation is under 2% on the closed-form rows and under 8% on the iterative rows across re-runs.
+The other tantalizing benefit of a closed-form inverse is speed. In the example repository, each language's harness also includes a wall-clock benchmark that times the inverse computation one coordinate pair at a time across the 5,151-point grid, multi-trial, with the minimum reported. All the numbers below are from my Apple M2 with `-O2` optimization, PROJ 9.8.1, Node 26.3, Python 3.14.6 with pyproj 3.7.2 (bundled PROJ 9.5.1). Trial-to-trial variation is under 2% on the closed-form rows and under 8% on the iterative rows across re-runs.
 
 The C numbers are the most direct comparison since PROJ is C:
 
@@ -293,7 +293,7 @@ Python is the interesting case, because the answer depends on how you call the i
 
 Across all implementations except the basic Python loop, the closed-form / iterative ratio sits between 8× and 15×. It's a consistent speed-up across three quite different optimized runtimes, which is reassuring.
 
-Kunimune's implementation results are also stable across languages: the structural decomposition lands at roughly 1.5× the algebraic time everywhere. Both forms produce almost identical outputs. The algebraic identity boils the inverse down to one `sqrt` and four trig functions, while the structural decomposition routes through a full spherical rotation between the polar and equatorial AE frames, costing about three extra trig calls. Both are substantially faster than the iterative method.
+Kunimune's implementation results are also stable across languages: the structural decomposition lands at roughly 1.5× the algebraic time everywhere. Both forms produce almost identical outputs. The algebraic identity boils the inverse down to one `sqrt` and four trig functions, while the structural decomposition routes through a full spherical rotation between the polar and equatorial frames, costing about three extra trig calls. Both are substantially faster than the iterative methods.
 
 A speedup of a few nanoseconds is hard to get excited about. In practice, this matters anywhere an inverse projection gets called once per pixel or once per coordinate. A 4K × 2K Aitoff raster reprojected to e.g. equirectangular is *8.4 million inverse calls*. By these numbers, PROJ's iterative implementation takes about 6 seconds of inverse work per raster, certainly not interactive and scaling quickly for batch jobs. With the closed-form, it takes about 0.4 seconds, which enables quicker-updating previews even without a GPU. The same proportional gain applies to cartopy and GeoPandas batch reprojection, vector-tile servers, and anything else that does interactive Aitoff display.
 
@@ -301,11 +301,11 @@ These benchmarks are reproducible from a clean clone with `make bench` at the re
 
 ## Implications
 
-Once the closed-form Aitoff was in hand, I poked at a couple of nearby projections to see whether the same approach extended. The two immediate candidates were the [Winkel Tripel]({% link _projections/winkel-tripel.md %}) and the [Wagner IX]({% link _projections/wagner-ix.md %}), because it's a direct modification of Aitoff itself.
+Once the closed-form Aitoff was in hand, I poked at a couple of nearby projections to see whether the same approach extended. The two immediate candidates were the [Winkel Tripel]({% link _projections/winkel-tripel.md %}) and the [Wagner IX]({% link _projections/wagner-ix.md %}), because they're based on the Aitoff projection.
 
 ### Winkel Tripel: No Go
 
-It was a bit crushing that the Winkel Tripel attempt didn't pan out as a full closed-form, but the failure is maybe interesting enough to be worth writing down. Winkel Tripel is the arithmetic mean of Aitoff and an equirectangular projection at standard parallel $\varphi_1 = \arccos(2/\pi)$:
+It was a bit crushing that the Winkel Tripel attempt didn't pan out as a full closed-form, but the failure is interesting enough to be worth writing down. Winkel Tripel is the arithmetic mean of Aitoff and an equirectangular projection at standard parallel $\varphi_1 = \arccos(2/\pi)$:
 
 $$
 \begin{aligned}
@@ -315,17 +315,19 @@ y_{WT} &= \tfrac{1}{2}(y_A + \varphi)
 \end{aligned}
 $$
 
-Solving for the Aitoff terms gives $x_A = 2x_{WT} - 2\lambda/\pi$ and $y_A = 2y_{WT} - \varphi$. Substituting these into the algebraic identity we derived above would, if it worked, hand us $\alpha$ directly — same trick that made Aitoff closed-form. But it doesn't work, because the substitution introduces $\varphi$ and $\lambda$ on the right-hand side:
+Just as before, the inverse problem here is to recover $(\varphi, \lambda)$ given the planar coordinates — only this time the planar coordinates are $(x_{WT}, y_{WT})$ rather than Aitoff's $(x_A, y_A)$. Solving the two WT equations above for the Aitoff terms gives $x_A = 2x_{WT} - 2\lambda/\pi$ and $y_A = 2y_{WT} - \varphi$. The natural next move is to drop those into the identity that made Aitoff closed-form, $(x_A/2)^2 + y_A^2 = \alpha^2$, and hope it hands us $\alpha$ directly in terms of $(x_{WT}, y_{WT})$.
+
+It doesn't, because the substitution drags $\varphi$ and $\lambda$ — the very quantities we're trying to solve for — onto the right-hand side:
 
 $$
 \alpha = \sqrt{\bigl(x_{WT} - \lambda/\pi\bigr)^2 + (2y_{WT} - \varphi)^2}
 $$
 
-The equirectangular contribution couples $\varphi$ and $\lambda$ back into the expression that recovered $\alpha$ algebraically for Aitoff. The resulting 2D system is transcendental in $(\varphi, \lambda)$ with no algebraic separation I or the AI agent could find. Kunimune apparently ran into the same wall — his `WinkelTripel.java` opens with a candid comment:
+For Aitoff, the inputs $(x_A, y_A)$ and the unknowns $(\varphi, \lambda)$ stayed cleanly separated and the identity isolated $\alpha$ entirely on the input side. For Winkel Tripel, the equirectangular term leaks the unknowns into the formula for $\alpha$ itself, so we'd need to know $(\varphi, \lambda)$ before we could compute the very quantity that's supposed to recover them. The resulting two-equation system seems genuinely coupled and I ran out of patience trying to pull it apart. Kunimune apparently ran into the same wall — his `WinkelTripel.java` opens with a candid comment:
 
 > *I tried solving for these equations myself, and I think I got them mostly right, but the expressions were just too complicated. I got better results by transcribing the below equations from Ipbüker and Bildirici's paper...*
 
-We tried a few iterative approaches with the closed-form Aitoff as the inner step. None of them are robust enough to replace Newton-Raphson on the full Winkel Tripel domain. So Winkel Tripel stays iterative, overall.
+I tried a few iterative approaches with the closed-form Aitoff as the inner step. None were robust enough to replace Newton-Raphson on the full Winkel Tripel domain. So, Winkel Tripel has to remain iterative, for now.
 
 ### Wagner IX: A Clean Win
 
@@ -344,3 +346,7 @@ $$
 for fixed Wagner constants $m, n, s_x, s_y$. Each piece is closed-form on its own, so the inverse is derived straightforwardly: undo the output scaling, apply the closed-form Aitoff inverse, undo the input scaling.
 
 Wagner IX isn't widely shipped, so the value found here is less obvious. But it is one demonstration of why the closed-form Aitoff is useful as a building block: anywhere Aitoff appears as a component of another projection, the closed-form replacement either improves the surrounding code directly or improves the inner step of whatever iteration remains.
+
+## Conclusion
+
+This sidebar ended up consuming way more time than I expected. It was a rabbit hole for sure, but the deeper I dug the more fascinated I was by the history of the Aitoff and Hammer projections, and how they're confused even today thanks to their visual similarity and intertwined origins. I find the Hammer projection the most pleasing of the two, but I appreciate the simple elegance of Aitoff's original construction, even more so now that I know about the closed-form inverse. And finding that closed form inverse has netted real performance results for Flatsphere already while matching existing implementations' accuracy. Thanks to this investigation, I'll be making a PR to PROJ at least to suggest using the closed-form inverse.

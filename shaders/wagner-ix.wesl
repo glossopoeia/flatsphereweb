@@ -9,14 +9,23 @@ import package::common::{PI};
 //
 // Every step is closed-form and individually invertible, so the whole projection is too: the
 // inverse undoes the output scaling, runs the closed-form Aitoff inverse, then undoes
-// the input scaling. Constants are Wagner's originals m = 7/9, n = 5/18 with the axial scale
-// factors Cx = 18/5, Cy = 9/7 (Tobias Jung / Canters). They satisfy Cx·Cy = 1/(n·m) and place
-// the equator at true scale (x = λ when φ = 0).
+// the input scaling.
+//
+// The two shape constants are Wagner's originals m = 7/9, n = 5/18 (Tobias Jung / Canters): m
+// sets the pole-line length, n the meridian curvature. The output scales are NOT independent
+// magic numbers — they fall out of m and n as Cx = 1/n and Cy = 1/m, which give true scale at
+// the centre of the map in both axes (∂x/∂λ = ∂y/∂φ = 1 at the origin). Their ratio
+// Cx/Cy = m/n is the projection's *axial ratio* (≈ 2.8 here). That single degree of freedom is
+// what Flatsphere's display aspect-ratio slider controls — a pure horizontal stretch, applied
+// after projection, is exactly a change of Cx relative to Cy. The slider's default
+// (defaultAspect = Y_MAX/π in projections.json) shows the standard proportions; other values
+// reach other Wagner IX axial ratios, the same way the equirectangular standard parallel is
+// reached by the slider. So the axial ratio is set by the slider default, not hard-coded here.
 
-const M: f32 = 0.77777777777777778;    // 7/9  — sin η = m · sin φ
-const N: f32 = 0.27777777777777778;    // 5/18 — δ = n · λ (renumbered half-longitude)
-const CX: f32 = 3.6;                    // 18/5 — output x scale
-const CY: f32 = 1.28571428571428571;   // 9/7  — output y scale
+const M: f32 = 0.77777777777777778;    // 7/9  — sin η = m · sin φ   (pole-line length)
+const N: f32 = 0.27777777777777778;    // 5/18 — δ = n · λ           (meridian curvature)
+const CX: f32 = 1.0 / N;                // 18/5 — true scale at centre: x = λ on the equator
+const CY: f32 = 1.0 / M;                // 9/7  — true scale at centre; Cx/Cy = m/n is the axial ratio
 const Y_MAX: f32 = 1.2625201731;        // max |y|, at the pole-line ends (φ = ±90°, λ = ±180°)
 
 const planar_scale: vec2f = vec2(PI, Y_MAX);

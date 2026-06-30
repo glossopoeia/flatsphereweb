@@ -1,69 +1,77 @@
 import package::common::{PI};
 
 // Wagner IX (Aitoff-Wagner): Karlheinz Wagner's 1949 modification of Aitoff that gives the
-// poles a finite, gently curved line instead of a single point. It pre-scales latitude and
-// longitude, applies the Aitoff construction to the scaled pair, then rescales the output.
+// poles a finite, gently curved line instead of a single point. It applies the Aitoff
+// construction to PRE-SCALED coordinates, then rescales the result:
 //
-//   sin η = m·sin φ,   δ = n·λ,   c = arccos(cos η · cos δ)
-//   (x, y) = (Cx · cos η · sin δ,  Cy · sin η) · (c / sin c)
+//   φ' = asin(m · sin φ),   λ' = n · λ,   (x, y) = (sx, sy) · Aitoff(φ', λ')
 //
-// Every step is closed-form and individually invertible, so the whole projection is too: the
-// inverse undoes the output scaling, runs the closed-form Aitoff inverse, then undoes
-// the input scaling.
+// Because Aitoff is closed-form both ways, so is Wagner IX: the inverse undoes the output
+// scaling, runs the closed-form Aitoff inverse (reused verbatim — the very point of the
+// construction), then undoes the input scaling. The aitoff_forward / aitoff_inverse helpers
+// below are the same Aitoff building blocks used in aitoff.wesl and composed in
+// winkel-tripel.wesl; Wagner IX just feeds them renumbered coordinates and rescales.
 //
-// The two shape constants are Wagner's originals m = 7/9, n = 5/18 (Tobias Jung / Canters): m
-// sets the pole-line length, n the meridian curvature. The output scales are NOT independent
-// magic numbers — they fall out of m and n as Cx = 1/n and Cy = 1/m, which give true scale at
-// the centre of the map in both axes (∂x/∂λ = ∂y/∂φ = 1 at the origin). Their ratio
-// Cx/Cy = m/n is the projection's *axial ratio* (≈ 2.8 here). That single degree of freedom is
-// what Flatsphere's display aspect-ratio slider controls — a pure horizontal stretch, applied
-// after projection, is exactly a change of Cx relative to Cy. The slider's default
-// (defaultAspect = Y_MAX/π in projections.json) shows the standard proportions; other values
-// reach other Wagner IX axial ratios, the same way the equirectangular standard parallel is
-// reached by the slider. So the axial ratio is set by the slider default, not hard-coded here.
+// Constants: m = 7/9 (pole-line length) and n = 5/9 (meridian curvature) are Wagner's originals
+// (Tobias Jung / Canters). The output scales are not independent magic numbers — sx = 1/n and
+// sy = 1/m give true scale at the centre of the map in both axes (∂x/∂λ = ∂y/∂φ = 1 at the
+// origin). Their balance fixes the map's aspect (half-width:half-height = π : Y_MAX ≈ 2.49), and
+// that single affine degree of freedom is what the display aspect-ratio slider controls: its
+// default (defaultAspect = Y_MAX/π in projections.json) shows the standard proportions, other
+// values give other Wagner IX axial ratios — the same way the equirectangular standard parallel
+// is reached by the slider.
 
-const M: f32 = 0.77777777777777778;    // 7/9  — sin η = m · sin φ   (pole-line length)
-const N: f32 = 0.27777777777777778;    // 5/18 — δ = n · λ           (meridian curvature)
-const CX: f32 = 1.0 / N;                // 18/5 — true scale at centre: x = λ on the equator
-const CY: f32 = 1.0 / M;                // 9/7  — true scale at centre; Cx/Cy = m/n is the axial ratio
+const M: f32 = 0.77777777777777778;    // 7/9 — m: φ' = asin(m·sin φ)   (pole-line length)
+const N: f32 = 0.55555555555555556;    // 5/9 — n: λ' = n·λ             (meridian curvature)
+const SX: f32 = 1.0 / N;                // 9/5 — sx = 1/n: true scale at centre (x = λ on the equator)
+const SY: f32 = 1.0 / M;                // 9/7 — sy = 1/m: true scale at centre
 const Y_MAX: f32 = 1.2625201731;        // max |y|, at the pole-line ends (φ = ±90°, λ = ±180°)
 
 const planar_scale: vec2f = vec2(PI, Y_MAX);
 
+// --- Aitoff building blocks (identical to aitoff.wesl / winkel-tripel.wesl) ---
+
+// Aitoff forward: equatorial azimuthal-equidistant of (lat, lon/2) with x doubled.
+fn aitoff_forward(lat: f32, lon: f32) -> vec2f {
+    let a = acos(clamp(cos(lat) * cos(lon / 2.0), -1.0, 1.0));
+    let d = select(a / sin(a), 1.0, a < 1e-6);   // α/sin α → 1 as α → 0
+    return vec2f(2.0 * cos(lat) * sin(lon / 2.0) * d, sin(lat) * d);
+}
+
+// Aitoff closed-form inverse: (x/2)² + y² = α², so α — and from it lat, lon — fall out directly.
+fn aitoff_inverse(x: f32, y: f32) -> vec2f {
+    let half_x = x / 2.0;
+    let alpha = sqrt(half_x * half_x + y * y);
+    if (alpha < 1e-6) {
+        return vec2f(y, x);
+    }
+    let sin_alpha = sin(alpha);
+    return vec2f(asin(clamp(y * sin_alpha / alpha, -1.0, 1.0)),
+                 2.0 * atan2(half_x * sin_alpha, alpha * cos(alpha)));
+}
+
+// --- Wagner IX = Aitoff on renumbered coordinates, rescaled ---
+
 fn project(lat: f32, lon: f32) -> vec2f {
-    let s = M * sin(lat);                        // sin η
-    let cos_eta = sqrt(max(1.0 - s * s, 0.0));   // cos η
-    let delta = N * lon;                          // renumbered half-longitude
-    let cos_c = clamp(cos_eta * cos(delta), -1.0, 1.0);
-    let c = acos(cos_c);                          // angular distance from the projection center
-    // c/sin c → 1 as c → 0; guard the 0/0 singularity at the origin (φ = 0, λ = 0)
-    let d = select(c / sin(c), 1.0, c < 1e-6);
-    let x = CX * cos_eta * sin(delta) * d;
-    let y = CY * s * d;
-    return vec2f(x, y);
+    let phi_p = asin(M * sin(lat));        // φ' = asin(m·sin φ)
+    let a = aitoff_forward(phi_p, N * lon); // Aitoff(φ', λ'),  λ' = n·λ
+    return vec2f(SX * a.x, SY * a.y);
 }
 
 fn inverse(x: f32, y: f32) -> vec2f {
-    // Undo the output scaling: (t1, t2) are azimuthal-equidistant coordinates of the renumbered
-    // point (η, δ). For the equidistant parent the planar radius IS the angular distance, so
-    // c = √(t1² + t2²) recovers it with no iteration — the same algebraic identity that makes
-    // the Aitoff inverse closed-form.
-    let t1 = x / CX;
-    let t2 = y / CY;
-    let c = sqrt(t1 * t1 + t2 * t2);
-    if (c < 1e-6) {
-        return vec2f(0.0, 0.0);                   // projection center
+    // Undo the output scaling, then invert the Aitoff half in closed form.
+    let ax = x / SX;
+    let ay = y / SY;
+    // Outside the Aitoff ellipse the renumbered point is past a hemisphere — reject (same bound
+    // aitoff.wesl uses, applied to the unscaled coordinates).
+    if (ax * ax + 4.0 * ay * ay > PI * PI) {
+        return vec2f(-181.0, 0.0);
     }
-    if (c > PI) {
-        return vec2f(-181.0, 0.0);                // beyond the hemispherical bound
-    }
-    let sin_c = sin(c);
-    let sin_eta = t2 * sin_c / c;                 // sin η
-    let sin_lat = sin_eta / M;                    // undo latitude renumbering: sin φ = sin η / m
-    let delta = atan2(t1 * sin_c, c * cos(c));    // renumbered half-longitude
-    let lon = delta / N;                           // undo longitude renumbering
-    // The outline is exactly |sin φ| ≤ 1 (the curved pole-line arcs) and |λ| ≤ π (the
-    // antimeridian arcs); reject anything past either so exterior pixels render as background.
+    let p = aitoff_inverse(ax, ay);   // (φ', λ')
+    let sin_lat = sin(p.x) / M;        // undo latitude renumbering: sin φ = sin φ' / m
+    let lon = p.y / N;                  // undo longitude renumbering: λ = λ' / n
+    // Wagner's outline is the Aitoff image of the renumbered rectangle, strictly inside the
+    // ellipse: |φ'| ≤ asin(m) ⟺ |sin φ| ≤ 1, and |λ'| ≤ nπ ⟺ |λ| ≤ π. Reject past either arc.
     if (abs(sin_lat) > 1.0 + 1e-4 || abs(lon) > PI + 1e-4) {
         return vec2f(-181.0, 0.0);
     }

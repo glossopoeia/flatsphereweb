@@ -23,23 +23,26 @@ fn set_extra_params(p: vec4f) { }
 
 // --- Aitoff helpers (Aitoff is the other half of the Winkel-Tripel average) ---
 
-// Aitoff forward
+// Aitoff forward, see aitoff.wesl for explanation of numeric compute choices made here.
 fn aitoff_forward(lat: f32, lon: f32) -> vec2f {
-    let a = acos(clamp(cos(lat) * cos(lon / 2.0), -1.0, 1.0));
-    let d = select(a / sin(a), 1.0, a < 1e-6);   // α/sin α → 1 as α → 0
-    return vec2f(2.0 * cos(lat) * sin(lon / 2.0) * d, sin(lat) * d);
+    let sin_half_lon = sin(lon / 2.0);
+    let cos_half_lon = cos(lon / 2.0);
+    let sin_lat = sin(lat);
+    let cos_lat = cos(lat);
+    let cos_alpha = cos_lat * cos_half_lon;
+    let sin_alpha = length(vec2f(cos_lat * sin_half_lon, sin_lat));
+    let A = select(atan2(sin_alpha, cos_alpha) / max(sin_alpha, 1e-12), 1.0,
+                   sin_alpha < 1e-6 && cos_alpha > 0.0);
+    return vec2f(2.0 * cos_lat * sin_half_lon * A, sin_lat * A);
 }
 
-// Aitoff closed-form inverse
+// Aitoff closed-form inverse (Snyder 1987, pp. 195–197)
 fn aitoff_inverse(x: f32, y: f32) -> vec2f {
     let half_x = x / 2.0;
-    let alpha = sqrt(half_x * half_x + y * y);
-    if (alpha < 1e-6) {
-        return vec2f(y, x);
-    }
-    let sin_alpha = sin(alpha);
-    return vec2f(asin(clamp(y * sin_alpha / alpha, -1.0, 1.0)),
-                 2.0 * atan2(half_x * sin_alpha, alpha * cos(alpha)));
+    let alpha = length(vec2f(half_x, y));
+    let sinc_alpha = select(sin(alpha) / alpha, 1.0, alpha < 1e-6);
+    return vec2f(asin(clamp(y * sinc_alpha, -1.0, 1.0)),
+                 2.0 * atan2(half_x * sinc_alpha, cos(alpha)));
 }
 
 // --- Winkel-Tripel ---
@@ -56,16 +59,24 @@ fn winkel_jacobian(lat: f32, lon: f32) -> vec4f {
     let psi = lon / 2.0;
     let cphi = cos(lat); let sphi = sin(lat);
     let cpsi = cos(psi); let spsi = sin(psi);
-    let c = clamp(cphi * cpsi, -1.0, 1.0);          // cos α
-    let alpha = acos(c);
-    let s = sqrt(max(1.0 - c * c, 1e-12));          // sin α
+    let c = cphi * cpsi;                            // cos α
+    // sin α from components (sin²α = cos²φ·sin²ψ + sin²φ): good relative accuracy at
+    // small α, where 1 − c² cancels catastrophically in f32
+    let s = length(vec2f(cphi * spsi, sphi));
+    let alpha = atan2(s, c);
     var d: f32; var k: f32;
-    if (alpha < 1e-4) {
+    // Taylor branch below α = 1e-2: the direct K loses to cancellation in 1 − D·cosα
+    // there (it can even go negative), while truncating K = 1/3 + (2/15)α² + O(α⁴) to
+    // its constant costs only ~4e-5 relative at the branch point
+    if (alpha < 1e-2) {
         d = 1.0 + alpha * alpha / 6.0;
         k = 1.0 / 3.0;
     } else {
-        d = alpha / s;
-        k = (1.0 - d * c) / (s * s);
+        // floor s away from the other removable end: Newton's unwrapped lon can reach
+        // α = π, where the component form gives s = 0 exactly
+        let ss = max(s, 1e-6);
+        d = alpha / ss;
+        k = (1.0 - d * c) / (ss * ss);
     }
     let dxa_dphi = 2.0 * spsi * (-sphi * d + cphi * sphi * cpsi * k);
     let dxa_dlam = cphi * cpsi * d + cphi * cphi * spsi * spsi * k;

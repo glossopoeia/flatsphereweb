@@ -32,22 +32,27 @@ const planar_scale: vec2f = vec2(PI, Y_MAX);
 // --- Aitoff building blocks (identical to aitoff.wesl / winkel-tripel.wesl) ---
 
 // Aitoff forward: equatorial azimuthal-equidistant of (lat, lon/2) with x doubled.
+// See aitoff.wesl for explanation of numeric compute choices made here.
 fn aitoff_forward(lat: f32, lon: f32) -> vec2f {
-    let a = acos(clamp(cos(lat) * cos(lon / 2.0), -1.0, 1.0));
-    let d = select(a / sin(a), 1.0, a < 1e-6);   // α/sin α → 1 as α → 0
-    return vec2f(2.0 * cos(lat) * sin(lon / 2.0) * d, sin(lat) * d);
+    let sin_half_lon = sin(lon / 2.0);
+    let cos_half_lon = cos(lon / 2.0);
+    let sin_lat = sin(lat);
+    let cos_lat = cos(lat);
+    let cos_alpha = cos_lat * cos_half_lon;
+    let sin_alpha = length(vec2f(cos_lat * sin_half_lon, sin_lat));
+    let A = select(atan2(sin_alpha, cos_alpha) / max(sin_alpha, 1e-12), 1.0,
+                   sin_alpha < 1e-6 && cos_alpha > 0.0);
+    return vec2f(2.0 * cos_lat * sin_half_lon * A, sin_lat * A);
 }
 
-// Aitoff closed-form inverse: (x/2)² + y² = α², so α — and from it lat, lon — fall out directly.
+// Aitoff closed-form inverse (Snyder 1987, pp. 195–197).
 fn aitoff_inverse(x: f32, y: f32) -> vec2f {
     let half_x = x / 2.0;
-    let alpha = sqrt(half_x * half_x + y * y);
-    if (alpha < 1e-6) {
-        return vec2f(y, x);
-    }
-    let sin_alpha = sin(alpha);
-    return vec2f(asin(clamp(y * sin_alpha / alpha, -1.0, 1.0)),
-                 2.0 * atan2(half_x * sin_alpha, alpha * cos(alpha)));
+    let alpha = length(vec2f(half_x, y));
+    // unlike aitoff.wesl, don't guard against α > π/2 here
+    let sinc_alpha = select(sin(alpha) / alpha, 1.0, alpha < 1e-6);
+    return vec2f(asin(clamp(y * sinc_alpha, -1.0, 1.0)),
+                 2.0 * atan2(half_x * sinc_alpha, cos(alpha)));
 }
 
 // --- Wagner IX = Aitoff on renumbered coordinates, rescaled ---

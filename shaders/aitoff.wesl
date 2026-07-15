@@ -14,8 +14,10 @@ fn project(lat: f32, lon: f32) -> vec2f {
     let sin_alpha = length(vec2f(cos_lat * sin_half_lon, sin_lat));
     // A = α/sin α → 1 at the origin. The cos α > 0 condition pins the guard to the α≈0
     // root: callers iterating with unwrapped lon can reach α≈π, where sin α≈0 too but
-    // the atan2 form stays finite and correct.
-    let A = select(atan2(sin_alpha, cos_alpha) / sin_alpha, 1.0,
+    // the atan2 form stays finite and correct — sin α bounds the factors multiplying A,
+    // so |x| ≤ 2α and |y| ≤ α. The 1e-12 floor closes the one residual 0/0: WGSL's loose
+    // trig tolerance lets a driver return sin(λ/2) == 0 exactly with cos(λ/2) < 0.
+    let A = select(atan2(sin_alpha, cos_alpha) / max(sin_alpha, 1e-12), 1.0,
                    sin_alpha < 1e-6 && cos_alpha > 0.0);
     return vec2f(2.0 * cos_lat * sin_half_lon * A, sin_lat * A);
 }

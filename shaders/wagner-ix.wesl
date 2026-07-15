@@ -40,7 +40,7 @@ fn aitoff_forward(lat: f32, lon: f32) -> vec2f {
     let cos_lat = cos(lat);
     let cos_alpha = cos_lat * cos_half_lon;
     let sin_alpha = length(vec2f(cos_lat * sin_half_lon, sin_lat));
-    let A = select(atan2(sin_alpha, cos_alpha) / sin_alpha, 1.0,
+    let A = select(atan2(sin_alpha, cos_alpha) / max(sin_alpha, 1e-12), 1.0,
                    sin_alpha < 1e-6 && cos_alpha > 0.0);
     return vec2f(2.0 * cos_lat * sin_half_lon * A, sin_lat * A);
 }

@@ -366,6 +366,19 @@ export function createAppComponent() {
             if (Number.isFinite(deg)) Alpine.store('app').setRingCenterLon(deg);
         },
 
+        // Echo the store on change (Enter, or blur after an edit) so the field shows what is actually
+        // rendered. For example, latitude 100 gets clamped to 90, so we put 90 back in the field.
+        onRingCenterCommit() {
+            const store = Alpine.store('app');
+            this.$refs.ringCenterLat.value = store.rangeRingCenterLat;
+            this.$refs.ringCenterLon.value = store.rangeRingCenterLon;
+        },
+
+        // Called from the x-for row template on change, so it takes the row index directly.
+        onRingRadiusCommit(index) {
+            Alpine.store('app').clampRingRadius(index);
+        },
+
         onRingCenterMarkerChange() {
             Alpine.store('app').rangeRingShowCenter = this.$refs.ringCenterMarker.checked;
         },

@@ -216,6 +216,15 @@ Alpine.store('app', {
         if (index >= 0 && index < this.rings.length) this.rings.splice(index, 1);
     },
 
+    // Used when committing a ring radius. The input's max and step only flag the field invalid;
+    // they do not stop x-model storing whatever was typed, so we need to clamp and round here.
+    clampRingRadius(index) {
+        const ring = this.rings[index];
+        if (!ring || !Number.isFinite(ring.radius)) return;
+        const u = ringUnit(this.rangeRingUnit);
+        ring.radius = +Math.max(0, Math.min(u.max, ring.radius)).toFixed(u.decimals);
+    },
+
     // Re-express every radius so switching units preserves the distance rather than reinterpreting
     // the number. Labels that still match the auto-generated form are regenerated too; anything the
     // user typed is left untouched.

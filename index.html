@@ -159,11 +159,11 @@ nav: home
                         <div class="ring-center-grid">
                             <label for="ringCenterLat">
                                 Center Lat
-                                <input type="number" id="ringCenterLat" x-ref="ringCenterLat" x-on:input="onRingCenterLatInput" min="-90" max="90" step="0.01" value="0">
+                                <input type="number" id="ringCenterLat" x-ref="ringCenterLat" x-on:input="onRingCenterLatInput" x-on:change="onRingCenterCommit" min="-90" max="90" step="0.01" value="0">
                             </label>
                             <label for="ringCenterLon">
                                 Center Lon
-                                <input type="number" id="ringCenterLon" x-ref="ringCenterLon" x-on:input="onRingCenterLonInput" min="-180" max="180" step="0.01" value="0">
+                                <input type="number" id="ringCenterLon" x-ref="ringCenterLon" x-on:input="onRingCenterLonInput" x-on:change="onRingCenterCommit" min="-180" max="180" step="0.01" value="0">
                             </label>
                         </div>
                         <label>
@@ -186,7 +186,7 @@ nav: home
                                 <div class="ring-row">
                                     <input type="checkbox" class="ring-enable" x-model="ring.enabled" aria-label="Show this ring">
                                     <input type="color" x-model="ring.color" aria-label="Ring color">
-                                    <input type="number" x-model.number="ring.radius" min="0" x-bind:max="$store.app.ringMax" x-bind:step="$store.app.ringStep" aria-label="Ring radius">
+                                    <input type="number" x-model.number="ring.radius" x-on:change="onRingRadiusCommit(index)" min="0" x-bind:max="$store.app.ringMax" x-bind:step="$store.app.ringStep" aria-label="Ring radius">
                                     <span class="ring-unit" x-text="$store.app.ringUnitSuffix"></span>
                                     <input type="text" x-model="ring.label" maxlength="32" placeholder="Label" aria-label="Ring label">
                                     <button type="button" class="ring-remove" x-on:click="removeRing(index)" aria-label="Remove ring">&times;</button>

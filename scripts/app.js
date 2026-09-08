@@ -9,6 +9,10 @@ import { triggerDownload, hexToRgbNormalized, generateAutoBasename, withImageExt
 import { trackEvent } from './analytics.js';
 import { packRings, legendEntries, drawRingLegend, EMPTY_RINGS } from './rings.js';
 
+// How long an 'auto' legend-theme decision is reused before the preview is sampled again.
+// Sampling is a synchronous GPU readback, and the preview repaints on every pan and zoom frame.
+const PREVIEW_THEME_SAMPLE_MS = 250;
+
 export class ProjectionApp {
     constructor() {
         this.canvas = document.getElementById('projectionCanvas');
@@ -335,12 +339,36 @@ export class ProjectionApp {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const decorate = this.ringLegendDecorator();
         if (!decorate) return;
+
         // 'auto' resolves the panel from the luma underneath, so the preview has to sample the same
         // pixels the export would or it would always fall back to the dark panel and disagree with
-        // the file whenever the map is light there. Only 'auto' pays for the readback.
-        const theme = Alpine.store('app').rangeRingLegendTheme;
-        const pixels = theme === 'auto' ? this.readPreviewPixels() : null;
-        decorate(ctx, canvas.width, canvas.height, pixels);
+        // the file whenever the map is light there. That sample is a synchronous GPU readback and
+        // this repaints on every pan and zoom frame, so it is rate-limited: a recent decision is
+        // reused, one trailing re-sample runs once the interaction settles, and nothing is read at
+        // all while the Export panel is closed and the preview is not on screen.
+        let pixels = null;
+        let themeOverride = null;
+        if (Alpine.store('app').rangeRingLegendTheme === 'auto') {
+            const visible = this.previewCanvas?.closest('details')?.open !== false;
+            const fresh = this._previewAutoTheme
+                && (performance.now() - this._previewAutoThemeAt) < PREVIEW_THEME_SAMPLE_MS;
+            if (visible && !fresh) {
+                pixels = this.readPreviewPixels();
+            } else {
+                themeOverride = this._previewAutoTheme || 'dark';
+                if (visible && !this._previewThemeTimer) {
+                    this._previewThemeTimer = setTimeout(() => {
+                        this._previewThemeTimer = null;
+                        this.renderPreviewLegend();
+                    }, PREVIEW_THEME_SAMPLE_MS);
+                }
+            }
+        }
+        const resolved = decorate(ctx, canvas.width, canvas.height, pixels, themeOverride);
+        if (pixels && resolved) {
+            this._previewAutoTheme = resolved;
+            this._previewAutoThemeAt = performance.now();
+        }
     }
 
     // RGBA bytes of the export-preview canvas. It is a WebGPU canvas, so getImageData can't read it
@@ -477,7 +505,9 @@ export class ProjectionApp {
         const entries = legendEntries(store.rings, store.rangeRingUnit);
         if (entries.length === 0) return null;
         const theme = store.rangeRingLegendTheme;
-        return (ctx, width, height, pixels) => drawRingLegend(ctx, entries, { width, height, theme, pixels });
+        // themeOverride lets a caller that already resolved 'auto' skip the pixel sampling.
+        return (ctx, width, height, pixels, themeOverride) =>
+            drawRingLegend(ctx, entries, { width, height, theme: themeOverride || theme, pixels });
     }
 
     render() {

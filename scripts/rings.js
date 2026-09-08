@@ -164,18 +164,20 @@ function meanLuma(rgba, imgWidth, imgHeight, box) {
     const y1 = Math.min(imgHeight, Math.ceil(box.y + box.h));
     if (x1 <= x0 || y1 <= y0) return 0;
     const stride = Math.max(1, Math.floor(Math.min(x1 - x0, y1 - y0) / 16));
-    let sum = 0, n = 0;
+    let sum = 0, weight = 0;
     for (let y = y0; y < y1; y += stride) {
         for (let x = x0; x < x1; x += stride) {
             const i = (y * imgWidth + x) * 4;
-            // Weight by alpha so a transparent background doesn't read as black and force a light
-            // panel onto an image that will be composited over something unknown.
+            // Alpha-weighted mean. A transparent pixel carries no colour of its own, so it must not
+            // count as black: dividing by the accumulated alpha rather than the sample count lets a
+            // partly transparent area be judged by its opaque pixels alone. An area with no opaque
+            // pixels at all yields 0, which the caller treats as dark.
             const a = rgba[i + 3] / 255;
             sum += (0.2126 * rgba[i] + 0.7152 * rgba[i + 1] + 0.0722 * rgba[i + 2]) / 255 * a;
-            n++;
+            weight += a;
         }
     }
-    return n ? sum / n : 0;
+    return weight > 0 ? sum / weight : 0;
 }
 
 /**
@@ -184,9 +186,12 @@ function meanLuma(rgba, imgWidth, imgHeight, box) {
  * entries  [{ label, color }] from legendEntries()
  * theme    'auto' | 'light' | 'dark'. 'auto' needs `pixels` to measure against.
  * pixels   optional RGBA buffer of the image the legend is being drawn over, used by 'auto'.
+ *
+ * Returns the theme actually drawn ('light' or 'dark'), or null when nothing was drawn, so a
+ * caller that repaints often can reuse an 'auto' decision instead of re-sampling every time.
  */
 export function drawRingLegend(ctx, entries, { width, height, theme = 'auto', pixels = null } = {}) {
-    if (!entries || entries.length === 0) return;
+    if (!entries || entries.length === 0) return null;
 
     const m = legendMetrics(width, height, entries.length);
     ctx.save();
@@ -204,7 +209,7 @@ export function drawRingLegend(ctx, entries, { width, height, theme = 'auto', pi
     const box = { x: m.margin, y: Math.max(m.margin, height - m.margin - boxH), w: boxW, h: boxH };
     if (box.w <= 0 || box.h <= 0) {
         ctx.restore();
-        return;
+        return null;
     }
 
     let resolved = theme;
@@ -244,4 +249,5 @@ export function drawRingLegend(ctx, entries, { width, height, theme = 'auto', pi
 
     ctx.restore();
     ctx.restore();
+    return resolved;
 }

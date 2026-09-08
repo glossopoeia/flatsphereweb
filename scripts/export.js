@@ -35,7 +35,7 @@ const WEBP_XMP_FLAG = 0x04;
  *   overlays.rangeRingUnit: 'km' | 'deg'                — unit the ring radii are expressed in
  *   overlays.rangeRingCenterLatDeg: number, -90..90     — shared ring centre latitude
  *   overlays.rangeRingCenterLonDeg: number, -180..180   — shared ring centre longitude
- *   overlays.rangeRingCenterMarker: bool                — centre crosshair drawn
+ *   overlays.rangeRingCenterMarker: bool                — centre marker drawn
  *   overlays.rangeRingLegend: bool                      — legend composited into the image
  *   overlays.rangeRingLegendTheme: 'auto'|'light'|'dark'— legend panel treatment
  *   overlays.rangeRingList: [{ enabled, radius, color, label }]  — up to 8 rings, in draw order.

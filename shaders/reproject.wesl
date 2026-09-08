@@ -4,6 +4,7 @@ import package::srcproj::{project, to_texture};
 import package::tissot::{is_tissot_indicatrix, apply_tissot_indicatrices};
 import package::graticule::{apply_graticule, is_graticule_line};
 import package::oblique::{oblique_transform_from_sphere};
+import package::rangerings::{range_ring_field, apply_range_rings, MAX_RINGS};
 
 struct Uniforms {
     camera_lat: f32,
@@ -16,10 +17,14 @@ struct Uniforms {
     pan_x: f32,
     pan_y: f32,
     graticule_width: f32,
-    _pad1: f32,
-    _pad2: f32,
+    show_range_rings: f32,
+    range_ring_width: f32,
     background_color: vec4f,
     proj_extra_params: vec4f,
+    // (lat_rad, lon_rad, show_marker, reserved)
+    range_ring_center: vec4f,
+    // Per ring slot: (radius_rad, r, g, b). radius <= 0 marks an unused or disabled slot.
+    range_rings: array<vec4f, MAX_RINGS>,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -99,6 +104,16 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     
     // Calculate graticule BEFORE any conditional branches (for uniform control flow)
     let graticule_intensity = is_graticule_line(final_lat, final_lon, uniforms.graticule_width);
+
+    // Range rings take screen-space derivatives too, so they must also be evaluated up here.
+    // Gated on the uniform so the field's trigonometry and per-slot loop cost nothing for the many
+    // renders with the overlay off: a condition on a uniform-buffer value is uniform across the
+    // draw, so the derivatives inside remain in uniform control flow.
+    var ring_field = vec4f(0.0, 0.0, 0.0, 0.0);
+    if (uniforms.show_range_rings > 0.5) {
+        ring_field = range_ring_field(final_lat, final_lon, uniforms.range_ring_center,
+                                      uniforms.range_rings, uniforms.range_ring_width);
+    }
     
     // Sample world map texture
     let color = source_color_at(final_lat, final_lon);
@@ -113,6 +128,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     
     // Add graticule if enabled (using pre-calculated intensity)
     final_color = apply_graticule(final_color, graticule_intensity, uniforms.show_graticule);
+
+    // Rings last so they stay on top of the reference grid
+    final_color = apply_range_rings(final_color, ring_field, uniforms.show_range_rings);
     
     return vec4f(final_color, 1.0);
 }

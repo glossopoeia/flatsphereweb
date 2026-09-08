@@ -1,4 +1,5 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/@alpinejs/csp@3/dist/module.esm.js';
+import { MAX_RINGS, convertRingRadius, defaultRings, nextRingColor, formatRingLabel, ringUnit } from './rings.js';
 import { ProjectionApp } from './app.js';
 import { createAppComponent } from './app-component.js';
 import { trackEvent } from './analytics.js';
@@ -33,6 +34,18 @@ Alpine.store('app', {
     graticule: false,
     graticuleWidth: 1.0,
     fullscreen: false,
+
+    // Range rings overlay
+    rangeRings: false,
+    rangeRingWidth: 1.0,
+    rangeRingUnit: 'km',
+    rangeRingCenterLat: 0,
+    rangeRingCenterLon: 0,
+    rangeRingShowCenter: true,
+    rangeRingLegend: true,
+    rangeRingLegendTheme: 'auto',
+    rings: [],
+    nextRingId: 1,
 
     // Sliders
     aspectRatio: 1.0,
@@ -155,6 +168,75 @@ Alpine.store('app', {
         let v = ((deg % 360) + 360) % 360;
         if (v > 180) v -= 360;
         this.obliqueLon = v;
+    },
+
+    get ringMax() { return ringUnit(this.rangeRingUnit).max; },
+    get ringStep() { return ringUnit(this.rangeRingUnit).step; },
+    get ringUnitSuffix() { return ringUnit(this.rangeRingUnit).suffix.trim(); },
+    get canAddRing() { return this.rings.length < MAX_RINGS; },
+
+    setRingCenterLat(deg) {
+        this.rangeRingCenterLat = Math.max(-90, Math.min(90, deg));
+    },
+
+    setRingCenterLon(deg) {
+        let v = ((deg % 360) + 360) % 360;
+        if (v > 180) v -= 360;
+        this.rangeRingCenterLon = v;
+    },
+
+    // Enabling the overlay with nothing configured would be a silent no-op, so seed a usable set
+    // the first time it is switched on. Later toggles leave the user's rings alone.
+    setRangeRings(enabled) {
+        this.rangeRings = enabled;
+        if (enabled && this.rings.length === 0) {
+            this.rings = defaultRings(this.rangeRingUnit);
+            this.nextRingId = this.rings.length + 1;
+        }
+    },
+
+    addRing() {
+        if (this.rings.length >= MAX_RINGS) return;
+        // Step out from the current outermost ring so a new ring is visible rather than landing on
+        // top of an existing one.
+        const outermost = this.rings.reduce((m, r) => Math.max(m, r.radius || 0), 0);
+        const u = ringUnit(this.rangeRingUnit);
+        const radius = Math.min(outermost > 0 ? outermost * 2 : (this.rangeRingUnit === 'deg' ? 10 : 1000), u.max);
+        const ring = {
+            id: this.nextRingId++,
+            enabled: true,
+            radius: +radius.toFixed(u.decimals),
+            color: nextRingColor(this.rings),
+            label: formatRingLabel(+radius.toFixed(u.decimals), this.rangeRingUnit),
+        };
+        this.rings.push(ring);
+    },
+
+    removeRing(index) {
+        if (index >= 0 && index < this.rings.length) this.rings.splice(index, 1);
+    },
+
+    // Used when committing a ring radius. The input's max and step only flag the field invalid;
+    // they do not stop x-model storing whatever was typed, so we need to clamp and round here.
+    clampRingRadius(index) {
+        const ring = this.rings[index];
+        if (!ring || !Number.isFinite(ring.radius)) return;
+        const u = ringUnit(this.rangeRingUnit);
+        ring.radius = +Math.max(0, Math.min(u.max, ring.radius)).toFixed(u.decimals);
+    },
+
+    // Re-express every radius so switching units preserves the distance rather than reinterpreting
+    // the number. Labels that still match the auto-generated form are regenerated too; anything the
+    // user typed is left untouched.
+    setRingUnit(unit) {
+        const from = this.rangeRingUnit;
+        if (from === unit) return;
+        for (const ring of this.rings) {
+            const wasAuto = ring.label === formatRingLabel(ring.radius, from);
+            ring.radius = convertRingRadius(ring.radius, from, unit);
+            if (wasAuto) ring.label = formatRingLabel(ring.radius, unit);
+        }
+        this.rangeRingUnit = unit;
     },
 
     // Set a projection's extra-parameter value (see projections.json `parameters`).

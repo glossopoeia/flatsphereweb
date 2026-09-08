@@ -7,6 +7,11 @@ import { triggerDownload, hexToRgbNormalized, generateAutoBasename, withImageExt
          sanitizeFilename, serializeProjectionState,
          embedPngMetadata, embedJpegMetadata, embedWebpMetadata } from './export.js';
 import { trackEvent } from './analytics.js';
+import { packRings, legendEntries, drawRingLegend, EMPTY_RINGS } from './rings.js';
+
+// How long an 'auto' legend-theme decision is reused before the preview is sampled again.
+// Sampling is a synchronous GPU readback, and the preview repaints on every pan and zoom frame.
+const PREVIEW_THEME_SAMPLE_MS = 250;
 
 export class ProjectionApp {
     constructor() {
@@ -187,6 +192,7 @@ export class ProjectionApp {
             };
             await this.renderer.initialize(this.canvas);
             this.previewCanvas = document.getElementById('exportPreviewCanvas');
+            this.previewLegendCanvas = document.getElementById('exportPreviewLegend');
             if (this.previewCanvas) {
                 this.renderer.initPreviewContext(this.previewCanvas);
                 // When the Export <details> toggles open, recompute the preview backing using
@@ -260,6 +266,15 @@ export class ProjectionApp {
         Alpine.effect(() => {
             // Read all reactive properties that should trigger a re-render
             void (store.tissot, store.graticule, store.graticuleWidth);
+            void (store.rangeRings, store.rangeRingWidth, store.rangeRingUnit);
+            void (store.rangeRingCenterLat, store.rangeRingCenterLon, store.rangeRingShowCenter);
+            // The legend is painted over the export preview from these two, so they have to be read
+            // here as well or toggling the legend off (or switching its panel) leaves it stale.
+            void (store.rangeRingLegend, store.rangeRingLegendTheme);
+            // Touching each ring's fields registers a dependency on both the fields and the array
+            // length, so edits, adds and removes all repaint without a separate revision counter.
+            // label is included because it is what the legend actually renders.
+            for (const ring of store.rings) void (ring.enabled, ring.radius, ring.color, ring.label);
             void (store.zoom, store.aspectRatio, store.rotation);
             void (store.panX, store.panY);
             void (store.obliqueLat, store.obliqueLon);
@@ -309,6 +324,76 @@ export class ProjectionApp {
         const backingWidth = Math.max(1, Math.round(displayWidth * dpr));
         this.previewCanvas.width = backingWidth;
         this.previewCanvas.height = Math.max(1, Math.round(backingWidth * (h / w)));
+        if (this.previewLegendCanvas) {
+            this.previewLegendCanvas.width = this.previewCanvas.width;
+            this.previewLegendCanvas.height = this.previewCanvas.height;
+        }
+    }
+
+    // Repaint the legend layer over the preview. The legend is sized from the canvas it is drawn
+    // on, so at preview scale it stays proportional to what the exported file will show.
+    renderPreviewLegend() {
+        const canvas = this.previewLegendCanvas;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const decorate = this.ringLegendDecorator();
+        if (!decorate) return;
+
+        // 'auto' resolves the panel from the luma underneath, so the preview has to sample the same
+        // pixels the export would or it would always fall back to the dark panel and disagree with
+        // the file whenever the map is light there. That sample is a synchronous GPU readback and
+        // this repaints on every pan and zoom frame, so it is rate-limited: a recent decision is
+        // reused, one trailing re-sample runs once the interaction settles, and nothing is read at
+        // all while the Export panel is closed and the preview is not on screen.
+        let pixels = null;
+        let themeOverride = null;
+        if (Alpine.store('app').rangeRingLegendTheme === 'auto') {
+            const visible = this.previewCanvas?.closest('details')?.open !== false;
+            const fresh = this._previewAutoTheme
+                && (performance.now() - this._previewAutoThemeAt) < PREVIEW_THEME_SAMPLE_MS;
+            if (visible && !fresh) {
+                pixels = this.readPreviewPixels();
+            } else {
+                themeOverride = this._previewAutoTheme || 'dark';
+                if (visible && !this._previewThemeTimer) {
+                    this._previewThemeTimer = setTimeout(() => {
+                        this._previewThemeTimer = null;
+                        this.renderPreviewLegend();
+                    }, PREVIEW_THEME_SAMPLE_MS);
+                }
+            }
+        }
+        const resolved = decorate(ctx, canvas.width, canvas.height, pixels, themeOverride);
+        if (pixels && resolved) {
+            this._previewAutoTheme = resolved;
+            this._previewAutoThemeAt = performance.now();
+        }
+    }
+
+    // RGBA bytes of the export-preview canvas. It is a WebGPU canvas, so getImageData can't read it
+    // directly; copy it through a reusable 2D scratch canvas instead. Returns null if the copy
+    // fails, which puts drawRingLegend back on its no-pixels default rather than breaking the paint.
+    readPreviewPixels() {
+        const source = this.previewCanvas;
+        if (!source || !source.width || !source.height) return null;
+        let scratch = this._previewScratch;
+        if (!scratch) {
+            scratch = document.createElement('canvas');
+            this._previewScratch = scratch;
+        }
+        if (scratch.width !== source.width || scratch.height !== source.height) {
+            scratch.width = source.width;
+            scratch.height = source.height;
+        }
+        try {
+            const sctx = scratch.getContext('2d', { willReadFrequently: true });
+            sctx.clearRect(0, 0, scratch.width, scratch.height);
+            sctx.drawImage(source, 0, 0);
+            return sctx.getImageData(0, 0, scratch.width, scratch.height).data;
+        } catch {
+            return null;
+        }
     }
 
     async loadUserFile(file) {
@@ -393,6 +478,38 @@ export class ProjectionApp {
         return params;
     }
 
+    // Ring state in renderer form. Degrees and user-facing units live in the store; conversion to
+    // radians happens here at the render boundary, as it does for the oblique camera.
+    computeRingParams() {
+        const store = Alpine.store('app');
+        return {
+            showRangeRings: store.rangeRings ? 1.0 : 0.0,
+            rangeRingWidth: store.rangeRingWidth,
+            rangeRingCenter: [
+                store.rangeRingCenterLat * Math.PI / 180,
+                store.rangeRingCenterLon * Math.PI / 180,
+                store.rangeRingShowCenter ? 1.0 : 0.0,
+                0.0,
+            ],
+            // Nothing is drawn when the overlay is off, so reuse the shared zero block rather
+            // than allocating a ring buffer on every frame of a drag or zoom.
+            rangeRings: store.rangeRings ? packRings(store.rings, store.rangeRingUnit) : EMPTY_RINGS,
+        };
+    }
+
+    // Legend painter shared by the export and the export preview, so what the preview shows is
+    // what the file gets. Returns null when there is nothing to draw.
+    ringLegendDecorator() {
+        const store = Alpine.store('app');
+        if (!store.rangeRings || !store.rangeRingLegend) return null;
+        const entries = legendEntries(store.rings, store.rangeRingUnit);
+        if (entries.length === 0) return null;
+        const theme = store.rangeRingLegendTheme;
+        // themeOverride lets a caller that already resolved 'auto' skip the pixel sampling.
+        return (ctx, width, height, pixels, themeOverride) =>
+            drawRingLegend(ctx, entries, { width, height, theme: themeOverride || theme, pixels });
+    }
+
     render() {
         if (!this.renderer) return;
 
@@ -410,6 +527,7 @@ export class ProjectionApp {
             panX: store.panX,
             panY: store.panY,
             graticuleWidth: store.graticuleWidth,
+            ...this.computeRingParams(),
             projExtraParams: this.computeProjExtraParams(),
         });
     }
@@ -433,9 +551,11 @@ export class ProjectionApp {
             panX: store.panX,
             panY: store.panY,
             graticuleWidth: store.graticuleWidth,
+            ...this.computeRingParams(),
             backgroundColor: [bgR, bgG, bgB, bgA],
             projExtraParams: this.computeProjExtraParams(),
         });
+        this.renderPreviewLegend();
     }
 
     async exportImage() {
@@ -461,6 +581,8 @@ export class ProjectionApp {
                 panX: store.panX,
                 panY: store.panY,
                 graticuleWidth: store.graticuleWidth,
+                ...this.computeRingParams(),
+                decorate: this.ringLegendDecorator(),
                 backgroundColor: [bgR, bgG, bgB, bgA],
                 projExtraParams: this.computeProjExtraParams(),
                 format: store.exportFormat,

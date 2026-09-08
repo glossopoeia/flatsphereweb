@@ -1,11 +1,15 @@
 import { link } from "https://cdn.jsdelivr.net/npm/wesl@0.7.27/+esm";
+import { MAX_RINGS } from './rings.js';
 import projections from "/data/projections.json" with { type: "json" };
 
 const MAX_IMAGE_PIXELS = 4096 * 4096; // keep in sync with image-loader.js
 
-// Shader uniform layout: 12 scalars + 2 vec4f (background_color, proj_extra_params). See reproject.wesl Uniforms.
-const UNIFORM_FLOAT_COUNT = 20;
+// Shader uniform layout: 12 scalars, then vec4f background_color, proj_extra_params and
+// range_ring_center, then array<vec4f, 8> range_rings. See reproject.wesl Uniforms.
+const UNIFORM_FLOAT_COUNT = 12 + 4 + 4 + 4 + MAX_RINGS * 4;
 const UNIFORM_BUFFER_SIZE = UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT;
+// Shared zero-filled default so callers that don't use rings don't allocate one per frame.
+const EMPTY_RINGS = new Float32Array(MAX_RINGS * 4);
 
 // WebGPU spec: copyTextureToBuffer requires bytesPerRow to be a multiple of 256.
 const COPY_BYTES_PER_ROW_ALIGNMENT = 256;
@@ -50,11 +54,12 @@ export class ProjectionRenderer {
             }
             return r.text();
         };
-        const [commonSource, tissotSource, graticuleSource, obliqueSource, reprojectSource, ...projectionSources] =
+        const [commonSource, tissotSource, graticuleSource, rangeRingsSource, obliqueSource, reprojectSource, ...projectionSources] =
             await Promise.all([
                 fetchText("./shaders/common.wesl"),
                 fetchText("./shaders/tissot.wesl"),
                 fetchText("./shaders/graticule.wesl"),
+                fetchText("./shaders/rangerings.wesl"),
                 fetchText("./shaders/oblique.wesl"),
                 fetchText("./shaders/reproject.wesl"),
                 ...projections.map(p => fetchText(`./shaders/${p.shader}.wesl`)),
@@ -63,6 +68,7 @@ export class ProjectionRenderer {
             common: commonSource,
             tissot: tissotSource,
             graticule: graticuleSource,
+            rangeRings: rangeRingsSource,
             oblique: obliqueSource,
             reproject: reprojectSource,
             projections: projectionSources,
@@ -146,6 +152,7 @@ export class ProjectionRenderer {
                 "common.wesl": s.common,
                 "tissot.wesl": s.tissot,
                 "graticule.wesl": s.graticule,
+                "rangerings.wesl": s.rangeRings,
                 "oblique.wesl": s.oblique,
             },
         });
@@ -249,22 +256,24 @@ export class ProjectionRenderer {
     // aspect ratio for their target (canvas vs export texture); everything else is the same shape.
     // Keep this in sync with the Uniforms struct in reproject.wesl.
     _packUniforms({ cameraLat, cameraLon, zoom, aspect, showTissot, showGraticule, rotation,
-                    panX, panY, graticuleWidth, backgroundColor, projExtraParams = [0, 0, 0, 0] }) {
-        return new Float32Array([
-            cameraLat,
-            cameraLon,
-            zoom,
-            aspect,
-            showTissot,
-            showGraticule,
-            rotation,
-            panX,
-            panY,
-            graticuleWidth,
-            0, 0, // padding before vec4f at offset 48
-            backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3],
-            projExtraParams[0], projExtraParams[1], projExtraParams[2], projExtraParams[3],
-        ]);
+                    panX, panY, graticuleWidth, showRangeRings = 0.0, rangeRingWidth = 1.0,
+                    backgroundColor, projExtraParams = [0, 0, 0, 0],
+                    rangeRingCenter = [0, 0, 0, 0], rangeRings = EMPTY_RINGS }) {
+        // Written by float offset rather than as one positional literal, because the vec4f members
+        // must land on their 16-byte boundaries and a miscounted padding entry silently shifts
+        // everything after it.
+        const u = new Float32Array(UNIFORM_FLOAT_COUNT);
+        u.set([
+            cameraLat, cameraLon, zoom, aspect,
+            showTissot, showGraticule, rotation,
+            panX, panY, graticuleWidth,
+            showRangeRings, rangeRingWidth,
+        ], 0);
+        u.set(backgroundColor, 12);      // byte offset 48
+        u.set(projExtraParams, 16);      // byte offset 64
+        u.set(rangeRingCenter, 20);      // byte offset 80
+        u.set(rangeRings, 24);           // byte offset 96
+        return u;
     }
 
     // Configure a second canvas as the export-preview swapchain. Uses 'premultiplied' alpha
@@ -292,7 +301,9 @@ export class ProjectionRenderer {
     _renderToCanvas(context, canvas, { dst, src, cameraLat, cameraLon, zoom,
                                        showTissot, showGraticule, aspectRatioMultiplier = 1.0,
                                        rotation = 0.0, panX = 0.0, panY = 0.0,
-                                       graticuleWidth = 1.0, backgroundColor = [0, 0, 0, 1],
+                                       graticuleWidth = 1.0, showRangeRings = 0.0,
+                                       rangeRingWidth = 1.0, rangeRingCenter, rangeRings,
+                                       backgroundColor = [0, 0, 0, 1],
                                        projExtraParams = [0, 0, 0, 0] }) {
         // Initialize hasn't finished yet (e.g. resize event fired during async startup); no-op cleanly
         if (!this.shaderSources || !this.bindGroupLayout) return;
@@ -316,7 +327,8 @@ export class ProjectionRenderer {
         const uniformData = this._packUniforms({
             cameraLat, cameraLon, zoom, aspect,
             showTissot, showGraticule, rotation,
-            panX, panY, graticuleWidth, backgroundColor, projExtraParams,
+            panX, panY, graticuleWidth, showRangeRings, rangeRingWidth,
+            rangeRingCenter, rangeRings, backgroundColor, projExtraParams,
         });
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
@@ -346,7 +358,9 @@ export class ProjectionRenderer {
     // an image blob. Uses rgba8unorm for predictable RGBA byte order on readback.
     async exportToBlob({ dst, src, width, height, cameraLat, cameraLon, zoom,
                          showTissot, showGraticule, aspectRatioMultiplier, rotation,
-                         panX, panY, graticuleWidth, backgroundColor, projExtraParams, format, quality }) {
+                         panX, panY, graticuleWidth, showRangeRings = 0.0,
+                         rangeRingWidth = 1.0, rangeRingCenter, rangeRings,
+                         backgroundColor, projExtraParams, format, quality, decorate }) {
         // Validate everything up front before touching the GPU. Two limits matter: the texture
         // axis limit (maxTextureDimension2D) and the readback buffer size (maxBufferSize).
         // A single-axis check is not enough — e.g. 16384×16384 may pass the axis check but
@@ -381,7 +395,8 @@ export class ProjectionRenderer {
         const uniformData = this._packUniforms({
             cameraLat, cameraLon, zoom, aspect,
             showTissot, showGraticule, rotation,
-            panX, panY, graticuleWidth, backgroundColor, projExtraParams,
+            panX, panY, graticuleWidth, showRangeRings, rangeRingWidth,
+            rangeRingCenter, rangeRings, backgroundColor, projExtraParams,
         });
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
 
@@ -431,6 +446,10 @@ export class ProjectionRenderer {
         const canvas = new OffscreenCanvas(width, height);
         const ctx = canvas.getContext('2d');
         ctx.putImageData(new ImageData(tight, width, height), 0, 0);
+        // Hook for anything that has to be painted on top of the rendered map (currently the ring
+        // legend). Kept as a callback so the renderer needs no knowledge of overlay semantics; the
+        // raw pixels are passed along for decorations that need to measure what they cover.
+        if (decorate) decorate(ctx, width, height, tight);
         const blobOptions = { type: mime };
         if (format !== 'png') {
             blobOptions.quality = quality;

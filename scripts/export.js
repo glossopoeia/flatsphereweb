@@ -30,6 +30,20 @@ const WEBP_XMP_FLAG = 0x04;
  *   overlays.tissot:      bool                          — Tissot indicatrices visible
  *   overlays.graticule:   bool                          — graticule visible
  *   overlays.graticuleWidth: number                     — graticule line-width multiplier
+ *   overlays.rangeRings:  bool                          — range-rings overlay visible
+ *   overlays.rangeRingWidth: number                     — ring line-width multiplier
+ *   overlays.rangeRingUnit: 'km' | 'deg'                — unit the ring radii are expressed in
+ *   overlays.rangeRingCenterLatDeg: number, -90..90     — shared ring centre latitude
+ *   overlays.rangeRingCenterLonDeg: number, -180..180   — shared ring centre longitude
+ *   overlays.rangeRingCenterMarker: bool                — centre marker drawn
+ *   overlays.rangeRingLegend: bool                      — legend composited into the image
+ *   overlays.rangeRingLegendTheme: 'auto'|'light'|'dark'— legend panel treatment
+ *   overlays.rangeRingList: [{ enabled, radius, color, label }]  — up to 8 rings, in draw order.
+ *                                                         `radius` is in `rangeRingUnit`; `color`
+ *                                                         is '#rrggbb'; `label` is the legend text.
+ *
+ * Range-ring fields are additive: a reader written against the original version 1 payload simply
+ * ignores them, so the schema version does not change.
  *
  * Where embedded:
  *   PNG  → tEXt chunk, keyword 'flatsphere'. JSON is ASCII-escaped (\uXXXX) since tEXt is Latin-1;
@@ -70,6 +84,20 @@ export function serializeProjectionState(store, projections) {
             tissot: store.tissot,
             graticule: store.graticule,
             graticuleWidth: store.graticuleWidth,
+            rangeRings: store.rangeRings,
+            rangeRingWidth: store.rangeRingWidth,
+            rangeRingUnit: store.rangeRingUnit,
+            rangeRingCenterLatDeg: store.rangeRingCenterLat,
+            rangeRingCenterLonDeg: store.rangeRingCenterLon,
+            rangeRingCenterMarker: store.rangeRingShowCenter,
+            rangeRingLegend: store.rangeRingLegend,
+            rangeRingLegendTheme: store.rangeRingLegendTheme,
+            rangeRingList: (store.rings || []).map(ring => ({
+                enabled: ring.enabled,
+                radius: ring.radius,
+                color: ring.color,
+                label: ring.label,
+            })),
         },
     };
 }
@@ -285,6 +313,10 @@ export function generateAutoBasename(store, projections) {
                 parts.push(`${param.key}${v}`);
             }
         }
+    }
+    if (store.rangeRings) {
+        const live = (store.rings || []).filter(ring => ring.enabled && ring.radius > 0).length;
+        if (live > 0) parts.push(`rings${live}`);
     }
     return parts.join('-');
 }

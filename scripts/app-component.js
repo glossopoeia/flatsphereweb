@@ -60,6 +60,26 @@ export function createAppComponent() {
                 this.$refs.obliqueLonLabel.textContent = `${store.obliqueLon.toFixed(0)}°`;
             });
 
+            // Sync range ring controls
+            Alpine.effect(() => {
+                this.$refs.rangeRingsToggle.checked = store.rangeRings;
+                this.$refs.ringCenterMarker.checked = store.rangeRingShowCenter;
+                this.$refs.ringLegendToggle.checked = store.rangeRingLegend;
+                this.$refs.ringLegendTheme.value = store.rangeRingLegendTheme;
+                this.$refs.ringUnit.value = store.rangeRingUnit;
+                // Skip the write-back while the field has focus: a partial entry like "-" or
+                // "51." parses to a different number than the text, and echoing the parsed value
+                // back would erase the character just typed.
+                if (document.activeElement !== this.$refs.ringCenterLat) {
+                    this.$refs.ringCenterLat.value = store.rangeRingCenterLat;
+                }
+                if (document.activeElement !== this.$refs.ringCenterLon) {
+                    this.$refs.ringCenterLon.value = store.rangeRingCenterLon;
+                }
+                this.$refs.ringWidthSlider.value = store.rangeRingWidth;
+                this.$refs.ringWidthLabel.textContent = `${store.rangeRingWidth.toFixed(1)}x`;
+            });
+
             // Sync graticule line width slider/label and enabled state
             Alpine.effect(() => {
                 this.$refs.graticuleWidthSlider.value = store.graticuleWidth;
@@ -326,6 +346,66 @@ export function createAppComponent() {
             const enabled = this.$refs.graticuleToggle.checked;
             Alpine.store('app').graticule = enabled;
             trackEvent('display_option_toggled', { option: 'graticule', enabled });
+        },
+
+        onRangeRingsChange() {
+            const enabled = this.$refs.rangeRingsToggle.checked;
+            Alpine.store('app').setRangeRings(enabled);
+            trackEvent('display_option_toggled', { option: 'rangeRings', enabled });
+        },
+
+        // A half-typed or empty field is not a coordinate of zero, so leave the last good value in
+        // place until the text parses. `|| 0` would also make a deliberate 0 indistinguishable.
+        onRingCenterLatInput() {
+            const deg = parseFloat(this.$refs.ringCenterLat.value);
+            if (Number.isFinite(deg)) Alpine.store('app').setRingCenterLat(deg);
+        },
+
+        onRingCenterLonInput() {
+            const deg = parseFloat(this.$refs.ringCenterLon.value);
+            if (Number.isFinite(deg)) Alpine.store('app').setRingCenterLon(deg);
+        },
+
+        // Echo the store on change (Enter, or blur after an edit) so the field shows what is actually
+        // rendered. For example, latitude 100 gets clamped to 90, so we put 90 back in the field.
+        onRingCenterCommit() {
+            const store = Alpine.store('app');
+            this.$refs.ringCenterLat.value = store.rangeRingCenterLat;
+            this.$refs.ringCenterLon.value = store.rangeRingCenterLon;
+        },
+
+        // Called from the x-for row template on change, so it takes the row index directly.
+        onRingRadiusCommit(index) {
+            Alpine.store('app').clampRingRadius(index);
+        },
+
+        onRingCenterMarkerChange() {
+            Alpine.store('app').rangeRingShowCenter = this.$refs.ringCenterMarker.checked;
+        },
+
+        onRingUnitChange() {
+            Alpine.store('app').setRingUnit(this.$refs.ringUnit.value);
+        },
+
+        onRingWidthInput() {
+            Alpine.store('app').rangeRingWidth = parseFloat(this.$refs.ringWidthSlider.value);
+        },
+
+        onRingAdd() {
+            Alpine.store('app').addRing();
+        },
+
+        // Called from the x-for row template, so it takes the row index directly.
+        removeRing(index) {
+            Alpine.store('app').removeRing(index);
+        },
+
+        onRingLegendChange() {
+            Alpine.store('app').rangeRingLegend = this.$refs.ringLegendToggle.checked;
+        },
+
+        onRingLegendThemeChange() {
+            Alpine.store('app').rangeRingLegendTheme = this.$refs.ringLegendTheme.value;
         },
 
         onGraticuleWidthInput() {

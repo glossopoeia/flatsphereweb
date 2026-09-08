@@ -93,6 +93,7 @@
    "transparency" affordance when the user has the Transparent toggle on.
    background-repeat must be set explicitly because Pico's reset disables tiling. */
 .export-preview-wrap {
+    position: relative;
     width: 100%;
     margin-bottom: var(--spacing-sm);
     background-color: #2a2a2a;
@@ -103,6 +104,14 @@
     border-radius: var(--radius-sm);
     overflow: hidden;
     line-height: 0; /* prevent inline-baseline gap below the canvas */
+}
+
+#exportPreviewLegend {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
 }
 
 #exportPreviewCanvas {
@@ -204,4 +213,104 @@
 
 .proj-info-resources a:hover {
     text-decoration: underline;
+}
+
+/* --- Range rings ---------------------------------------------------------- */
+/* Selectors are #sidebar-prefixed to match the surrounding overrides: Pico targets inputs via
+   input:not([type="checkbox"]):not([type="radio"]), which outranks a bare class. */
+
+/* The fieldset exists only so `disabled` cascades to every ring control at once; it should carry
+   none of the box styling a fieldset normally has. */
+#sidebar .ring-fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+#sidebar .ring-fieldset:disabled {
+    opacity: 0.5;
+}
+
+#sidebar .ring-center-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+}
+
+#sidebar .ring-add {
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+}
+
+#sidebar .ring-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+/* One line per ring: enable, colour, radius, unit, label, remove. Keeping it to a single row
+   matters because the list can hold eight of these and the inputs inherit the sidebar's height. */
+#sidebar .ring-row {
+    display: grid;
+    grid-template-columns: auto auto minmax(3rem, 4rem) auto 1fr auto;
+    grid-template-areas: "enable colour radius unit label remove";
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--radius-sm);
+}
+
+#sidebar .ring-enable {
+    grid-area: enable;
+    margin: 0;
+}
+
+/* Pico sets appearance:none and generous padding on inputs, which collapses the native colour
+   swatch to an empty box. Restore the native rendering and shrink it to swatch size. */
+#sidebar .ring-row input[type="color"] {
+    grid-area: colour;
+    appearance: auto;
+    -webkit-appearance: auto;
+    width: 1.6rem;
+    height: 1.6rem;
+    padding: 1px;
+    border-radius: var(--radius-sm);
+}
+
+#sidebar .ring-row input[type="number"] {
+    grid-area: radius;
+    min-width: 0;
+    padding-inline: var(--spacing-xs);
+}
+
+#sidebar .ring-unit {
+    grid-area: unit;
+    color: var(--pico-muted-color);
+    white-space: nowrap;
+}
+
+#sidebar .ring-row input[type="text"] {
+    grid-area: label;
+    min-width: 0;
+}
+
+#sidebar .ring-remove {
+    grid-area: remove;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--pico-muted-border-color);
+    color: var(--pico-muted-color);
+}
+
+#sidebar .ring-remove:hover:not(:disabled) {
+    color: var(--pico-del-color, #b3261e);
+    border-color: currentColor;
 }

@@ -148,9 +148,74 @@ nav: home
                 </details>
 
                 <details>
+                    <summary role="button" class="secondary">Range Rings</summary>
+                    <label>
+                        <input type="checkbox" role="switch" id="rangeRingsToggle" x-ref="rangeRingsToggle" x-on:change="onRangeRingsChange">
+                        Show Range Rings
+                    </label>
+                    <!-- A disabled fieldset disables every descendant control natively, which keeps
+                         the dynamically-generated ring rows in step without per-row bindings. -->
+                    <fieldset class="ring-fieldset" x-bind:disabled="!$store.app.rangeRings">
+                        <div class="ring-center-grid">
+                            <label for="ringCenterLat">
+                                Center Lat
+                                <input type="number" id="ringCenterLat" x-ref="ringCenterLat" x-on:input="onRingCenterLatInput" x-on:change="onRingCenterCommit" min="-90" max="90" step="0.01" value="0">
+                            </label>
+                            <label for="ringCenterLon">
+                                Center Lon
+                                <input type="number" id="ringCenterLon" x-ref="ringCenterLon" x-on:input="onRingCenterLonInput" x-on:change="onRingCenterCommit" min="-180" max="180" step="0.01" value="0">
+                            </label>
+                        </div>
+                        <label>
+                            <input type="checkbox" role="switch" id="ringCenterMarker" x-ref="ringCenterMarker" x-on:change="onRingCenterMarkerChange" checked>
+                            Show Center Marker
+                        </label>
+                        <label for="ringUnit">
+                            Distance Units
+                            <select id="ringUnit" x-ref="ringUnit" x-on:change="onRingUnitChange">
+                                <option value="km">Kilometres</option>
+                                <option value="deg">Degrees</option>
+                            </select>
+                        </label>
+                        <label for="ringWidthSlider">
+                            Ring Line Width: <span x-ref="ringWidthLabel">1.0x</span>
+                            <input type="range" id="ringWidthSlider" x-ref="ringWidthSlider" x-on:input="onRingWidthInput" min="0.5" max="5" step="0.1" value="1.0">
+                        </label>
+                        <div class="ring-list">
+                            <template x-for="(ring, index) in $store.app.rings" :key="ring.id">
+                                <div class="ring-row">
+                                    <input type="checkbox" class="ring-enable" x-model="ring.enabled" aria-label="Show this ring">
+                                    <input type="color" x-model="ring.color" aria-label="Ring color">
+                                    <input type="number" x-model.number="ring.radius" x-on:change="onRingRadiusCommit(index)" min="0" x-bind:max="$store.app.ringMax" x-bind:step="$store.app.ringStep" aria-label="Ring radius">
+                                    <span class="ring-unit" x-text="$store.app.ringUnitSuffix"></span>
+                                    <input type="text" x-model="ring.label" maxlength="32" placeholder="Label" aria-label="Ring label">
+                                    <button type="button" class="ring-remove" x-on:click="removeRing(index)" aria-label="Remove ring">&times;</button>
+                                </div>
+                            </template>
+                        </div>
+                        <button type="button" class="secondary ring-add" x-on:click="onRingAdd" x-bind:disabled="!$store.app.canAddRing">Add Ring</button>
+                        <label>
+                            <input type="checkbox" role="switch" id="ringLegendToggle" x-ref="ringLegendToggle" x-on:change="onRingLegendChange" checked>
+                            Include Legend in Exports
+                        </label>
+                        <label for="ringLegendTheme">
+                            Legend Panel
+                            <select id="ringLegendTheme" x-ref="ringLegendTheme" x-on:change="onRingLegendThemeChange">
+                                <option value="auto">Auto (match image)</option>
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                            </select>
+                        </label>
+                    </fieldset>
+                </details>
+
+                <details>
                     <summary role="button" class="secondary">Export</summary>
                     <div class="export-preview-wrap">
                         <canvas id="exportPreviewCanvas" x-ref="exportPreviewCanvas" aria-label="Export preview" width="320" height="180"></canvas>
+                        <!-- The preview is a WebGPU canvas and cannot be drawn into with Canvas2D,
+                             so the legend is painted on a sibling stacked over it. -->
+                        <canvas id="exportPreviewLegend" x-ref="exportPreviewLegend" aria-hidden="true" width="320" height="180"></canvas>
                     </div>
                     <label for="exportFormat">
                         Format

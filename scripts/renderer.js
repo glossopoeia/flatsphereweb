@@ -71,7 +71,9 @@ export class ProjectionRenderer {
             rangeRings: rangeRingsSource,
             oblique: obliqueSource,
             reproject: reprojectSource,
-            projections: projectionSources,
+            // Keyed by catalog id: ensurePipeline receives ids, and the catalog's array order is not
+            // guaranteed to match them.
+            projections: Object.fromEntries(projections.map((p, i) => [p.id, projectionSources[i]])),
         };
 
         this.context = canvas.getContext('webgpu');

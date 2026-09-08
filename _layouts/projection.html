@@ -4,6 +4,9 @@ layout: default
 {%- comment -%}
 Per-projection detail page. Stub files in _projections/{slug}.md provide page.slug;
 this layout looks up the matching record in site.data.projections and renders it.
+The "Unknown projection" fallback below is reachable only under `jekyll serve`, where
+_plugins/projection_titles.rb warns about a stub with no catalog record (or a missing catalog)
+so the dev loop keeps regenerating; `jekyll build` fails on that state instead.
 {%- endcomment -%}
 
 {%- assign p = site.data.projections | where: "shader", page.slug | first -%}

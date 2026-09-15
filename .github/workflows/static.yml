@@ -35,12 +35,6 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
-      - name: Stage projection data for Jekyll
-        run: |
-          if [ -f data/projections.json ]; then
-            mkdir -p _data
-            cp data/projections.json _data/projections.json
-          fi
       - name: Build site with Jekyll
         run: bundle exec jekyll build --destination _site
         env:

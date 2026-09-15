@@ -14,7 +14,8 @@ permalink: /gallery/
     {%- comment -%}
     Iterate data (in id order) and resolve each to its collection page for the URL.
     A data entry without a stub file in _projections/ is skipped — keeps the grid in
-    sync with what actually has a detail page.
+    sync with what actually has a detail page. That state only survives under `jekyll serve`;
+    `jekyll build` fails on it (see _plugins/projection_titles.rb).
     {%- endcomment -%}
     {%- for p in site.data.projections -%}
       {%- assign proj_page = site.projections | where: "slug", p.shader | first -%}

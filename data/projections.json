@@ -518,5 +518,67 @@
         "url": "https://map-projections.net/make-my-wagner/wagner9.php"
       }
     ]
+  },
+  {
+    "id": 20,
+    "shader": "eckert-iv",
+    "defaultAspect": 0.5,
+    "name": "Eckert IV",
+    "properties": [
+      "Equal-Area"
+    ],
+    "creators": [
+      "Max Eckert"
+    ],
+    "originated": "1906",
+    "summary": "A pseudocylindrical equal-area projection from the series of six that Max Eckert published in 1906. Parallels are straight lines, the pole lines are half the length of the equator, and the outer meridians are semicircles, giving the map its rounded 2:1 outline. The auxiliary angle that spaces the parallels has no closed form, so the forward projection is solved with Newton's method, while the inverse is closed-form. Its gentler polar compression than the sinusoidal or Mollweide projections has kept it a popular choice for thematic world maps, and in September 2026 France's foreign ministry adopted it in place of Mercator for its diplomatic maps.",
+    "resources": [
+      {
+        "title": "Wikipedia: Eckert IV Projection",
+        "url": "https://en.wikipedia.org/wiki/Eckert_IV_projection"
+      },
+      {
+        "title": "Map Projections: A Working Manual (USGS)",
+        "url": "https://pubs.usgs.gov/pp/1395/report.pdf"
+      },
+      {
+        "title": "France adopts Eckert IV world map to replace Mercator (The Connexion, September 2026)",
+        "url": "https://www.connexionfrance.com/news/france-adopts-new-world-map-moving-on-from-mercator/813158"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "shader": "equal-earth",
+    "defaultAspect": 0.48672,
+    "name": "Equal Earth",
+    "properties": [
+      "Equal-Area"
+    ],
+    "creators": [
+      "Bojan Šavrič",
+      "Tom Patterson",
+      "Bernhard Jenny"
+    ],
+    "originated": "2018",
+    "summary": "An equal-area pseudocylindrical projection published in 2018 by Bojan Šavrič, Tom Patterson, and Bernhard Jenny in response to renewed demand for world maps that show countries at their true relative sizes without the strong shape distortion of Gall–Peters. It borrows the look of the Robinson projection — straight parallels, gently curved meridians, and pole lines about 0.59 of the equator's length — but derives the meridian spacing from the equal-area condition, so every region takes up map space proportional to its true area. The parallel spacing is a short polynomial in a parametric latitude, and the authors published the equations openly for anyone to implement. It is the flagship projection of the African Union–backed Correct the Map campaign, and in September 2026 the U.N. General Assembly adopted that campaign's resolution encouraging the use of equal-area world maps in education and public communication.",
+    "resources": [
+      {
+        "title": "Wikipedia: Equal Earth Projection",
+        "url": "https://en.wikipedia.org/wiki/Equal_Earth_projection"
+      },
+      {
+        "title": "The Equal Earth map projection (Šavrič, Patterson & Jenny, 2018)",
+        "url": "https://doi.org/10.1080/13658816.2018.1504949"
+      },
+      {
+        "title": "Equal Earth wall maps and resources",
+        "url": "https://equal-earth.com/"
+      },
+      {
+        "title": "The U.N. backs a new world map showing Africa in its true relative size (NPR, September 2026)",
+        "url": "https://www.npr.org/2026/09/04/nx-s1-5958611/africa-world-map-un-vote"
+      }
+    ]
   }
 ]

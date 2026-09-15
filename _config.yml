@@ -4,6 +4,13 @@ url: https://flatsphere.dev
 baseurl: ""
 permalink: /blog/:slug/
 
+# Jekyll reads its site data from data/ instead of the default _data/. That directory is a
+# regular (published) source directory, so data/projections.json is both site.data.projections
+# for the gallery templates and the /data/projections.json the app fetches at runtime — one
+# file, no staging copy. Every data file here is parsed at build time and, unless listed in
+# `exclude:` below, also published.
+data_dir: data
+
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
@@ -45,3 +52,7 @@ exclude:
   - "*.pem"
   - server.log
   - .claude/
+  # Read as site.data.authors but not served at /data/authors.yml. Excluding a data file stops
+  # only its publication, not its loading. Side effect: jekyll serve's watcher ignores excluded
+  # paths, so an author edit shows up on the next regeneration triggered by another file.
+  - data/authors.yml

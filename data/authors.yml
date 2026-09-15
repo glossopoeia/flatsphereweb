@@ -1,4 +1,5 @@
-# Author profiles for blog posts.
+# Author profiles for blog posts. Not published as a file (see `exclude:` in _config.yml),
+# so only the fields the templates render become public.
 # Fields, for future reference:
 #   name    - display name. Required; everything else falls back to it.
 #   uri     - profile/home URL. Links the byline and fills the feed <uri>.
